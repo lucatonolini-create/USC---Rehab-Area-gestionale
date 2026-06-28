@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { CATEGORIE, PIEDI, type Atleta, type Stato, type Categoria, type Piede } from "@/lib/store";
 
-const STATI: Stato[] = ["In recupero", "Quasi guarito", "Critico", "Guarito"];
+const STATI: Stato[] = ["In recupero", "Quasi guarito", "Guarito"];
 
 const atletaVuoto: Omit<Atleta, "id"> = {
   nome: "", dataNascita: "", categoria: "Primavera",
@@ -107,6 +107,13 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
               </Sel>
             </div>
           </div>
+
+          {form.stato === "Guarito" && (
+            <div>
+              <Label>Data fine riabilitazione</Label>
+              <Input className="mt-1" type="date" value={form.fineRehab ?? ""} onChange={(e) => f("fineRehab", e.target.value)} />
+            </div>
+          )}
 
           <div>
             <Label>{`Progresso recupero: ${form.progresso}%`}</Label>

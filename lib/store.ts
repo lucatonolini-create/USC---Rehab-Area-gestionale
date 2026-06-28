@@ -1,8 +1,8 @@
 "use client";
 
-export type Stato = "In recupero" | "Quasi guarito" | "Critico" | "Guarito";
+export type Stato = "In recupero" | "Quasi guarito" | "Guarito";
 
-export const CATEGORIE = ["Primavera", "U19", "U18", "U17", "U16", "U15", "U14"] as const;
+export const CATEGORIE = ["Primavera", "U17", "U16", "U15", "U14"] as const;
 export type Categoria = (typeof CATEGORIE)[number];
 
 export const PIEDI = ["Destro", "Sinistro", "Ambidestro"] as const;
@@ -17,6 +17,7 @@ export interface Atleta {
   piedeDominante: Piede;
   infortunio: string;
   inizioRehab: string;
+  fineRehab?: string;
   stato: Stato;
   progresso: number;
   fisioterapista: string;
@@ -35,6 +36,24 @@ export interface Esercizio {
   note: string;
 }
 
+export interface TestFisiometrico {
+  nome: string;
+  risultato: string;
+  unita: string;
+  note: string;
+}
+
+export interface Carico {
+  interno: string;
+  esterno: string;
+  durata: string;
+  distanzaTotale: string;
+  velocitaMax: string;
+  hsr: string;
+  accelerazioni: string;
+  note: string;
+}
+
 export interface Programma {
   id: string;
   atletaId: string;
@@ -42,6 +61,8 @@ export interface Programma {
   fase: string;
   data: string;
   esercizi: Esercizio[];
+  tests: TestFisiometrico[];
+  carico: Carico;
 }
 
 export interface Impostazioni {
@@ -62,6 +83,11 @@ function load<T>(key: string, fallback: T): T {
   }
 }
 
+const defaultCarico: Carico = {
+  interno: "", esterno: "", durata: "", distanzaTotale: "",
+  velocitaMax: "", hsr: "", accelerazioni: "", note: "",
+};
+
 export function loadAtleti(): Atleta[] {
   return load<Atleta[]>("usc_atleti", []);
 }
@@ -70,7 +96,12 @@ export function saveAtleti(a: Atleta[]) {
 }
 
 export function loadProgrammi(): Programma[] {
-  return load<Programma[]>("usc_programmi", []);
+  const raw = load<any[]>("usc_programmi", []);
+  return raw.map((p) => ({
+    ...p,
+    tests: p.tests ?? [],
+    carico: p.carico ?? { ...defaultCarico },
+  }));
 }
 export function saveProgrammi(p: Programma[]) {
   localStorage.setItem("usc_programmi", JSON.stringify(p));

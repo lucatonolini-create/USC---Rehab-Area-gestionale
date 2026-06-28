@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft,
+  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2,
 } from "lucide-react";
 
 const navItems = [
@@ -13,6 +13,7 @@ const navItems = [
   { href: "/atleti",      label: "Atleti",      icon: Users },
   { href: "/esercizi",    label: "Programmi",   icon: Dumbbell },
   { href: "/progressi",   label: "Progressi",   icon: TrendingUp },
+  { href: "/analisi",     label: "Analisi",     icon: BarChart2 },
   { href: "/impostazioni",label: "Impostazioni",icon: Settings },
 ];
 

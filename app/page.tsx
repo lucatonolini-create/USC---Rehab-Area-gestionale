@@ -13,7 +13,6 @@ import AtletaModal from "@/components/AtletaModal";
 const statoColor: Record<Stato, string> = {
   "In recupero":  "bg-blue-100 text-blue-700",
   "Quasi guarito":"bg-green-100 text-green-700",
-  "Critico":      "bg-red-100 text-red-700",
   "Guarito":      "bg-gray-100 text-gray-600",
 };
 
@@ -36,7 +35,7 @@ export default function Dashboard() {
     setMostraModifica(false);
   };
 
-  const inRecupero = atleti.filter((a) => a.stato === "In recupero" || a.stato === "Critico").length;
+  const inRecupero = atleti.filter((a) => a.stato === "In recupero").length;
   const guariti    = atleti.filter((a) => a.stato === "Guarito").length;
 
   const atletiFiltrati = filtroCategoria === "Tutti"

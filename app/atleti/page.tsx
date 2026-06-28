@@ -13,7 +13,6 @@ import dynamic from "next/dynamic";
 const statoColor: Record<Stato, string> = {
   "In recupero":  "bg-blue-100 text-blue-700",
   "Quasi guarito":"bg-green-100 text-green-700",
-  "Critico":      "bg-red-100 text-red-700",
   "Guarito":      "bg-gray-100 text-gray-600",
 };
 
