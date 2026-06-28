@@ -20,6 +20,7 @@ create table if not exists atleti (
   telefono            text default '',
   email               text default '',
   note                text default '',
+  storico_infortuni   jsonb default '[]'::jsonb,
   created_at          timestamptz default now()
 );
 

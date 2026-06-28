@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Download, FileText, Calendar, Filter } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, upsertAtleta,
-  CATEGORIE, type Atleta, type Stato, type Programma,
+  loadAtleti, loadProgrammi, upsertAtleta, uid,
+  CATEGORIE, type Atleta, type Stato, type Programma, type InfortunioStorico,
 } from "@/lib/store";
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
@@ -526,9 +526,28 @@ export default function ProgressiPage() {
     let updatedAtleta: Atleta | undefined;
     const nuovi = atleti.map((a) => {
       if (a.id !== id) return a;
-      const updated = { ...a, [campo]: valore };
-      if (campo === "stato" && valore === "Disponibile" && !a.fineRehab) {
-        updated.fineRehab = new Date().toISOString().slice(0, 10);
+      const updated: Atleta = { ...a, [campo]: valore };
+      if (campo === "stato" && valore === "Disponibile") {
+        const fineRehab = a.fineRehab ?? new Date().toISOString().slice(0, 10);
+        updated.fineRehab = fineRehab;
+        // Archivia l'infortunio corrente se presente
+        if (a.infortunio || a.inizioRehab) {
+          const inf: InfortunioStorico = {
+            id: uid(),
+            tipo: a.tipoInfortunio,
+            diagnosi: a.infortunio || "—",
+            inizioRehab: a.inizioRehab,
+            fineRehab,
+            note: a.note || undefined,
+          };
+          updated.storicoInfortuni = [...(a.storicoInfortuni ?? []), inf];
+        }
+        // Pulisce i campi dell'infortunio attivo
+        updated.infortunio = "";
+        updated.tipoInfortunio = undefined;
+        updated.inizioRehab = "";
+        updated.fineRehab = undefined;
+        updated.progresso = 100;
       }
       updatedAtleta = updated;
       return updated;

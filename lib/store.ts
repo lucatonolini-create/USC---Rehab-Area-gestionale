@@ -19,6 +19,15 @@ export const TIPI_INFORTUNIO = [
 ] as const;
 export type TipoInfortunio = (typeof TIPI_INFORTUNIO)[number];
 
+export interface InfortunioStorico {
+  id: string;
+  tipo?: string;
+  diagnosi: string;
+  inizioRehab: string;
+  fineRehab: string;
+  note?: string;
+}
+
 export interface Atleta {
   id: string;
   nome: string;
@@ -37,6 +46,7 @@ export interface Atleta {
   telefono: string;
   email: string;
   note: string;
+  storicoInfortuni?: InfortunioStorico[];
   // Antropometria
   peso?: string;
   altezza?: string;
@@ -215,6 +225,7 @@ function rowToAtleta(r: Record<string, any>): Atleta {
     telefono: r.telefono ?? "",
     email: r.email ?? "",
     note: r.note ?? "",
+    storicoInfortuni: r.storico_infortuni ?? [],
     peso: r.peso ?? "",
     altezza: r.altezza ?? "",
     altezzaDaSeduto: r.altezza_da_seduto ?? "",
@@ -240,6 +251,7 @@ function atletaToRow(a: Atleta): Record<string, any> {
     telefono: a.telefono,
     email: a.email,
     note: a.note,
+    storico_infortuni: a.storicoInfortuni ?? [],
     peso: a.peso ?? null,
     altezza: a.altezza ?? null,
     altezza_da_seduto: a.altezzaDaSeduto ?? null,
