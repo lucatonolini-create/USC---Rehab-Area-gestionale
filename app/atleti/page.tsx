@@ -59,7 +59,30 @@ export default function AtletiPage() {
   const onSalvaAtleta = async (dati: Omit<Atleta, "id">) => {
     try {
       if (editAtleta) {
-        const aggiornato = { ...dati, id: editAtleta.id };
+        let aggiornato: Atleta = { ...dati, id: editAtleta.id };
+        // Se l'atleta passa da Infortunato a Disponibile, archivia l'infortunio corrente
+        if (editAtleta.stato === "Infortunato" && dati.stato === "Disponibile") {
+          const fineRehab = dati.fineRehab ?? new Date().toISOString().slice(0, 10);
+          if (editAtleta.infortunio || editAtleta.inizioRehab) {
+            const inf: InfortunioStorico = {
+              id: uid(),
+              tipo: editAtleta.tipoInfortunio,
+              diagnosi: editAtleta.infortunio || "—",
+              inizioRehab: editAtleta.inizioRehab,
+              fineRehab,
+              note: editAtleta.note || undefined,
+            };
+            aggiornato = {
+              ...aggiornato,
+              storicoInfortuni: [...(editAtleta.storicoInfortuni ?? []), inf],
+              infortunio: "",
+              tipoInfortunio: undefined,
+              inizioRehab: "",
+              fineRehab: undefined,
+              progresso: 100,
+            };
+          }
+        }
         setAtleti((prev) => prev.map((a) => a.id === editAtleta.id ? aggiornato : a));
         setSelected(aggiornato);
         await upsertAtleta(aggiornato);
