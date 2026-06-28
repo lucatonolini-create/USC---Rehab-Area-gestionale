@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, User, ChevronRight, Phone, Mail } from "lucide-react";
+import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2 } from "lucide-react";
 import {
   loadAtleti, saveAtleti, uid,
   CATEGORIE, type Atleta, type Stato,
@@ -141,7 +141,8 @@ export default function AtletiPage() {
                 </div>
                 <div className="space-y-3">
                   {lista.map((atleta) => (
-                    <button key={atleta.id} onClick={() => { setSelected(atleta); setTab("dati"); }}
+                    <div key={atleta.id} className="relative group">
+                    <button onClick={() => { setSelected(atleta); setTab("dati"); }}
                       className={`w-full bg-white rounded-xl p-4 border text-left transition-all hover:shadow-md ${
                         selected?.id === atleta.id ? "border-[#C8102E] shadow-md" : "border-gray-100"
                       }`}>
@@ -184,6 +185,13 @@ export default function AtletiPage() {
                         </div>
                       )}
                     </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); if (confirm(`Eliminare ${atleta.nome}?`)) elimina(atleta.id); }}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500"
+                      title="Elimina atleta">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
