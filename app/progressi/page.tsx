@@ -111,6 +111,21 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
       row.eachCell({ includeEmpty: true }, (cell: any, col: number) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle", horizontal: col === 2 ? "left" : "center" }; });
     });
 
+    if (prog.esercizicampo?.length) {
+      ws.addRow([]);
+      addSectionTitle(ws, "ESERCIZI IN CAMPO", darkFill);
+      const hCampo = ws.addRow(["#", "Tipo", "Serie", "Durata", "Descrizione"]);
+      hCampo.height = 20;
+      hCampo.eachCell((cell: any) => { cell.fill = redFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
+      hCampo.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
+      hCampo.getCell(5).alignment = { vertical: "middle", horizontal: "left" };
+      prog.esercizicampo.forEach((c, i) => {
+        const row = ws.addRow([i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]);
+        row.height = 18;
+        row.eachCell({ includeEmpty: true }, (cell: any, col: number) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle", horizontal: col === 2 || col === 5 ? "left" : "center" }; });
+      });
+    }
+
     if (prog.carico && Object.values(prog.carico).some(Boolean)) {
       ws.addRow([]);
       addSectionTitle(ws, "CARICO SESSIONE", darkFill);
@@ -248,6 +263,21 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         alternateRowStyles: { fillColor: [250, 250, 250] },
         margin: { left: M, right: M },
         columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 50 }, 2: { cellWidth: 12 }, 3: { cellWidth: 18 }, 4: { cellWidth: 20 }, 5: { cellWidth: 10 }, 6: { cellWidth: 14 } },
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
+    }
+
+    if (prog.esercizicampo?.length) {
+      y = secTitle("Esercizi in campo", y);
+      autoTable(doc, {
+        startY: y,
+        head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]],
+        body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]),
+        headStyles: { fillColor: [34, 139, 34], textColor: 255, fontSize: 7.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
+        alternateRowStyles: { fillColor: [245, 252, 245] },
+        margin: { left: M, right: M },
+        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } },
       });
       y = (doc as any).lastAutoTable.finalY + 6;
     }
