@@ -285,7 +285,7 @@ async function esportaExcelReport(
   ws.addRow([]);
 
   // Intestazioni colonne
-  xlAddColHeaders(ws, ["Nome", "Categoria", "Tipo Infortunio", "Diagnosi", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso %", "Fisioterapista", "Preparatore"], xlDarkFill);
+  xlAddColHeaders(ws, ["Nome", "Categoria", "Tipo Infortunio", "Diagnosi", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso %"], xlDarkFill);
 
   // Righe dati
   atletiMese.forEach((a, i) => {
@@ -298,8 +298,6 @@ async function esportaExcelReport(
       a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
       a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
       `${a.progresso}%`,
-      a.fisioterapista || "—",
-      a.preparatoreAtletico || "—",
     ], i % 2 !== 0, [8]);
     // Diagnosi e Nome: allineamento sinistra
     const row = ws.getRow(ws.rowCount);
