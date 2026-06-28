@@ -39,8 +39,8 @@ export default function ImpostazioniPage() {
           return (
             <div key={sezione.titolo} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5 text-[#003087]" />
+                <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center shrink-0">
+                  <Icon className="w-5 h-5 text-[#C8102E]" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-gray-900 mb-0.5">{sezione.titolo}</h3>
@@ -48,13 +48,13 @@ export default function ImpostazioniPage() {
                   <ul className="space-y-2">
                     {sezione.voci.map((v, i) => (
                       <li key={i} className="text-sm text-gray-700 flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 bg-[#003087] rounded-full shrink-0" />
+                        <span className="w-1.5 h-1.5 bg-[#C8102E] rounded-full shrink-0" />
                         {v}
                       </li>
                     ))}
                   </ul>
                 </div>
-                <button className="text-sm text-[#003087] font-medium hover:underline shrink-0">
+                <button className="text-sm text-[#C8102E] font-medium hover:underline shrink-0">
                   Modifica
                 </button>
               </div>

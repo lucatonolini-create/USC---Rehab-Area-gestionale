@@ -44,7 +44,7 @@ export default function ProgressiPage() {
           {atleti.map((atleta) => (
             <div key={atleta.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
               <div className="flex items-center gap-4 mb-5">
-                <div className="w-12 h-12 bg-[#003087] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
+                <div className="w-12 h-12 bg-[#C8102E] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
                   {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div className="flex-1">
@@ -63,7 +63,7 @@ export default function ProgressiPage() {
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-sm font-semibold text-gray-600">Progresso recupero</label>
-                  <span className="text-2xl font-bold text-[#003087]">{atleta.progresso}%</span>
+                  <span className="text-2xl font-bold text-[#C8102E]">{atleta.progresso}%</span>
                 </div>
                 <input
                   type="range"
@@ -71,7 +71,7 @@ export default function ProgressiPage() {
                   max={100}
                   value={atleta.progresso}
                   onChange={(e) => aggiorna(atleta.id, "progresso", Number(e.target.value))}
-                  className="w-full accent-[#003087] h-2"
+                  className="w-full accent-[#C8102E] h-2"
                 />
                 <div className="flex justify-between text-xs text-gray-300 mt-1">
                   <span>0%</span>

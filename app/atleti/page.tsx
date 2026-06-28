@@ -97,7 +97,7 @@ export default function AtletiPage() {
           </div>
           <button
             onClick={apriNuovo}
-            className="flex items-center gap-2 bg-[#003087] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors"
+            className="flex items-center gap-2 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Nuovo Atleta
@@ -111,7 +111,7 @@ export default function AtletiPage() {
             placeholder="Cerca per nome o infortunio..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
           />
         </div>
 
@@ -128,11 +128,11 @@ export default function AtletiPage() {
                 key={atleta.id}
                 onClick={() => setSelected(atleta)}
                 className={`bg-white rounded-xl p-5 border cursor-pointer transition-all hover:shadow-md ${
-                  selected?.id === atleta.id ? "border-[#003087] shadow-md" : "border-gray-100"
+                  selected?.id === atleta.id ? "border-[#C8102E] shadow-md" : "border-gray-100"
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#003087] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
+                  <div className="w-12 h-12 bg-[#C8102E] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
                     {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -145,7 +145,7 @@ export default function AtletiPage() {
                     <p className="text-sm text-gray-500 truncate">{atleta.infortunio || "—"}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-2xl font-bold text-[#003087]">{atleta.progresso}%</p>
+                    <p className="text-2xl font-bold text-[#C8102E]">{atleta.progresso}%</p>
                     <p className="text-xs text-gray-400">recupero</p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-gray-300" />
@@ -171,7 +171,7 @@ export default function AtletiPage() {
             ✕ Chiudi
           </button>
           <div className="text-center mb-6">
-            <div className="w-20 h-20 bg-[#003087] rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-3">
+            <div className="w-20 h-20 bg-[#C8102E] rounded-full flex items-center justify-center text-white font-bold text-2xl mx-auto mb-3">
               {selected.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
             </div>
             <h2 className="text-xl font-bold text-gray-900">{selected.nome}</h2>
@@ -191,9 +191,9 @@ export default function AtletiPage() {
               <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Progresso</p>
               <div className="flex items-center gap-3">
                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#003087] rounded-full" style={{ width: `${selected.progresso}%` }} />
+                  <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${selected.progresso}%` }} />
                 </div>
-                <span className="text-sm font-bold text-[#003087]">{selected.progresso}%</span>
+                <span className="text-sm font-bold text-[#C8102E]">{selected.progresso}%</span>
               </div>
             </div>
             {selected.fisioterapista && (
@@ -212,7 +212,7 @@ export default function AtletiPage() {
           <div className="flex gap-2 mt-6">
             <button
               onClick={() => apriModifica(selected)}
-              className="flex-1 flex items-center justify-center gap-2 border border-[#003087] text-[#003087] py-2.5 rounded-xl text-sm font-medium hover:bg-blue-50"
+              className="flex-1 flex items-center justify-center gap-2 border border-[#C8102E] text-[#C8102E] py-2.5 rounded-xl text-sm font-medium hover:bg-red-50"
             >
               <Edit2 className="w-4 h-4" /> Modifica
             </button>
@@ -245,7 +245,7 @@ export default function AtletiPage() {
                   value={form.nome}
                   onChange={(e) => setForm({ ...form, nome: e.target.value })}
                   placeholder="Es. Marco Rossi"
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -256,7 +256,7 @@ export default function AtletiPage() {
                     onChange={(e) => setForm({ ...form, eta: e.target.value })}
                     placeholder="Es. 24"
                     type="number"
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
                 <div>
@@ -265,7 +265,7 @@ export default function AtletiPage() {
                     value={form.posizione}
                     onChange={(e) => setForm({ ...form, posizione: e.target.value })}
                     placeholder="Es. Centrocampista"
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
               </div>
@@ -275,7 +275,7 @@ export default function AtletiPage() {
                   value={form.infortunio}
                   onChange={(e) => setForm({ ...form, infortunio: e.target.value })}
                   placeholder="Es. Lesione legamento crociato"
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -285,7 +285,7 @@ export default function AtletiPage() {
                     type="date"
                     value={form.inizioRehab}
                     onChange={(e) => setForm({ ...form, inizioRehab: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
                 <div>
@@ -293,7 +293,7 @@ export default function AtletiPage() {
                   <select
                     value={form.stato}
                     onChange={(e) => setForm({ ...form, stato: e.target.value as Stato })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                   >
                     {STATI.map((s) => <option key={s}>{s}</option>)}
                   </select>
@@ -309,7 +309,7 @@ export default function AtletiPage() {
                   max={100}
                   value={form.progresso}
                   onChange={(e) => setForm({ ...form, progresso: Number(e.target.value) })}
-                  className="mt-2 w-full accent-[#003087]"
+                  className="mt-2 w-full accent-[#C8102E]"
                 />
               </div>
               <div>
@@ -318,7 +318,7 @@ export default function AtletiPage() {
                   value={form.fisioterapista}
                   onChange={(e) => setForm({ ...form, fisioterapista: e.target.value })}
                   placeholder="Es. Dott. Conti"
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -328,7 +328,7 @@ export default function AtletiPage() {
                     value={form.telefono}
                     onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                     placeholder="+39 333 0000000"
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
                 <div>
@@ -337,7 +337,7 @@ export default function AtletiPage() {
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     placeholder="nome@email.it"
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
               </div>
@@ -348,7 +348,7 @@ export default function AtletiPage() {
                   onChange={(e) => setForm({ ...form, note: e.target.value })}
                   placeholder="Note aggiuntive..."
                   rows={3}
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] resize-none"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none"
                 />
               </div>
             </div>
@@ -362,7 +362,7 @@ export default function AtletiPage() {
               <button
                 onClick={salvaAtleta}
                 disabled={!form.nome.trim()}
-                className="flex-1 bg-[#003087] text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {editId ? "Salva modifiche" : "Aggiungi atleta"}
               </button>

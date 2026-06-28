@@ -68,11 +68,11 @@ export default function AppuntamentiPage() {
             type="date"
             value={filtroData}
             onChange={(e) => setFiltroData(e.target.value)}
-            className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+            className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
           />
           <button
             onClick={() => { setForm({ ...vuoto, data: filtroData }); setMostraForm(true); }}
-            className="flex items-center gap-2 bg-[#003087] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors"
+            className="flex items-center gap-2 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800 transition-colors"
           >
             <Plus className="w-4 h-4" />
             Nuovo
@@ -86,7 +86,7 @@ export default function AppuntamentiPage() {
           <p className="text-gray-400 text-lg font-medium">Nessun appuntamento in questa data</p>
           <button
             onClick={() => { setForm({ ...vuoto, data: filtroData }); setMostraForm(true); }}
-            className="text-[#003087] text-sm font-medium mt-2 inline-block hover:underline"
+            className="text-[#C8102E] text-sm font-medium mt-2 inline-block hover:underline"
           >
             + Aggiungi appuntamento
           </button>
@@ -139,7 +139,7 @@ export default function AppuntamentiPage() {
                 <select
                   value={form.atletaId}
                   onChange={(e) => setForm({ ...form, atletaId: e.target.value })}
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                 >
                   <option value="">Seleziona atleta...</option>
                   {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
@@ -155,7 +155,7 @@ export default function AppuntamentiPage() {
                     type="date"
                     value={form.data}
                     onChange={(e) => setForm({ ...form, data: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
                 <div>
@@ -164,7 +164,7 @@ export default function AppuntamentiPage() {
                     type="time"
                     value={form.ora}
                     onChange={(e) => setForm({ ...form, ora: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
               </div>
@@ -173,7 +173,7 @@ export default function AppuntamentiPage() {
                 <select
                   value={form.tipo}
                   onChange={(e) => setForm({ ...form, tipo: e.target.value })}
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                 >
                   {TIPI.map((t) => <option key={t}>{t}</option>)}
                 </select>
@@ -185,7 +185,7 @@ export default function AppuntamentiPage() {
                     type="number"
                     value={form.durata}
                     onChange={(e) => setForm({ ...form, durata: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                   />
                 </div>
                 <div>
@@ -193,7 +193,7 @@ export default function AppuntamentiPage() {
                   <select
                     value={form.stanza}
                     onChange={(e) => setForm({ ...form, stanza: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                   >
                     {STANZE.map((s) => <option key={s}>{s}</option>)}
                   </select>
@@ -207,7 +207,7 @@ export default function AppuntamentiPage() {
               <button
                 onClick={aggiungi}
                 disabled={!form.atletaId}
-                className="flex-1 bg-[#003087] text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Aggiungi
               </button>

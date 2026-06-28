@@ -23,7 +23,7 @@ export default function Dashboard() {
   const guariti = atleti.filter((a) => a.stato === "Guarito").length;
 
   const stats = [
-    { label: "Atleti Attivi", value: atleti.length, icon: Users, color: "bg-blue-500" },
+    { label: "Atleti Attivi", value: atleti.length, icon: Users, color: "bg-red-500" },
     { label: "Sedute Oggi", value: appOggi.length, icon: Calendar, color: "bg-green-500" },
     { label: "In Recupero", value: inRecupero, icon: Activity, color: "bg-orange-500" },
     { label: "Guarigioni", value: guariti, icon: TrendingUp, color: "bg-purple-500" },
@@ -69,7 +69,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Appuntamenti di Oggi</h2>
-            <Link href="/appuntamenti" className="text-sm text-[#003087] font-medium hover:underline">
+            <Link href="/appuntamenti" className="text-sm text-[#C8102E] font-medium hover:underline">
               Vedi tutti
             </Link>
           </div>
@@ -77,7 +77,7 @@ export default function Dashboard() {
             <div className="p-12 text-center">
               <Calendar className="w-10 h-10 text-gray-200 mx-auto mb-3" />
               <p className="text-gray-400 text-sm">Nessun appuntamento oggi</p>
-              <Link href="/appuntamenti" className="text-[#003087] text-sm font-medium mt-2 inline-block hover:underline">
+              <Link href="/appuntamenti" className="text-[#C8102E] text-sm font-medium mt-2 inline-block hover:underline">
                 + Aggiungi appuntamento
               </Link>
             </div>
@@ -109,7 +109,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Atleti in Recupero</h2>
-            <Link href="/atleti" className="text-sm text-[#003087] font-medium hover:underline">
+            <Link href="/atleti" className="text-sm text-[#C8102E] font-medium hover:underline">
               Vedi tutti
             </Link>
           </div>
@@ -117,7 +117,7 @@ export default function Dashboard() {
             <div className="p-12 text-center">
               <User className="w-10 h-10 text-gray-200 mx-auto mb-3" />
               <p className="text-gray-400 text-sm">Nessun atleta ancora</p>
-              <Link href="/atleti" className="text-[#003087] text-sm font-medium mt-2 inline-block hover:underline">
+              <Link href="/atleti" className="text-[#C8102E] text-sm font-medium mt-2 inline-block hover:underline">
                 + Aggiungi atleta
               </Link>
             </div>

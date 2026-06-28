@@ -78,7 +78,7 @@ export default function EserciziPage() {
         </div>
         <button
           onClick={() => setMostraForm(true)}
-          className="flex items-center gap-2 bg-[#003087] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800"
+          className="flex items-center gap-2 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800"
         >
           <Plus className="w-4 h-4" /> Nuovo programma
         </button>
@@ -100,14 +100,14 @@ export default function EserciziPage() {
                   onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
                   className="w-full flex items-center gap-5 p-6 hover:bg-gray-50 text-left"
                 >
-                  <div className="w-12 h-12 bg-[#003087] rounded-xl flex items-center justify-center shrink-0">
+                  <div className="w-12 h-12 bg-[#C8102E] rounded-xl flex items-center justify-center shrink-0">
                     <Dumbbell className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
                       <h3 className="font-semibold text-gray-900">{prog.nome}</h3>
                       {prog.fase && (
-                        <span className="text-xs bg-[#FFCC00] text-[#003087] px-2.5 py-0.5 rounded-full font-medium">
+                        <span className="text-xs bg-[#FFCC00] text-[#C8102E] px-2.5 py-0.5 rounded-full font-medium">
                           {prog.fase}
                         </span>
                       )}
@@ -169,7 +169,7 @@ export default function EserciziPage() {
                 <select
                   value={atletaId}
                   onChange={(e) => setAtletaId(e.target.value)}
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                 >
                   <option value="">Seleziona atleta...</option>
                   {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
@@ -181,7 +181,7 @@ export default function EserciziPage() {
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   placeholder="Es. Recupero LCA"
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                 />
               </div>
               <div>
@@ -190,14 +190,14 @@ export default function EserciziPage() {
                   value={fase}
                   onChange={(e) => setFase(e.target.value)}
                   placeholder="Es. Fase 1 – Controllo del dolore"
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
                 />
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi</label>
-                  <button onClick={aggiungiEsercizio} className="text-[#003087] text-xs font-medium hover:underline">
+                  <button onClick={aggiungiEsercizio} className="text-[#C8102E] text-xs font-medium hover:underline">
                     + Aggiungi
                   </button>
                 </div>
@@ -211,7 +211,7 @@ export default function EserciziPage() {
                             const n = [...esercizi]; n[i].nome = e.target.value; setEsercizi(n);
                           }}
                           placeholder="Nome esercizio"
-                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                          className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                         />
                         {esercizi.length > 1 && (
                           <button onClick={() => rimuoviEsercizio(i)} className="text-gray-300 hover:text-red-400">
@@ -224,18 +224,18 @@ export default function EserciziPage() {
                           value={es.serie}
                           onChange={(e) => { const n = [...esercizi]; n[i].serie = e.target.value; setEsercizi(n); }}
                           placeholder="Serie"
-                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                         />
                         <input
                           value={es.reps}
                           onChange={(e) => { const n = [...esercizi]; n[i].reps = e.target.value; setEsercizi(n); }}
                           placeholder="Reps / tempo"
-                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                         />
                         <select
                           value={es.intensita}
                           onChange={(e) => { const n = [...esercizi]; n[i].intensita = e.target.value; setEsercizi(n); }}
-                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                          className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white"
                         >
                           {INTENSITA.map((v) => <option key={v} value={v}>{v || "Intensità"}</option>)}
                         </select>
@@ -252,7 +252,7 @@ export default function EserciziPage() {
               <button
                 onClick={aggiungiProgramma}
                 disabled={!atletaId || !nome.trim()}
-                className="flex-1 bg-[#003087] text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Crea programma
               </button>

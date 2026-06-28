@@ -6,22 +6,20 @@ import Sidebar from "@/components/Sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "USC Rehab Area - Gestionale",
-  description: "Sistema di gestione per l'area riabilitazione USC",
+  title: "USC Cremonese – Rehab Area",
+  description: "Gestionale area riabilitazione USC Cremonese",
   manifest: "/manifest.json",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="it">
       <body className={inter.className}>
-        <div className="flex h-screen overflow-hidden">
+        <div className="flex h-screen overflow-hidden bg-gray-50">
+          {/* Sidebar: fixed su mobile, statica su desktop */}
           <Sidebar />
-          <main className="flex-1 overflow-y-auto">
+          {/* Contenuto principale — su mobile ha padding-top per non finire sotto l'hamburger */}
+          <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
             {children}
           </main>
         </div>
