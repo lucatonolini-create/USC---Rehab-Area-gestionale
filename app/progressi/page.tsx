@@ -242,6 +242,113 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   doc.save(`${atleta.nome.replace(/ /g, "_")}_rehab.pdf`);
 }
 
+async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string) {
+  const { Workbook } = await import("exceljs");
+  const wb = new Workbook();
+  wb.creator = "U.S. Cremonese Rehab Area";
+  const oggi = new Date().toLocaleDateString("it-IT");
+  const nomeMese = MESI[mese];
+  const subtitle = `${nomeMese} ${anno}${filtroCat !== "Tutte" ? ` – ${filtroCat}` : ""}`;
+
+  const XL_RED  = "FFC8102E"; const XL_DARK = "FF2B2B2B"; const XL_LIGHT = "FFF5F5F5";
+  const redFill  = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_RED } };
+  const darkFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_DARK } };
+  const lightFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_LIGHT } };
+  const whiteFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFFFFF" } };
+  const border = { top: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, bottom: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, left: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, right: { style: "thin" as const, color: { argb: "FFE0E0E0" } } };
+
+  const logoBuf = await getLogoBuffer();
+  const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
+
+  const ws = wb.addWorksheet("Report Mensile");
+  ws.columns = [{ width: 30 }, { width: 16 }, { width: 30 }, { width: 20 }, { width: 18 }, { width: 18 }, { width: 12 }];
+
+  ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
+  if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 0.92, row: 3.8 } as any, editAs: "oneCell" });
+  const r1 = ws.getRow(1); r1.getCell(2).value = "U.S. CREMONESE – REHAB AREA"; r1.getCell(2).font = { bold: true, size: 13, color: { argb: XL_RED } };
+  const r2 = ws.getRow(2); r2.getCell(2).value = "REPORT MENSILE"; r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_RED } };
+  const r3 = ws.getRow(3); r3.getCell(2).value = subtitle; r3.getCell(2).font = { size: 9, italic: true, color: { argb: "FF999999" } };
+  ws.getRow(3).getCell(4).value = `Generato il ${oggi}`; ws.getRow(3).getCell(4).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(4).alignment = { horizontal: "right" };
+
+  ws.addRow([]);
+  const hRow = ws.addRow(["Nome", "Categoria", "Diagnosi / Infortunio", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso"]);
+  hRow.height = 20;
+  hRow.eachCell((cell: any) => { cell.fill = darkFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle" }; });
+
+  atletiMese.forEach((a, i) => {
+    const row = ws.addRow([
+      a.nome, a.categoria, a.infortunio || "—", a.stato,
+      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
+      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
+      `${a.progresso}%`,
+    ]);
+    row.height = 18;
+    row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle" }; });
+  });
+
+  ws.addRow([]);
+  const rRiep = ws.addRow(["Riepilogo per categoria", "", `Totale: ${atletiMese.length} atleti`]);
+  rRiep.getCell(1).font = { bold: true, size: 9, color: { argb: XL_RED } };
+  rRiep.getCell(3).font = { bold: true, size: 9, color: { argb: XL_DARK } };
+  CATEGORIE.forEach((cat, i) => {
+    const n = atletiMese.filter((a) => a.categoria === cat).length;
+    if (!n) return;
+    const row = ws.addRow([cat, `${n} atleti`]);
+    row.height = 16;
+    row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; });
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `USC_Report_${nomeMese}_${anno}.xlsx`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+  const doc = new jsPDF();
+  const red: [number, number, number] = [200, 16, 46];
+  const dark: [number, number, number] = [43, 43, 43];
+  const oggi = new Date().toLocaleDateString("it-IT");
+  const nomeMese = MESI[mese];
+  const logoDataUrl = await getLogoDataUrl();
+
+  doc.setFillColor(248, 248, 248);
+  doc.rect(0, 0, 210, 26, "F");
+  doc.setDrawColor(...red); doc.setLineWidth(0.8); doc.line(0, 26, 210, 26);
+  if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
+  const tx = logoDataUrl ? 27 : 14;
+  doc.setTextColor(...red); doc.setFontSize(12); doc.setFont("helvetica", "bold");
+  doc.text("U.S. Cremonese – Report Mensile", tx, 15);
+  doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(140, 140, 140);
+  doc.text(oggi, 196, 15, { align: "right" });
+
+  doc.setTextColor(...dark); doc.setFontSize(15); doc.setFont("helvetica", "bold");
+  doc.text(`${nomeMese} ${anno}${filtroCat !== "Tutte" ? ` · ${filtroCat}` : ""}`, 14, 37);
+  doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(130, 130, 130);
+  doc.text(`${atletiMese.length} atleti nel periodo`, 14, 44);
+
+  autoTable(doc, {
+    startY: 50,
+    head: [["Nome", "Categoria", "Diagnosi / Infortunio", "Stato", "Inizio", "Fine", "%"]],
+    body: atletiMese.map((a) => [
+      a.nome, a.categoria, a.infortunio || "—", a.stato,
+      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
+      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
+      `${a.progresso}%`,
+    ]),
+    headStyles: { fillColor: dark, textColor: 255, fontSize: 8 },
+    bodyStyles: { fontSize: 8 },
+    alternateRowStyles: { fillColor: [248, 248, 248] },
+    margin: { left: 14, right: 14 },
+    columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 18 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 18 }, 5: { cellWidth: 18 }, 6: { cellWidth: 12 } },
+  });
+
+  doc.save(`USC_Report_${nomeMese}_${anno}.pdf`);
+}
+
 type PageTab = "progressi" | "report";
 
 const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
@@ -266,6 +373,7 @@ export default function ProgressiPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [programmi, setProgrammi] = useState<Programma[]>([]);
   const [esportando, setEsportando] = useState<string | null>(null);
+  const [esportandoReport, setEsportandoReport] = useState<"excel" | "pdf" | null>(null);
   const [pageTab, setPageTab] = useState<PageTab>("progressi");
 
   const oggi = new Date();
@@ -456,12 +564,28 @@ export default function ProgressiPage() {
 
           {/* Risultati */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between gap-3 flex-wrap">
               <h2 className="font-bold text-gray-900">
                 {MESI[reportMese]} {reportAnno}
                 {filtroCat !== "Tutte" && ` · ${filtroCat}`}
+                <span className="ml-2 text-sm font-bold text-[#C8102E]">{atletiMese.length} atleti</span>
               </h2>
-              <span className="text-sm font-bold text-[#C8102E]">{atletiMese.length} atleti</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={async () => { setEsportandoReport("excel"); try { await esportaExcelReportMensile(atletiMese, reportMese, reportAnno, filtroCat); } finally { setEsportandoReport(null); } }}
+                  disabled={!!esportandoReport || atletiMese.length === 0}
+                  className="flex items-center gap-1.5 border border-green-300 text-green-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-50 disabled:opacity-50">
+                  <Download className="w-3.5 h-3.5" />
+                  {esportandoReport === "excel" ? "..." : "Excel"}
+                </button>
+                <button
+                  onClick={async () => { setEsportandoReport("pdf"); try { await esportaPDFReportMensile(atletiMese, reportMese, reportAnno, filtroCat); } finally { setEsportandoReport(null); } }}
+                  disabled={!!esportandoReport || atletiMese.length === 0}
+                  className="flex items-center gap-1.5 border border-red-200 text-[#C8102E] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-50 disabled:opacity-50">
+                  <FileText className="w-3.5 h-3.5" />
+                  {esportandoReport === "pdf" ? "..." : "PDF"}
+                </button>
+              </div>
             </div>
 
             {atletiMese.length === 0 ? (
