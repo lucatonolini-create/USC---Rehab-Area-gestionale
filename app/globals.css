@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --usc-blue: #003087;
+  --usc-gold: #FFCC00;
+  --usc-red: #C8102E;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900;
+}

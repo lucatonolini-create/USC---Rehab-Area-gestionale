@@ -1,0 +1,19 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.usc.rehabarea",
+        "paths": [
+          "/atleti/*",
+          "/appuntamenti/*",
+          "/esercizi/*",
+          "/progressi/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.usc.rehabarea"]
+  }
+}
