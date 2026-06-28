@@ -52,11 +52,9 @@ export const TESTS_PREDEFINITI = [
   // Hop
   "Single Leg Hop Test",
   "Triple Hop Test",
-  "Triple Hop",
   "Crossover Hop Test",
   "6m Timed Hop Test",
   "Side Hop Test",
-  "Side Hop",
   "Broad Jump",
   // Balance
   "Y-Balance Test – Anteriore",
