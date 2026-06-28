@@ -332,45 +332,54 @@ async function esportaPDFPanoramica(params: {
   const doc = new jsPDF();
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
   const attivi = params.atleti.filter((a) => a.stato !== "Guarito").length;
   const guariti = params.atleti.filter((a) => a.stato === "Guarito").length;
   const logoDataUrl = await getLogoDataUrl();
-
-  const HEADER_H = 26;
-  const FIRST_Y = HEADER_H + 8;
+  const M = 14; const W = 210; const H = 297; const HDR = 30;
 
   const addHeader = () => {
-    doc.setFillColor(248, 248, 248);
-    doc.rect(0, 0, 210, HEADER_H, "F");
-    doc.setDrawColor(...red);
-    doc.setLineWidth(0.8);
-    doc.line(0, HEADER_H, 210, HEADER_H);
-    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
-    const tx = logoDataUrl ? 27 : 14;
-    doc.setTextColor(...red);
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese – Analisi Rehab Area", tx, 15);
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(140, 140, 140);
-    doc.text(oggi, 196, 15, { align: "right" });
+    doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
+    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
+    const tx = logoDataUrl ? 30 : M;
+    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese – Analisi Rehab Area", tx, 13);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(oggi, W - M, 13, { align: "right" });
   };
 
-  const addSectionTitle = (text: string, y: number) => {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    doc.setTextColor(...dark);
-    doc.text(text, 14, y);
-    return y + 6;
+  const secTitle = (text: string, y: number) => {
+    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
+    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    return y + 11;
+  };
+
+  const addFooter = () => {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
+    }
   };
 
   addHeader();
 
-  // Riepilogo stats
-  let y = FIRST_Y;
-  y = addSectionTitle("Riepilogo generale", y);
+  doc.setTextColor(...dark); doc.setFontSize(15); doc.setFont("helvetica", "bold");
+  doc.text("Panoramica generale", M, HDR + 12);
+  doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+  doc.text(`${params.atleti.length} atleti in gestione`, M, HDR + 20);
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, HDR + 26, W - M, HDR + 26);
+
+  let y = HDR + 33;
+
+  y = secTitle("Riepilogo generale", y);
   autoTable(doc, {
     startY: y,
     body: [
@@ -379,28 +388,29 @@ async function esportaPDFPanoramica(params: {
       ["Guariti / Dimessi", String(guariti)],
       ["Programmi riabilitativi creati", String(params.programmi.length)],
     ],
-    theme: "plain",
-    styles: { fontSize: 10 },
-    columnStyles: { 0: { cellWidth: 100, fontStyle: "bold" }, 1: { halign: "right" } },
-    margin: { left: 14, right: 14 },
+    theme: "striped",
+    styles: { fontSize: 8.5, cellPadding: 3 },
+    columnStyles: { 0: { cellWidth: 80, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 30, halign: "center", textColor: dark } },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: M, right: W / 2 },
   });
+  y = (doc as any).lastAutoTable.finalY + 8;
 
-  // Per categoria
-  y = (doc as any).lastAutoTable.finalY + 10;
-  y = addSectionTitle("Atleti per categoria", y);
+  y = secTitle("Atleti per categoria", y);
   autoTable(doc, {
     startY: y,
     head: [["Categoria", "Totale", "In riabilitazione", "Guariti"]],
     body: params.perCategoria.map(({ cat, totale, attivi: a }) => [cat, totale, a, totale - a]),
-    headStyles: { fillColor: red, textColor: 255 },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
-    margin: { left: 14, right: 14 },
+    headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
+    bodyStyles: { fontSize: 8.5, cellPadding: 2.5 },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: M, right: M },
+    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" } },
   });
+  y = (doc as any).lastAutoTable.finalY + 8;
 
-  // Tipi infortunio
-  y = (doc as any).lastAutoTable.finalY + 10;
-  if (y > 230) { doc.addPage(); addHeader(); y = FIRST_Y; }
-  y = addSectionTitle("Categorie di infortunio", y);
+  if (y > 230) { doc.addPage(); addHeader(); y = HDR + 12; }
+  y = secTitle("Categorie di infortunio", y);
   if (params.perTipoInfortunio.length > 0) {
     autoTable(doc, {
       startY: y,
@@ -408,45 +418,49 @@ async function esportaPDFPanoramica(params: {
       body: params.perTipoInfortunio.map(({ nome, count }) => [
         nome, count, params.atleti.length > 0 ? `${Math.round((count / params.atleti.length) * 100)}%` : "—",
       ]),
-      headStyles: { fillColor: [180, 180, 180], textColor: 255 },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-      margin: { left: 14, right: 14 },
+      headStyles: { fillColor: [160, 160, 160], textColor: 255, fontSize: 7.5 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: M },
+      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 2: { halign: "center" } },
     });
-    y = (doc as any).lastAutoTable.finalY + 6;
+    y = (doc as any).lastAutoTable.finalY + 8;
   } else {
-    doc.setFontSize(9); doc.setTextColor(150, 150, 150);
-    doc.text("Nessun dato – compilare il campo Tipo infortunio nelle schede atleta", 14, y + 4);
-    y += 12;
+    doc.setFontSize(8.5); doc.setFont("helvetica", "italic"); doc.setTextColor(...gray);
+    doc.text("Nessun dato – compilare il campo Tipo infortunio nelle schede atleta", M, y + 3);
+    y += 14;
   }
 
-  // Diagnosi specifiche
   if (params.perInfortunio.length > 0) {
-    if (y > 220) { doc.addPage(); addHeader(); y = FIRST_Y; }
-    y = addSectionTitle("Diagnosi specifiche più frequenti", y);
+    if (y > 220) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Diagnosi specifiche più frequenti", y);
     autoTable(doc, {
       startY: y,
       head: [["Diagnosi", "N° atleti"]],
       body: params.perInfortunio.map(({ nome, count }) => [nome, count]),
-      headStyles: { fillColor: dark, textColor: 255 },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-      margin: { left: 14, right: 14 },
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: M },
+      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" } },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as any).lastAutoTable.finalY + 8;
   }
 
-  // Trend mensile
-  if (y > 200) { doc.addPage(); addHeader(); y = FIRST_Y; }
-  y = addSectionTitle("Trend mensile – ultimi 12 mesi", y);
+  if (y > 200) { doc.addPage(); addHeader(); y = HDR + 12; }
+  y = secTitle("Trend mensile – ultimi 12 mesi", y);
   autoTable(doc, {
     startY: y,
     head: [["Mese", "Atleti attivi"]],
     body: params.trendMensile.map(({ label, count }) => [label, count]),
-    headStyles: { fillColor: red, textColor: 255 },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
-    margin: { left: 14, right: 120 },
+    headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
+    bodyStyles: { fontSize: 8.5, cellPadding: 2.5 },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: M, right: W / 2 },
+    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" } },
   });
+  y = (doc as any).lastAutoTable.finalY + 8;
 
-  // Progressi medi
   const progressiRows = CATEGORIE.map((cat) => {
     const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Guarito");
     if (!lista.length) return null;
@@ -455,19 +469,21 @@ async function esportaPDFPanoramica(params: {
   }).filter(Boolean) as any[][];
 
   if (progressiRows.length > 0) {
-    y = (doc as any).lastAutoTable.finalY + 10;
-    if (y > 220) { doc.addPage(); addHeader(); y = FIRST_Y; }
-    y = addSectionTitle("Progresso medio di recupero per categoria", y);
+    if (y > 220) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Progresso medio di recupero per categoria", y);
     autoTable(doc, {
       startY: y,
       head: [["Categoria", "Atleti attivi", "Progresso medio"]],
       body: progressiRows,
-      headStyles: { fillColor: dark, textColor: 255 },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-      margin: { left: 14, right: 14 },
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5 },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: M },
+      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 2: { halign: "center" } },
     });
   }
 
+  addFooter();
   doc.save(`USC_Analisi_${oggi.replace(/\//g, "-")}.pdf`);
 }
 
@@ -484,93 +500,101 @@ async function esportaPDFReport(
   const doc = new jsPDF();
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
-  const titolo = `${MESI_LUNGHI[mese]} ${anno}${filtroCat !== "Tutte" ? ` · ${filtroCat}` : ""}${filtroTipoInf ? ` · ${filtroTipoInf}` : ""}`;
   const logoDataUrl = await getLogoDataUrl();
+  const M = 14; const W = 210; const H = 297; const HDR = 30;
 
-  const HEADER_H = 26;
+  const addHeader = () => {
+    doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
+    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
+    const tx = logoDataUrl ? 30 : M;
+    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese – Report Mensile", tx, 13);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(oggi, W - M, 13, { align: "right" });
+  };
 
-  // Header con logo
-  doc.setFillColor(248, 248, 248);
-  doc.rect(0, 0, 210, HEADER_H, "F");
-  doc.setDrawColor(...red);
-  doc.setLineWidth(0.8);
-  doc.line(0, HEADER_H, 210, HEADER_H);
-  if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
-  const tx = logoDataUrl ? 27 : 14;
-  doc.setTextColor(...red);
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("U.S. Cremonese – Report Mensile", tx, 15);
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(140, 140, 140);
-  doc.text(oggi, 196, 15, { align: "right" });
+  const secTitle = (text: string, y: number) => {
+    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
+    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    return y + 11;
+  };
 
-  // Titolo periodo
-  doc.setTextColor(...dark);
-  doc.setFontSize(15);
-  doc.setFont("helvetica", "bold");
-  doc.text(titolo, 14, HEADER_H + 11);
-  doc.setFontSize(9);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(130, 130, 130);
-  doc.text(`${atletiMese.length} atleti nel periodo`, 14, HEADER_H + 18);
+  const addFooter = () => {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
+    }
+  };
 
-  // Riepilogo per categoria
-  const riepilogoCat = CATEGORIE.map((cat) => {
+  addHeader();
+
+  const titolo = `${MESI_LUNGHI[mese]} ${anno}`;
+  const filtri = [filtroCat !== "Tutte" ? filtroCat : "", filtroTipoInf || ""].filter(Boolean).join("  ·  ");
+  doc.setTextColor(...dark); doc.setFontSize(17); doc.setFont("helvetica", "bold");
+  doc.text(titolo, M, HDR + 13);
+  if (filtri) {
+    doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(filtri, M, HDR + 21);
+  }
+  doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+  doc.text(`${atletiMese.length} atleti nel periodo`, W - M, HDR + 13, { align: "right" });
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, HDR + 26, W - M, HDR + 26);
+
+  let y = HDR + 33;
+
+  const catRows = CATEGORIE.map((cat) => {
     const n = atletiMese.filter((a) => a.categoria === cat).length;
-    return n ? [cat, n] : null;
+    return n ? [cat, `${n} atleti`] : null;
   }).filter(Boolean) as any[][];
 
-  const catStartY = HEADER_H + 24;
-  if (riepilogoCat.length > 0) {
+  if (catRows.length > 0) {
+    y = secTitle("Riepilogo per categoria", y);
     autoTable(doc, {
-      startY: catStartY,
-      head: [["Categoria", "N° atleti"]],
-      body: riepilogoCat,
-      headStyles: { fillColor: red, textColor: 255 },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-      margin: { left: 14, right: 130 },
+      startY: y, body: catRows, theme: "striped",
+      styles: { fontSize: 8.5, cellPadding: 2.5 },
+      columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, halign: "center", textColor: dark } },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: W / 2 },
     });
+    y = (doc as any).lastAutoTable.finalY + 8;
   }
 
-  // Lista atleti completa
-  const startY = riepilogoCat.length > 0 ? (doc as any).lastAutoTable.finalY + 10 : catStartY + 3;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(...dark);
-  doc.text("Dettaglio atleti", 14, startY);
-
+  y = secTitle("Dettaglio atleti", y);
   autoTable(doc, {
-    startY: startY + 5,
+    startY: y,
     head: [["Atleta", "Categoria", "Tipo Infort.", "Diagnosi", "Stato", "Inizio", "Fine", "%"]],
     body: atletiMese.map((a) => [
-      a.nome,
-      a.categoria,
-      a.tipoInfortunio ?? "—",
-      a.infortunio || "—",
-      a.stato,
+      a.nome, a.categoria, a.tipoInfortunio ?? "—", a.infortunio || "—", a.stato,
       a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
-      a.fineRehab ? new Date(a.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—",
+      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
       `${a.progresso}%`,
     ]),
-    headStyles: { fillColor: dark, textColor: 255, fontSize: 8 },
-    bodyStyles: { fontSize: 8 },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
-    margin: { left: 14, right: 14 },
+    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+    bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 38 },
-      1: { cellWidth: 18 },
+      0: { cellWidth: 35 },
+      1: { cellWidth: 18, halign: "center" },
       2: { cellWidth: 24 },
       3: { cellWidth: 38 },
       4: { cellWidth: 22 },
-      5: { cellWidth: 18 },
-      6: { cellWidth: 18 },
-      7: { cellWidth: 12, halign: "right" },
+      5: { cellWidth: 17, halign: "center" },
+      6: { cellWidth: 17, halign: "center" },
+      7: { cellWidth: 11, halign: "center" },
     },
   });
 
+  addFooter();
   doc.save(`USC_Report_${MESI[mese]}_${anno}.pdf`);
 }
 

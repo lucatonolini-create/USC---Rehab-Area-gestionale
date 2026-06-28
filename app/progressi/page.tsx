@@ -151,94 +151,150 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   const doc = new jsPDF();
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
   const logoDataUrl = await getLogoDataUrl();
+  const oggi = new Date().toLocaleDateString("it-IT");
+  const M = 14; const W = 210; const H = 297; const HDR = 30;
 
-  doc.setFillColor(248, 248, 248);
-  doc.rect(0, 0, 210, 22, "F");
-  doc.setDrawColor(...red);
-  doc.setLineWidth(0.8);
-  doc.line(0, 22, 210, 22);
-  if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 16, 16);
-  const tx = logoDataUrl ? 23 : 14;
-  doc.setTextColor(...red);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("U.S. Cremonese – Scheda Riabilitativa", tx, 14);
+  const addHeader = (subtitle?: string) => {
+    doc.setFillColor(247, 247, 247);
+    doc.rect(0, 0, W, HDR, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
+    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
+    const tx = logoDataUrl ? 30 : M;
+    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese – Scheda Riabilitativa", tx, 13);
+    if (subtitle) { doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 21); }
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(oggi, W - M, 13, { align: "right" });
+  };
 
-  doc.setTextColor(...dark);
-  doc.setFontSize(16);
-  doc.setFont("helvetica", "bold");
-  doc.text(atleta.nome, 14, 34);
-  doc.setFontSize(10);
-  doc.setFont("helvetica", "normal");
-  doc.setTextColor(100, 100, 100);
-  doc.text(`${atleta.categoria} · ${atleta.posizione} · Piede ${atleta.piedeDominante}`, 14, 41);
+  const secTitle = (text: string, y: number) => {
+    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
+    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    return y + 11;
+  };
 
+  const addFooter = () => {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
+    }
+  };
+
+  // ── Pagina 1: dati atleta ──────────────────────────────────────────────────
+  addHeader();
+  doc.setTextColor(...dark); doc.setFontSize(17); doc.setFont("helvetica", "bold");
+  doc.text(atleta.nome, M, HDR + 13);
+  const info = [atleta.categoria, atleta.posizione, atleta.piedeDominante ? `Piede ${atleta.piedeDominante}` : ""].filter(Boolean).join("  ·  ");
+  doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+  doc.text(info, M, HDR + 21);
+  // badge stato
+  doc.setFillColor(...red); doc.roundedRect(W - M - 36, HDR + 7, 36, 10, 2, 2, "F");
+  doc.setTextColor(255, 255, 255); doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
+  doc.text(atleta.stato, W - M - 18, HDR + 13.5, { align: "center" });
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, HDR + 27, W - M, HDR + 27);
+
+  let y = HDR + 34;
+  y = secTitle("Dati clinici", y);
   autoTable(doc, {
-    startY: 48,
-    head: [["Campo", "Valore"]],
+    startY: y,
     body: [
       ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
-      ["Infortunio", atleta.infortunio || "—"],
+      ["Tipo infortunio", atleta.tipoInfortunio || "—"],
+      ["Diagnosi / Infortunio", atleta.infortunio || "—"],
       ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
       ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
       ["Fisioterapista", atleta.fisioterapista || "—"],
+      ["Preparatore atletico", atleta.preparatoreAtletico || "—"],
       ["Stato attuale", atleta.stato],
       ["Progresso recupero", `${atleta.progresso}%`],
-      ["Note", atleta.note || "—"],
     ],
-    headStyles: { fillColor: red, textColor: 255 },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
-    margin: { left: 14, right: 14 },
+    theme: "striped",
+    styles: { fontSize: 8.5, cellPadding: 3 },
+    columnStyles: { 0: { cellWidth: 58, fontStyle: "bold", textColor: dark }, 1: { textColor: dark } },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: M, right: M },
   });
 
+  if (atleta.note) {
+    y = (doc as any).lastAutoTable.finalY + 8;
+    y = secTitle("Note", y);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...dark);
+    doc.text(doc.splitTextToSize(atleta.note, W - M * 2), M, y);
+  }
+
+  // ── Pagine programmi ────────────────────────────────────────────────────────
   programmi.forEach((prog) => {
     doc.addPage();
-    doc.setFillColor(...red);
-    doc.rect(0, 0, 210, 14, "F");
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text(`${prog.nome}${prog.fase ? ` – ${prog.fase}` : ""}`, 14, 9);
-    doc.setTextColor(130, 130, 130);
-    doc.setFontSize(9);
-    doc.setFont("helvetica", "normal");
-    doc.text(prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "", 14, 20);
+    const dataStr = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "";
+    addHeader(`${atleta.nome}  ·  ${prog.nome}${prog.fase ? ` – ${prog.fase}` : ""}${dataStr ? `  ·  ${dataStr}` : ""}`);
+    y = HDR + 8;
 
-    autoTable(doc, {
-      startY: 26,
-      head: [["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS", "Note"]],
-      body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]),
-      headStyles: { fillColor: dark, textColor: 255 },
-      alternateRowStyles: { fillColor: [248, 248, 248] },
-      margin: { left: 14, right: 14 },
-      columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
-    });
+    if (prog.esercizi?.length) {
+      y = secTitle("Esercizi", y);
+      autoTable(doc, {
+        startY: y,
+        head: [["#", "Esercizio", "Serie", "Reps", "Carico", "RIR", "VAS", "Note"]],
+        body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]),
+        headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+        alternateRowStyles: { fillColor: [250, 250, 250] },
+        margin: { left: M, right: M },
+        columnStyles: { 0: { cellWidth: 8, halign: "center" }, 1: { cellWidth: 50 }, 2: { cellWidth: 12, halign: "center" }, 3: { cellWidth: 18, halign: "center" }, 4: { cellWidth: 20, halign: "center" }, 5: { cellWidth: 10, halign: "center" }, 6: { cellWidth: 14, halign: "center" } },
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
+    }
 
     if (prog.carico?.rpe) {
-      const rpeY = (doc as any).lastAutoTable?.finalY ?? 120;
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...dark);
-      doc.text(`RPE sessione: ${prog.carico.rpe}/10`, 14, rpeY + 8);
+      doc.setFillColor(255, 247, 237); doc.roundedRect(M, y, 50, 16, 2, 2, "F");
+      doc.setFillColor(234, 88, 12); doc.rect(M, y, 2.5, 16, "F");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(154, 52, 18);
+      doc.text("RPE SESSIONE", M + 5, y + 6);
+      doc.setFontSize(13); doc.text(`${prog.carico.rpe} / 10`, M + 5, y + 13);
+      y += 22;
+    }
+
+    const hasCarico = prog.carico && Object.entries(prog.carico).some(([k, v]) => k !== "rpe" && v);
+    if (hasCarico) {
+      y = secTitle("Carico GPS", y);
+      const c = prog.carico!;
+      const rows: any[] = [];
+      if (c.durata) rows.push(["Durata", `${c.durata} min`]);
+      if (c.interno) rows.push(["Carico interno", c.interno]);
+      if (c.esterno) rows.push(["Carico esterno", c.esterno]);
+      if (c.distanzaTotale) rows.push(["Distanza totale", `${c.distanzaTotale} km`]);
+      if (c.velocitaMax) rows.push(["Vel. max", `${c.velocitaMax} km/h`]);
+      if (c.hsr) rows.push(["HSR (>19 km/h)", `${c.hsr} m`]);
+      if (c.accelerazioni) rows.push(["Accelerazioni", c.accelerazioni]);
+      if (rows.length) {
+        autoTable(doc, { startY: y, body: rows, theme: "striped", styles: { fontSize: 8, cellPadding: 2.5 }, columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark } }, alternateRowStyles: { fillColor: [250, 250, 250] }, margin: { left: M, right: W / 2 } });
+        y = (doc as any).lastAutoTable.finalY + 6;
+      }
     }
 
     if (prog.tests?.length) {
-      const lastY = (doc as any).lastAutoTable?.finalY ?? 120;
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(...dark);
-      doc.text("Test fisiometrici e di performance", 14, lastY + 10);
+      y = secTitle("Test fisiometrici e di performance", y);
       autoTable(doc, {
-        startY: lastY + 15,
-        head: [["#", "Test", "Risultato", "Unità", "Note"]],
-        body: prog.tests.map((t, i) => [i + 1, t.nome, t.risultato, t.unita, t.note]),
-        headStyles: { fillColor: dark, textColor: 255 },
-        margin: { left: 14, right: 14 },
+        startY: y,
+        head: [["#", "Test", "Sx", "Dx", "Risultato", "Unità", "Note"]],
+        body: prog.tests.map((t, i) => [i + 1, t.nome, t.risultatoSx || "—", t.risultatoDx || "—", t.risultato || "—", t.unita || "—", t.note || ""]),
+        headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+        alternateRowStyles: { fillColor: [250, 250, 250] },
+        margin: { left: M, right: M },
+        columnStyles: { 0: { cellWidth: 8, halign: "center" }, 1: { cellWidth: 52 }, 2: { cellWidth: 16, halign: "center" }, 3: { cellWidth: 16, halign: "center" }, 4: { cellWidth: 20, halign: "center" } },
       });
     }
   });
 
+  addFooter();
   doc.save(`${atleta.nome.replace(/ /g, "_")}_rehab.pdf`);
 }
 
@@ -311,27 +367,76 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
   const doc = new jsPDF();
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
   const nomeMese = MESI[mese];
   const logoDataUrl = await getLogoDataUrl();
+  const M = 14; const W = 210; const H = 297; const HDR = 30;
 
-  doc.setFillColor(248, 248, 248);
-  doc.rect(0, 0, 210, 26, "F");
-  doc.setDrawColor(...red); doc.setLineWidth(0.8); doc.line(0, 26, 210, 26);
-  if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
-  const tx = logoDataUrl ? 27 : 14;
-  doc.setTextColor(...red); doc.setFontSize(12); doc.setFont("helvetica", "bold");
-  doc.text("U.S. Cremonese – Report Mensile", tx, 15);
-  doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(140, 140, 140);
-  doc.text(oggi, 196, 15, { align: "right" });
+  const addHeader = () => {
+    doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
+    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
+    const tx = logoDataUrl ? 30 : M;
+    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese – Report Mensile", tx, 13);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(oggi, W - M, 13, { align: "right" });
+  };
 
-  doc.setTextColor(...dark); doc.setFontSize(15); doc.setFont("helvetica", "bold");
-  doc.text(`${nomeMese} ${anno}${filtroCat !== "Tutte" ? ` · ${filtroCat}` : ""}`, 14, 37);
-  doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(130, 130, 130);
-  doc.text(`${atletiMese.length} atleti nel periodo`, 14, 44);
+  const secTitle = (text: string, y: number) => {
+    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
+    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    return y + 11;
+  };
 
+  const addFooter = () => {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
+    }
+  };
+
+  addHeader();
+
+  doc.setTextColor(...dark); doc.setFontSize(17); doc.setFont("helvetica", "bold");
+  doc.text(`${nomeMese} ${anno}`, M, HDR + 13);
+  if (filtroCat !== "Tutte") {
+    doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(filtroCat, M, HDR + 21);
+  }
+  doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+  doc.text(`${atletiMese.length} atleti nel periodo`, W - M, HDR + 13, { align: "right" });
+  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, HDR + 26, W - M, HDR + 26);
+
+  let y = HDR + 33;
+
+  const catRows = CATEGORIE.map((cat) => {
+    const n = atletiMese.filter((a) => a.categoria === cat).length;
+    return n ? [cat, `${n} atleti`] : null;
+  }).filter(Boolean) as any[][];
+
+  if (catRows.length > 0) {
+    y = secTitle("Riepilogo per categoria", y);
+    autoTable(doc, {
+      startY: y, body: catRows, theme: "striped",
+      styles: { fontSize: 8.5, cellPadding: 2.5 },
+      columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, halign: "center", textColor: dark } },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: W / 2 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
+  y = secTitle("Atleti del periodo", y);
   autoTable(doc, {
-    startY: 50,
+    startY: y,
     head: [["Nome", "Categoria", "Diagnosi / Infortunio", "Stato", "Inizio", "Fine", "%"]],
     body: atletiMese.map((a) => [
       a.nome, a.categoria, a.infortunio || "—", a.stato,
@@ -339,13 +444,14 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
       a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
       `${a.progresso}%`,
     ]),
-    headStyles: { fillColor: dark, textColor: 255, fontSize: 8 },
-    bodyStyles: { fontSize: 8 },
-    alternateRowStyles: { fillColor: [248, 248, 248] },
-    margin: { left: 14, right: 14 },
-    columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 18 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 18 }, 5: { cellWidth: 18 }, 6: { cellWidth: 12 } },
+    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+    bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
+    margin: { left: M, right: M },
+    columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 18 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 18 }, 5: { cellWidth: 18 }, 6: { cellWidth: 12, halign: "center" } },
   });
 
+  addFooter();
   doc.save(`USC_Report_${nomeMese}_${anno}.pdf`);
 }
 
