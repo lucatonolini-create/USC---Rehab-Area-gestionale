@@ -82,7 +82,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("USC Cremonese – Scheda Riabilitativa", 14, 14);
+  doc.text("U.S. Cremonese – Scheda Riabilitativa", 14, 14);
 
   doc.setTextColor(...dark);
   doc.setFontSize(16);

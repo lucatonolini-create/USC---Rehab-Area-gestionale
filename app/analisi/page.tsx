@@ -173,7 +173,7 @@ async function esportaExcelPanoramica(params: {
 }) {
   const { Workbook } = await import("exceljs");
   const wb = new Workbook();
-  wb.creator = "USC Cremonese Rehab Area";
+  wb.creator = "U.S. Cremonese Rehab Area";
 
   const oggi = new Date().toLocaleDateString("it-IT");
   const attivi = params.atleti.filter((a) => a.stato !== "Guarito").length;
@@ -257,7 +257,7 @@ async function esportaExcelReport(
 ) {
   const { Workbook } = await import("exceljs");
   const wb = new Workbook();
-  wb.creator = "USC Cremonese Rehab Area";
+  wb.creator = "U.S. Cremonese Rehab Area";
 
   const oggi = new Date().toLocaleDateString("it-IT");
   const subtitle = [
@@ -351,7 +351,7 @@ async function esportaPDFPanoramica(params: {
     doc.setTextColor(...dark);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("USC Cremonese – Analisi Infortuni", tx, 15);
+    doc.text("U.S. Cremonese – Analisi Infortuni", tx, 15);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(140, 140, 140);
@@ -501,7 +501,7 @@ async function esportaPDFReport(
   doc.setTextColor(...dark);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("USC Cremonese – Report Mensile", tx, 15);
+  doc.text("U.S. Cremonese – Report Mensile", tx, 15);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(140, 140, 140);

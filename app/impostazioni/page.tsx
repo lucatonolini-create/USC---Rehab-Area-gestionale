@@ -83,7 +83,7 @@ export default function ImpostazioniPage() {
           <h2 className="font-bold text-gray-900 mb-4">Club e struttura</h2>
           <div className="space-y-4">
             {[
-              { label: "Nome Club",                key: "nomeClub"      as keyof Impostazioni, ph: "Es. USC Cremonese" },
+              { label: "Nome Club",                key: "nomeClub"      as keyof Impostazioni, ph: "Es. U.S. Cremonese" },
               { label: "Nome struttura / reparto", key: "nomeStruttura" as keyof Impostazioni, ph: "Es. Rehab Area" },
               { label: "Indirizzo",                key: "indirizzo"     as keyof Impostazioni, ph: "Es. Via dello Sport 1, Cremona" },
             ].map(({ label, key, ph }) => (

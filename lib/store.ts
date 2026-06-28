@@ -291,7 +291,7 @@ export async function deleteProgramma(id: string): Promise<void> {
 // ─── Impostazioni ────────────────────────────────────────────────────────────
 
 const defaultImpostazioni: Impostazioni = {
-  nomeClub: "USC Cremonese",
+  nomeClub: "U.S. Cremonese",
   nomeStruttura: "Rehab Area",
   indirizzo: "",
   fisioterapisti: [],
@@ -306,7 +306,7 @@ export async function loadImpostazioni(): Promise<Impostazioni> {
     .single();
   if (!data) return { ...defaultImpostazioni };
   return {
-    nomeClub: data.nome_club ?? "USC Cremonese",
+    nomeClub: data.nome_club ?? "U.S. Cremonese",
     nomeStruttura: data.nome_struttura ?? "Rehab Area",
     indirizzo: data.indirizzo ?? "",
     fisioterapisti: data.fisioterapisti ?? [],

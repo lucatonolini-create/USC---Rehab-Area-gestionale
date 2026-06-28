@@ -6,8 +6,8 @@ import Sidebar from "@/components/Sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "USC Cremonese – Rehab Area",
-  description: "Gestionale area riabilitazione USC Cremonese",
+  title: "U.S. Cremonese – Rehab Area",
+  description: "Gestionale area riabilitazione U.S. Cremonese",
   manifest: "/manifest.json",
   icons: {
     apple: "/logo.png",
