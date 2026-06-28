@@ -129,7 +129,7 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
 
     if (prog.tests?.length) {
       ws.addRow([]);
-      addSectionTitle(ws, "TEST FISIOMETRICI E DI PERFORMANCE", darkFill);
+      addSectionTitle(ws, "TEST FISIOTERAPICI E DI PERFORMANCE", darkFill);
       prog.tests.forEach((t, i) => {
         const row = ws.addRow([i + 1, t.nome, t.risultato, t.unita, t.note]);
         row.height = 18;
@@ -280,7 +280,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     }
 
     if (prog.tests?.length) {
-      y = secTitle("Test fisiometrici e di performance", y);
+      y = secTitle("Test fisioterapici e di performance", y);
       autoTable(doc, {
         startY: y,
         head: [["#", "Test", "Sx", "Dx", "Risultato", "Unità", "Note"]],

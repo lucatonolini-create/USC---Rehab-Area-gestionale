@@ -257,7 +257,7 @@ export default function EserciziPage() {
                         {prog.tests && prog.tests.length > 0 && (
                           <div className="mb-4">
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                              <FlaskConical className="w-3.5 h-3.5" /> Test fisiometrici
+                              <FlaskConical className="w-3.5 h-3.5" /> Test fisioterapici
                             </p>
                             <div className="space-y-2">
                               {prog.tests.map((t, i) => {
@@ -473,7 +473,7 @@ export default function EserciziPage() {
               {sezioneAttiva === "test" && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Test fisiometrici e di performance</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Test fisioterapici e di performance</label>
                     <button onClick={aggiungiTest} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi test</button>
                   </div>
                   {tests.length === 0 ? (
