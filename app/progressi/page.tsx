@@ -217,7 +217,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       ["Progresso recupero", `${atleta.progresso}%`],
     ],
     theme: "striped",
-    styles: { fontSize: 8.5, cellPadding: 3 },
+    styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize" },
     columnStyles: { 0: { cellWidth: 58, fontStyle: "bold", textColor: dark }, 1: { textColor: dark } },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
@@ -244,7 +244,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         head: [["#", "Esercizio", "Serie", "Reps", "Carico", "RIR", "VAS", "Note"]],
         body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]),
         headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
-        bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
         alternateRowStyles: { fillColor: [250, 250, 250] },
         margin: { left: M, right: M },
         columnStyles: { 0: { cellWidth: 8, halign: "center" }, 1: { cellWidth: 50 }, 2: { cellWidth: 12, halign: "center" }, 3: { cellWidth: 18, halign: "center" }, 4: { cellWidth: 20, halign: "center" }, 5: { cellWidth: 10, halign: "center" }, 6: { cellWidth: 14, halign: "center" } },
@@ -274,7 +274,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       if (c.hsr) rows.push(["HSR (>19 km/h)", `${c.hsr} m`]);
       if (c.accelerazioni) rows.push(["Accelerazioni", c.accelerazioni]);
       if (rows.length) {
-        autoTable(doc, { startY: y, body: rows, theme: "striped", styles: { fontSize: 8, cellPadding: 2.5 }, columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark } }, alternateRowStyles: { fillColor: [250, 250, 250] }, margin: { left: M, right: W / 2 } });
+        autoTable(doc, { startY: y, body: rows, theme: "striped", styles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" }, columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark } }, alternateRowStyles: { fillColor: [250, 250, 250] }, margin: { left: M, right: W / 2 } });
         y = (doc as any).lastAutoTable.finalY + 6;
       }
     }
@@ -286,7 +286,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         head: [["#", "Test", "Sx", "Dx", "Risultato", "Unità", "Note"]],
         body: prog.tests.map((t, i) => [i + 1, t.nome, t.risultatoSx || "—", t.risultatoDx || "—", t.risultato || "—", t.unita || "—", t.note || ""]),
         headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-        bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+        bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
         alternateRowStyles: { fillColor: [250, 250, 250] },
         margin: { left: M, right: M },
         columnStyles: { 0: { cellWidth: 8, halign: "center" }, 1: { cellWidth: 52 }, 2: { cellWidth: 16, halign: "center" }, 3: { cellWidth: 16, halign: "center" }, 4: { cellWidth: 20, halign: "center" } },
@@ -426,7 +426,7 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     y = secTitle("Riepilogo per categoria", y);
     autoTable(doc, {
       startY: y, body: catRows, theme: "striped",
-      styles: { fontSize: 8.5, cellPadding: 2.5 },
+      styles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
       columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, halign: "center", textColor: dark } },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: W / 2 },
@@ -445,7 +445,7 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
       `${a.progresso}%`,
     ]),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+    bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 18 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 18 }, 5: { cellWidth: 18 }, 6: { cellWidth: 12, halign: "center" } },
