@@ -30,9 +30,10 @@ create table if not exists programmi (
   nome       text not null,
   fase       text default '',
   data       text not null,
-  esercizi   jsonb default '[]'::jsonb,
-  tests      jsonb default '[]'::jsonb,
-  carico     jsonb default '{}'::jsonb,
+  esercizi      jsonb default '[]'::jsonb,
+  esercizicampo jsonb default '[]'::jsonb,
+  tests         jsonb default '[]'::jsonb,
+  carico        jsonb default '{}'::jsonb,
   created_at timestamptz default now()
 );
 
