@@ -4,13 +4,13 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, calcolaPHV, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 
-const STATI: Stato[] = ["In recupero", "Quasi guarito", "Guarito"];
+const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
 const atletaVuoto: Omit<Atleta, "id"> = {
   nome: "", dataNascita: "", categoria: "Primavera",
   posizione: "", piedeDominante: "Destro",
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
-  stato: "In recupero", progresso: 0,
+  stato: "Infortunato", progresso: 0,
   fisioterapista: "", preparatoreAtletico: "",
   telefono: "", email: "", note: "",
   peso: "", altezza: "", altezzaDaSeduto: "",
@@ -118,7 +118,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             </div>
           </div>
 
-          {form.stato === "Guarito" && (
+          {form.stato === "Disponibile" && (
             <div>
               <Label>Data fine riabilitazione</Label>
               <Input className="mt-1" type="date" value={form.fineRehab ?? ""} onChange={(e) => f("fineRehab", e.target.value)} />

@@ -52,7 +52,7 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
   if (inizio > meseEnd) return false;
-  if (a.stato === "Guarito") {
+  if (a.stato === "Disponibile") {
     if (a.fineRehab) return new Date(a.fineRehab + "T12:00") >= meseStart;
     return inizio >= meseStart;
   }
@@ -176,8 +176,8 @@ async function esportaExcelPanoramica(params: {
   wb.creator = "U.S. Cremonese Rehab Area";
 
   const oggi = new Date().toLocaleDateString("it-IT");
-  const attivi = params.atleti.filter((a) => a.stato !== "Guarito").length;
-  const guariti = params.atleti.filter((a) => a.stato === "Guarito").length;
+  const attivi = params.atleti.filter((a) => a.stato !== "Disponibile").length;
+  const guariti = params.atleti.filter((a) => a.stato === "Disponibile").length;
 
   const logoBuf = await getLogoArrayBuffer();
   const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
@@ -238,7 +238,7 @@ async function esportaExcelPanoramica(params: {
   ws6.addRow([]);
   xlAddColHeaders(ws6, ["Categoria", "Atleti attivi", "Progresso medio"]);
   CATEGORIE.forEach((cat, i) => {
-    const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Guarito");
+    const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Disponibile");
     if (!lista.length) return;
     const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
     xlAddDataRow(ws6, [cat, lista.length, `${media}%`], i % 2 !== 0, [3]);
@@ -334,8 +334,8 @@ async function esportaPDFPanoramica(params: {
   const dark: [number, number, number] = [43, 43, 43];
   const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
-  const attivi = params.atleti.filter((a) => a.stato !== "Guarito").length;
-  const guariti = params.atleti.filter((a) => a.stato === "Guarito").length;
+  const attivi = params.atleti.filter((a) => a.stato !== "Disponibile").length;
+  const guariti = params.atleti.filter((a) => a.stato === "Disponibile").length;
   const logoDataUrl = await getLogoDataUrl();
   const M = 14; const W = 210; const H = 297; const HDR = 30;
 
@@ -462,7 +462,7 @@ async function esportaPDFPanoramica(params: {
   y = (doc as any).lastAutoTable.finalY + 8;
 
   const progressiRows = CATEGORIE.map((cat) => {
-    const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Guarito");
+    const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Disponibile");
     if (!lista.length) return null;
     const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
     return [cat, lista.length, `${media}%`];
@@ -616,14 +616,14 @@ export default function AnalisiPage() {
     loadProgrammi().then(setProgrammi);
   }, []);
 
-  const attivi = atleti.filter((a) => a.stato !== "Guarito");
-  const guariti = atleti.filter((a) => a.stato === "Guarito");
+  const attivi = atleti.filter((a) => a.stato !== "Disponibile");
+  const guariti = atleti.filter((a) => a.stato === "Disponibile");
 
   const perCategoria = useMemo(() => {
     return CATEGORIE.map((cat) => ({
       cat,
       totale: atleti.filter((a) => a.categoria === cat).length,
-      attivi: atleti.filter((a) => a.categoria === cat && a.stato !== "Guarito").length,
+      attivi: atleti.filter((a) => a.categoria === cat && a.stato !== "Disponibile").length,
     })).filter((x) => x.totale > 0);
   }, [atleti]);
 
@@ -666,9 +666,8 @@ export default function AnalisiPage() {
   });
 
   const statoColor: Record<string, string> = {
-    "In recupero": "bg-blue-100 text-blue-700",
-    "Quasi guarito": "bg-green-100 text-green-700",
-    "Guarito": "bg-gray-100 text-gray-600",
+    "Infortunato": "bg-orange-100 text-orange-700",
+    "Disponibile": "bg-green-100 text-green-700",
   };
 
   const handleExport = async (tipo: "excel" | "pdf") => {

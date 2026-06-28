@@ -11,9 +11,8 @@ import Link from "next/link";
 import AtletaModal from "@/components/AtletaModal";
 
 const statoColor: Record<Stato, string> = {
-  "In recupero":  "bg-blue-100 text-blue-700",
-  "Quasi guarito":"bg-green-100 text-green-700",
-  "Guarito":      "bg-gray-100 text-gray-600",
+  "Infortunato": "bg-orange-100 text-orange-700",
+  "Disponibile": "bg-green-100 text-green-700",
 };
 
 export default function Dashboard() {
@@ -35,8 +34,8 @@ export default function Dashboard() {
     setMostraModifica(false);
   };
 
-  const inRecupero = atleti.filter((a) => a.stato === "In recupero").length;
-  const guariti    = atleti.filter((a) => a.stato === "Guarito").length;
+  const inRecupero = atleti.filter((a) => a.stato === "Infortunato").length;
+  const guariti    = atleti.filter((a) => a.stato === "Disponibile").length;
 
   const atletiFiltrati = filtroCategoria === "Tutti"
     ? atleti
@@ -44,8 +43,8 @@ export default function Dashboard() {
 
   const stats = [
     { label: "Atleti Totali",    value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
-    { label: "In Recupero",      value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
-    { label: "Guariti",          value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
+    { label: "Infortunati",       value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
+    { label: "Disponibili",      value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
     { label: "Programmi Attivi", value: programmi.length, icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
   ];
 

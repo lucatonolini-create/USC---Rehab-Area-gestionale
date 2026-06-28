@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 
-export type Stato = "In recupero" | "Quasi guarito" | "Guarito";
+export type Stato = "Infortunato" | "Disponibile";
 
 export const CATEGORIE = ["Primavera", "U17", "U16", "U15", "U14"] as const;
 export type Categoria = (typeof CATEGORIE)[number];

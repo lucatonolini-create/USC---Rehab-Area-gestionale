@@ -7,11 +7,10 @@ import {
   CATEGORIE, type Atleta, type Stato, type Programma,
 } from "@/lib/store";
 
-const STATI: Stato[] = ["In recupero", "Quasi guarito", "Guarito"];
+const STATI: Stato[] = ["Infortunato", "Disponibile"];
 const statoColor: Record<Stato, string> = {
-  "In recupero":  "bg-blue-100 text-blue-700",
-  "Quasi guarito":"bg-green-100 text-green-700",
-  "Guarito":      "bg-gray-100 text-gray-600",
+  "Infortunato": "bg-orange-100 text-orange-700",
+  "Disponibile": "bg-green-100 text-green-700",
 };
 
 async function getLogoBuffer(): Promise<ArrayBuffer | null> {
@@ -495,7 +494,7 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
   if (inizio > meseEnd) return false;
-  if (a.stato === "Guarito") {
+  if (a.stato === "Disponibile") {
     if (a.fineRehab) {
       const fine = new Date(a.fineRehab + "T12:00");
       return fine >= meseStart;
@@ -528,7 +527,7 @@ export default function ProgressiPage() {
     const nuovi = atleti.map((a) => {
       if (a.id !== id) return a;
       const updated = { ...a, [campo]: valore };
-      if (campo === "stato" && valore === "Guarito" && !a.fineRehab) {
+      if (campo === "stato" && valore === "Disponibile" && !a.fineRehab) {
         updated.fineRehab = new Date().toISOString().slice(0, 10);
       }
       updatedAtleta = updated;
@@ -629,7 +628,7 @@ export default function ProgressiPage() {
                         </button>
                       ))}
                     </div>
-                    {atleta.stato === "Guarito" && atleta.fineRehab && (
+                    {atleta.stato === "Disponibile" && atleta.fineRehab && (
                       <p className="text-xs text-gray-400 mt-1">
                         Fine riab.: {new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT")}
                       </p>

@@ -10,16 +10,14 @@ import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
 
 const statoColor: Record<Stato, string> = {
-  "In recupero":  "bg-blue-100 text-blue-700",
-  "Quasi guarito":"bg-green-100 text-green-700",
-  "Guarito":      "bg-gray-100 text-gray-600",
+  "Infortunato": "bg-orange-100 text-orange-700",
+  "Disponibile": "bg-green-100 text-green-700",
 };
 
 const FILTRI_STATO: { label: string; value: Stato | "Tutti" }[] = [
   { label: "Tutti", value: "Tutti" },
-  { label: "In recupero", value: "In recupero" },
-  { label: "Quasi guarito", value: "Quasi guarito" },
-  { label: "Guarito", value: "Guarito" },
+  { label: "Infortunato", value: "Infortunato" },
+  { label: "Disponibile", value: "Disponibile" },
 ];
 
 type Tab = "dati" | "cartella";
@@ -153,13 +151,13 @@ export default function AtletiPage() {
                       }`}>
                       <div className="flex items-center gap-4">
                         <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${
-                          atleta.stato === "Guarito" ? "bg-gray-400" : "bg-[#2B2B2B]"
+                          atleta.stato === "Disponibile" ? "bg-gray-400" : "bg-[#2B2B2B]"
                         }`}>
                           {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <p className={`font-semibold ${atleta.stato === "Guarito" ? "text-gray-500" : "text-gray-900"}`}>{atleta.nome}</p>
+                            <p className={`font-semibold ${atleta.stato === "Disponibile" ? "text-gray-500" : "text-gray-900"}`}>{atleta.nome}</p>
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statoColor[atleta.stato]}`}>
                               {atleta.stato}
                             </span>
@@ -174,13 +172,13 @@ export default function AtletiPage() {
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className={`text-xl font-bold ${atleta.stato === "Guarito" ? "text-green-500" : "text-[#C8102E]"}`}>
+                          <p className={`text-xl font-bold ${atleta.stato === "Disponibile" ? "text-green-500" : "text-[#C8102E]"}`}>
                             {atleta.progresso}%
                           </p>
                         </div>
                         <ChevronRight className="w-4 h-4 text-gray-300" />
                       </div>
-                      {atleta.infortunio && atleta.stato !== "Guarito" && (
+                      {atleta.infortunio && atleta.stato !== "Disponibile" && (
                         <div className="mt-3">
                           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div className={`h-full rounded-full ${
@@ -225,7 +223,7 @@ export default function AtletiPage() {
 
             <div className="text-center">
               <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2 ${
-                selected.stato === "Guarito" ? "bg-gray-400" : "bg-[#2B2B2B]"
+                selected.stato === "Disponibile" ? "bg-gray-400" : "bg-[#2B2B2B]"
               }`}>
                 {selected.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
               </div>
