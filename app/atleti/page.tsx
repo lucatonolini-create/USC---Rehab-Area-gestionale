@@ -160,7 +160,7 @@ export default function AtletiPage() {
                               {atleta.stato}
                             </span>
                             {atleta.tipoInfortunio && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-[#2B2B2B]/10 text-[#2B2B2B] font-medium">
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
                                 {atleta.tipoInfortunio}
                               </span>
                             )}
@@ -248,9 +248,9 @@ export default function AtletiPage() {
             {tab === "dati" ? (
               <div className="space-y-2.5 text-sm">
                 {selected.tipoInfortunio && (
-                  <div className="bg-[#2B2B2B]/5 rounded-xl p-3 border border-[#2B2B2B]/15">
-                    <p className="text-xs text-[#2B2B2B]/60">Tipo infortunio</p>
-                    <p className="font-semibold text-[#2B2B2B]">{selected.tipoInfortunio}</p>
+                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
+                    <p className="text-xs text-gray-400">Tipo infortunio</p>
+                    <p className="font-semibold text-gray-600">{selected.tipoInfortunio}</p>
                   </div>
                 )}
                 {[
