@@ -113,12 +113,12 @@ function xlAddSheetHeader(ws: any, wb: any, logoId: number | undefined, title: s
   }
 
   const r1 = ws.getRow(1);
-  r1.getCell(2).value = "USC CREMONESE – REHAB AREA";
+  r1.getCell(2).value = "U.S. CREMONESE – REHAB AREA";
   r1.getCell(2).font = { bold: true, size: 13, color: { argb: XL_RED } };
 
   const r2 = ws.getRow(2);
   r2.getCell(2).value = title;
-  r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_DARK } };
+  r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_RED } };
 
   const r3 = ws.getRow(3);
   r3.getCell(2).value = subtitle;
@@ -348,7 +348,7 @@ async function esportaPDFPanoramica(params: {
     doc.line(0, HEADER_H, 210, HEADER_H);
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
     const tx = logoDataUrl ? 27 : 14;
-    doc.setTextColor(...dark);
+    doc.setTextColor(...red);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("U.S. Cremonese – Analisi Infortuni", tx, 15);
@@ -498,7 +498,7 @@ async function esportaPDFReport(
   doc.line(0, HEADER_H, 210, HEADER_H);
   if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
   const tx = logoDataUrl ? 27 : 14;
-  doc.setTextColor(...dark);
+  doc.setTextColor(...red);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text("U.S. Cremonese – Report Mensile", tx, 15);

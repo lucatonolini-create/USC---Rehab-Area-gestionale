@@ -77,9 +77,12 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
 
-  doc.setFillColor(...red);
+  doc.setFillColor(248, 248, 248);
   doc.rect(0, 0, 210, 22, "F");
-  doc.setTextColor(255, 255, 255);
+  doc.setDrawColor(...red);
+  doc.setLineWidth(0.8);
+  doc.line(0, 22, 210, 22);
+  doc.setTextColor(...red);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
   doc.text("U.S. Cremonese – Scheda Riabilitativa", 14, 14);
