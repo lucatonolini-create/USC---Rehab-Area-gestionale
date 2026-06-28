@@ -206,11 +206,11 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   autoTable(doc, {
     startY: y,
     body: [
-      ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
+      ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"],
       ["Tipo infortunio", atleta.tipoInfortunio || "—"],
       ["Diagnosi / Infortunio", atleta.infortunio || "—"],
-      ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
-      ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+      ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"],
+      ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"],
       ["Fisioterapista", atleta.fisioterapista || "—"],
       ["Preparatore atletico", atleta.preparatoreAtletico || "—"],
       ["Stato attuale", atleta.stato],
@@ -440,15 +440,15 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     head: [["Nome", "Categoria", "Diagnosi / Infortunio", "Stato", "Inizio", "Fine", "%"]],
     body: atletiMese.map((a) => [
       a.nome, a.categoria, a.infortunio || "—", a.stato,
-      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
-      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
+      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
+      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
       `${a.progresso}%`,
     ]),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
-    columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 16 }, 2: { cellWidth: 38 }, 3: { cellWidth: 24 }, 4: { cellWidth: 22, halign: "center" }, 5: { cellWidth: 22, halign: "center" }, 6: { cellWidth: 22, halign: "center" } },
+    columnStyles: { 0: { cellWidth: 40 }, 1: { cellWidth: 17 }, 2: { cellWidth: 44 }, 3: { cellWidth: 26 }, 4: { cellWidth: 18, halign: "center" }, 5: { cellWidth: 18, halign: "center" }, 6: { cellWidth: 19, halign: "center" } },
   });
 
   addFooter();

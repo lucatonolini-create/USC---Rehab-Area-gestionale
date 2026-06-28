@@ -574,8 +574,8 @@ async function esportaPDFReport(
     head: [["Atleta", "Categoria", "Tipo Infort.", "Diagnosi", "Stato", "Inizio", "Fine", "%"]],
     body: atletiMese.map((a) => [
       a.nome, a.categoria, a.tipoInfortunio ?? "—", a.infortunio || "—", a.stato,
-      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
-      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
+      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
+      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
       `${a.progresso}%`,
     ]),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
@@ -583,14 +583,14 @@ async function esportaPDFReport(
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 30 },
-      1: { cellWidth: 16, halign: "center" },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 34 },
+      0: { cellWidth: 35 },
+      1: { cellWidth: 17, halign: "center" },
+      2: { cellWidth: 26 },
+      3: { cellWidth: 40 },
       4: { cellWidth: 22 },
-      5: { cellWidth: 22, halign: "center" },
-      6: { cellWidth: 22, halign: "center" },
-      7: { cellWidth: 14, halign: "center" },
+      5: { cellWidth: 17, halign: "center" },
+      6: { cellWidth: 17, halign: "center" },
+      7: { cellWidth: 8, halign: "center" },
     },
   });
 
