@@ -408,7 +408,7 @@ async function esportaPDFPanoramica(params: {
       body: params.perTipoInfortunio.map(({ nome, count }) => [
         nome, count, params.atleti.length > 0 ? `${Math.round((count / params.atleti.length) * 100)}%` : "—",
       ]),
-      headStyles: { fillColor: [126, 34, 206], textColor: 255 },
+      headStyles: { fillColor: [43, 43, 43], textColor: 255 },
       alternateRowStyles: { fillColor: [248, 248, 248] },
       margin: { left: 14, right: 14 },
     });
@@ -752,7 +752,7 @@ export default function AnalisiPage() {
                 <div className="space-y-3">
                   {perTipoInfortunio.map(({ nome, count }) => (
                     <BarraOrizzontale key={nome} label={nome} value={count} max={maxTipo}
-                      color="bg-purple-500" sub={count === 1 ? "1 atleta" : `${count} atleti`} />
+                      color="bg-[#2B2B2B]" sub={count === 1 ? "1 atleta" : `${count} atleti`} />
                   ))}
                 </div>
               )}
