@@ -52,9 +52,12 @@ export const TESTS_PREDEFINITI = [
   // Hop
   "Single Leg Hop Test",
   "Triple Hop Test",
+  "Triple Hop",
   "Crossover Hop Test",
   "6m Timed Hop Test",
   "Side Hop Test",
+  "Side Hop",
+  "Broad Jump",
   // Balance
   "Y-Balance Test – Anteriore",
   "Y-Balance Test – Posteromediale",
@@ -71,8 +74,11 @@ export const TESTS_PREDEFINITI = [
   "Heel Rise Test",
   // Salto
   "CMJ – Counter Movement Jump",
+  "CMJ braccia libere",
+  "SL CMJ",
   "Squat Jump",
   "Drop Jump",
+  "SL Drop Jump",
   // ROM
   "Dorsiflexion Lunge Test",
   "ROM ginocchio – flessione",
@@ -94,10 +100,17 @@ export interface TestFisiometrico {
   risultato: string;
   unita: string;
   note: string;
-  // Drop Jump specifico
+  // Drop Jump
   altezzaSalto?: string;
   tempoContatto?: string;
   rsi?: string;
+  // SL Drop Jump (bilaterale)
+  altezzaSaltoSx?: string;
+  altezzaSaltoDx?: string;
+  tempoContattoSx?: string;
+  tempoContattoDx?: string;
+  rsiSx?: string;
+  rsiDx?: string;
 }
 
 export interface Carico {

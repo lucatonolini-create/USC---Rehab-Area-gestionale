@@ -266,8 +266,11 @@ export default function EserciziPage() {
                             </p>
                             <div className="space-y-2">
                               {prog.tests.map((t, i) => {
-                                const asim = calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
-                                const isDropJump = t.nome === "Drop Jump";
+                                const isDropJump   = t.nome === "Drop Jump";
+                                const isSLDropJump = t.nome === "SL Drop Jump";
+                                const asim = isSLDropJump
+                                  ? calcolaAsimmetria(t.rsiSx ?? "", t.rsiDx ?? "")
+                                  : calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
                                 return (
                                   <div key={i} className={`rounded-xl p-3 border ${asim !== null && asim > 10 ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-100"}`}>
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -284,6 +287,21 @@ export default function EserciziPage() {
                                         {t.altezzaSalto && <span>Altezza: <strong>{t.altezzaSalto} cm</strong></span>}
                                         {t.tempoContatto && <span>Contatto: <strong>{t.tempoContatto} ms</strong></span>}
                                         {t.rsi && <span>RSI: <strong>{t.rsi}</strong></span>}
+                                      </div>
+                                    ) : isSLDropJump ? (
+                                      <div className="grid grid-cols-2 gap-3 mt-1.5 text-xs text-gray-600">
+                                        <div>
+                                          <span className="font-semibold text-blue-600">Sx</span>
+                                          {t.altezzaSaltoSx && <span className="ml-2">↕ <strong>{t.altezzaSaltoSx} cm</strong></span>}
+                                          {t.tempoContattoSx && <span className="ml-2">⏱ <strong>{t.tempoContattoSx} ms</strong></span>}
+                                          {t.rsiSx && <span className="ml-2">RSI <strong>{t.rsiSx}</strong></span>}
+                                        </div>
+                                        <div>
+                                          <span className="font-semibold text-orange-600">Dx</span>
+                                          {t.altezzaSaltoDx && <span className="ml-2">↕ <strong>{t.altezzaSaltoDx} cm</strong></span>}
+                                          {t.tempoContattoDx && <span className="ml-2">⏱ <strong>{t.tempoContattoDx} ms</strong></span>}
+                                          {t.rsiDx && <span className="ml-2">RSI <strong>{t.rsiDx}</strong></span>}
+                                        </div>
                                       </div>
                                     ) : (t.risultatoSx || t.risultatoDx) ? (
                                       <div className="flex gap-4 mt-1.5 text-xs text-gray-600">
@@ -455,9 +473,13 @@ export default function EserciziPage() {
                   ) : (
                     <div className="space-y-3">
                       {tests.map((t, i) => {
-                        const asim = calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
-                        const isDropJump = t.nome === "Drop Jump";
+                        const isDropJump   = t.nome === "Drop Jump";
+                        const isSLDropJump = t.nome === "SL Drop Jump";
                         const isPersonalizzato = t.nome === "Personalizzato";
+                        const asim = isSLDropJump
+                          ? calcolaAsimmetria(t.rsiSx ?? "", t.rsiDx ?? "")
+                          : calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
+                        const inp = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white";
                         return (
                           <div key={i} className={`rounded-xl p-4 space-y-3 ${asim !== null && asim > 10 ? "bg-red-50 border border-red-200" : "bg-gray-50"}`}>
                             <div className="flex items-center gap-2">
@@ -474,68 +496,98 @@ export default function EserciziPage() {
 
                             {isPersonalizzato && (
                               <input value={t.risultato} onChange={(e) => aggiornaTest(i, "risultato", e.target.value)}
-                                placeholder="Nome test personalizzato"
-                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                placeholder="Nome test personalizzato" className={inp} />
                             )}
 
-                            {isDropJump ? (
-                              <div className="space-y-2">
-                                <div className="grid grid-cols-3 gap-2">
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Altezza salto (cm)</p>
-                                    <input value={t.altezzaSalto ?? ""} onChange={(e) => aggiornaTest(i, "altezzaSalto", e.target.value)}
-                                      placeholder="es. 32"
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Tempo contatto (ms)</p>
-                                    <input value={t.tempoContatto ?? ""} onChange={(e) => aggiornaTest(i, "tempoContatto", e.target.value)}
-                                      placeholder="es. 210"
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">RSI</p>
-                                    <input value={t.rsi ?? ""} onChange={(e) => aggiornaTest(i, "rsi", e.target.value)}
-                                      placeholder="es. 1.52"
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                                  </div>
+                            {isDropJump && (
+                              <div className="grid grid-cols-3 gap-2">
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Altezza salto (cm)</p>
+                                  <input value={t.altezzaSalto ?? ""} onChange={(e) => aggiornaTest(i, "altezzaSalto", e.target.value)} placeholder="es. 32" className={inp} />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">Tempo contatto (ms)</p>
+                                  <input value={t.tempoContatto ?? ""} onChange={(e) => aggiornaTest(i, "tempoContatto", e.target.value)} placeholder="es. 210" className={inp} />
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500 mb-1">RSI</p>
+                                  <input value={t.rsi ?? ""} onChange={(e) => aggiornaTest(i, "rsi", e.target.value)} placeholder="es. 1.52" className={inp} />
                                 </div>
                               </div>
-                            ) : !isPersonalizzato && (
+                            )}
+
+                            {isSLDropJump && (
                               <div className="space-y-2">
-                                <div className="grid grid-cols-3 gap-2">
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Arto Sx</p>
-                                    <input value={t.risultatoSx} onChange={(e) => aggiornaTest(i, "risultatoSx", e.target.value)}
-                                      placeholder="es. 85"
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                <div className="grid grid-cols-2 gap-3">
+                                  {/* Sx */}
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Arto Sx</p>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Altezza salto (cm)</p>
+                                      <input value={t.altezzaSaltoSx ?? ""} onChange={(e) => aggiornaTest(i, "altezzaSaltoSx", e.target.value)} placeholder="es. 30" className={inp} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Tempo contatto (ms)</p>
+                                      <input value={t.tempoContattoSx ?? ""} onChange={(e) => aggiornaTest(i, "tempoContattoSx", e.target.value)} placeholder="es. 220" className={inp} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">RSI</p>
+                                      <input value={t.rsiSx ?? ""} onChange={(e) => aggiornaTest(i, "rsiSx", e.target.value)} placeholder="es. 1.36" className={inp} />
+                                    </div>
                                   </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Arto Dx</p>
-                                    <input value={t.risultatoDx} onChange={(e) => aggiornaTest(i, "risultatoDx", e.target.value)}
-                                      placeholder="es. 92"
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                                  </div>
-                                  <div>
-                                    <p className="text-xs text-gray-500 mb-1">Unità</p>
-                                    <input value={t.unita} onChange={(e) => aggiornaTest(i, "unita", e.target.value)}
-                                      placeholder="cm / Nm / %"
-                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  {/* Dx */}
+                                  <div className="space-y-2">
+                                    <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide">Arto Dx</p>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Altezza salto (cm)</p>
+                                      <input value={t.altezzaSaltoDx ?? ""} onChange={(e) => aggiornaTest(i, "altezzaSaltoDx", e.target.value)} placeholder="es. 32" className={inp} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">Tempo contatto (ms)</p>
+                                      <input value={t.tempoContattoDx ?? ""} onChange={(e) => aggiornaTest(i, "tempoContattoDx", e.target.value)} placeholder="es. 210" className={inp} />
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500 mb-1">RSI</p>
+                                      <input value={t.rsiDx ?? ""} onChange={(e) => aggiornaTest(i, "rsiDx", e.target.value)} placeholder="es. 1.52" className={inp} />
+                                    </div>
                                   </div>
                                 </div>
                                 {asim !== null && (
                                   <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
                                     {asim > 10 && <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
-                                    Asimmetria: {asim.toFixed(1)}%
-                                    {asim > 10 ? " — superiore al 10%, attenzione!" : " — nella norma"}
+                                    Asimmetria RSI: {asim.toFixed(1)}%{asim > 10 ? " — superiore al 10%, attenzione!" : " — nella norma"}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {!isDropJump && !isSLDropJump && !isPersonalizzato && (
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Arto Sx</p>
+                                    <input value={t.risultatoSx} onChange={(e) => aggiornaTest(i, "risultatoSx", e.target.value)} placeholder="es. 85" className={inp} />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Arto Dx</p>
+                                    <input value={t.risultatoDx} onChange={(e) => aggiornaTest(i, "risultatoDx", e.target.value)} placeholder="es. 92" className={inp} />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Unità</p>
+                                    <input value={t.unita} onChange={(e) => aggiornaTest(i, "unita", e.target.value)} placeholder="cm / Nm / %" className={inp} />
+                                  </div>
+                                </div>
+                                {asim !== null && (
+                                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                                    {asim > 10 && <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
+                                    Asimmetria: {asim.toFixed(1)}%{asim > 10 ? " — superiore al 10%, attenzione!" : " — nella norma"}
                                   </div>
                                 )}
                               </div>
                             )}
 
                             <input value={t.note} onChange={(e) => aggiornaTest(i, "note", e.target.value)}
-                              placeholder="Note aggiuntive"
-                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                              placeholder="Note aggiuntive" className={inp} />
                           </div>
                         );
                       })}
