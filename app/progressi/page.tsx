@@ -448,7 +448,7 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
-    columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 18 }, 2: { cellWidth: 40 }, 3: { cellWidth: 24 }, 4: { cellWidth: 18 }, 5: { cellWidth: 18 }, 6: { cellWidth: 12, halign: "center" } },
+    columnStyles: { 0: { cellWidth: 38 }, 1: { cellWidth: 16 }, 2: { cellWidth: 38 }, 3: { cellWidth: 24 }, 4: { cellWidth: 22, halign: "center" }, 5: { cellWidth: 22, halign: "center" }, 6: { cellWidth: 22, halign: "center" } },
   });
 
   addFooter();

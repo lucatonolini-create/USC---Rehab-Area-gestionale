@@ -583,14 +583,14 @@ async function esportaPDFReport(
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 35 },
-      1: { cellWidth: 18, halign: "center" },
-      2: { cellWidth: 24 },
-      3: { cellWidth: 38 },
+      0: { cellWidth: 30 },
+      1: { cellWidth: 16, halign: "center" },
+      2: { cellWidth: 22 },
+      3: { cellWidth: 34 },
       4: { cellWidth: 22 },
-      5: { cellWidth: 17, halign: "center" },
-      6: { cellWidth: 17, halign: "center" },
-      7: { cellWidth: 11, halign: "center" },
+      5: { cellWidth: 22, halign: "center" },
+      6: { cellWidth: 22, halign: "center" },
+      7: { cellWidth: 14, halign: "center" },
     },
   });
 
