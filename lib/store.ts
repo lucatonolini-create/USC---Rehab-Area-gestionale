@@ -37,6 +37,29 @@ export interface Atleta {
   telefono: string;
   email: string;
   note: string;
+  // Antropometria
+  peso?: string;
+  altezza?: string;
+  altezzaDaSeduto?: string;
+}
+
+// Mirwald et al. (2002) – formula maschi
+export function calcolaPHV(
+  altezza: string, altezzaDaSeduto: string, peso: string, dataNascita: string
+): { offset: number; etaPHV: number } | null {
+  const h = parseFloat(altezza);
+  const sh = parseFloat(altezzaDaSeduto);
+  const w = parseFloat(peso);
+  if (!dataNascita || isNaN(h) || isNaN(sh) || isNaN(w) || h <= 0 || sh <= 0 || w <= 0 || sh >= h) return null;
+  const eta = (Date.now() - new Date(dataNascita).getTime()) / (365.25 * 864e5);
+  const leg = h - sh;
+  const offset =
+    -9.236
+    + 0.0002708 * leg * sh
+    - 0.001663  * eta * leg
+    + 0.007216  * eta * sh
+    + 0.02292   * (w / h) * 100;
+  return { offset: Math.round(offset * 100) / 100, etaPHV: Math.round((eta - offset) * 10) / 10 };
 }
 
 export interface Esercizio {
@@ -168,6 +191,9 @@ function rowToAtleta(r: Record<string, any>): Atleta {
     telefono: r.telefono ?? "",
     email: r.email ?? "",
     note: r.note ?? "",
+    peso: r.peso ?? "",
+    altezza: r.altezza ?? "",
+    altezzaDaSeduto: r.altezza_da_seduto ?? "",
   };
 }
 
@@ -190,6 +216,9 @@ function atletaToRow(a: Atleta): Record<string, any> {
     telefono: a.telefono,
     email: a.email,
     note: a.note,
+    peso: a.peso ?? null,
+    altezza: a.altezza ?? null,
+    altezza_da_seduto: a.altezzaDaSeduto ?? null,
   };
 }
 

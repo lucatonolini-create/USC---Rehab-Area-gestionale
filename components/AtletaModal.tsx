@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, calcolaPHV, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 
 const STATI: Stato[] = ["In recupero", "Quasi guarito", "Guarito"];
 
@@ -13,6 +13,7 @@ const atletaVuoto: Omit<Atleta, "id"> = {
   stato: "In recupero", progresso: 0,
   fisioterapista: "", preparatoreAtletico: "",
   telefono: "", email: "", note: "",
+  peso: "", altezza: "", altezzaDaSeduto: "",
 };
 
 interface Props {
@@ -158,6 +159,62 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             <textarea value={form.note} onChange={(e) => f("note", e.target.value)}
               placeholder="Note aggiuntive..." rows={3}
               className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
+          </div>
+
+          {/* Dati antropometrici */}
+          <div className="pt-2 border-t border-gray-100">
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dati antropometrici</p>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <Label>Peso (kg)</Label>
+                <Input className="mt-1" type="number" min="0" step="0.1"
+                  value={form.peso ?? ""} onChange={(e) => f("peso", e.target.value)}
+                  placeholder="es. 68" />
+              </div>
+              <div>
+                <Label>Altezza (cm)</Label>
+                <Input className="mt-1" type="number" min="0" step="0.1"
+                  value={form.altezza ?? ""} onChange={(e) => f("altezza", e.target.value)}
+                  placeholder="es. 175" />
+              </div>
+              <div>
+                <Label>Alt. da seduto (cm)</Label>
+                <Input className="mt-1" type="number" min="0" step="0.1"
+                  value={form.altezzaDaSeduto ?? ""} onChange={(e) => f("altezzaDaSeduto", e.target.value)}
+                  placeholder="es. 90" />
+              </div>
+            </div>
+
+            {/* PHV calcolato */}
+            {(() => {
+              const phv = calcolaPHV(form.altezza ?? "", form.altezzaDaSeduto ?? "", form.peso ?? "", form.dataNascita);
+              if (!phv) return (
+                <p className="text-xs text-gray-400 mt-3 italic">
+                  Inserisci peso, altezza, altezza da seduto e data di nascita per calcolare il PHV.
+                </p>
+              );
+              const postPre = phv.offset >= 0 ? "post-PHV" : "pre-PHV";
+              const colore = phv.offset >= 0 ? "bg-green-50 border-green-200 text-green-800" : "bg-blue-50 border-blue-200 text-blue-800";
+              return (
+                <div className={`mt-3 rounded-xl border p-3 ${colore}`}>
+                  <p className="text-xs font-bold uppercase tracking-wide mb-1">PHV – Peak Height Velocity</p>
+                  <div className="flex gap-6 text-sm">
+                    <div>
+                      <span className="text-xs opacity-70">Maturity Offset</span>
+                      <p className="font-bold">
+                        {phv.offset >= 0 ? "+" : ""}{phv.offset} anni
+                        <span className="text-xs font-normal ml-1 opacity-70">({postPre})</span>
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-xs opacity-70">Età stimata al PHV</span>
+                      <p className="font-bold">{phv.etaPHV} anni</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] opacity-50 mt-1">Formula Mirwald et al. 2002 – sesso maschile</p>
+                </div>
+              );
+            })()}
           </div>
         </div>
 
