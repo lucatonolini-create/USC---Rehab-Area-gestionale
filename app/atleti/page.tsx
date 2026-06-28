@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Trash2, Edit2, X, User, ChevronRight, Phone, Mail } from "lucide-react";
+import { Plus, Search, Trash2, User, ChevronRight, Phone, Mail } from "lucide-react";
 import {
   loadAtleti, saveAtleti, uid,
-  CATEGORIE, PIEDI,
-  type Atleta, type Stato, type Categoria, type Piede,
+  CATEGORIE, type Atleta, type Stato,
 } from "@/lib/store";
-
-const STATI: Stato[] = ["In recupero", "Quasi guarito", "Critico", "Guarito"];
+import AtletaModal from "@/components/AtletaModal";
+import CartellaClinaca from "@/components/CartellaClinaca";
+import dynamic from "next/dynamic";
 
 const statoColor: Record<Stato, string> = {
   "In recupero":  "bg-blue-100 text-blue-700",
@@ -17,68 +17,31 @@ const statoColor: Record<Stato, string> = {
   "Guarito":      "bg-gray-100 text-gray-600",
 };
 
-const atletaVuoto: Omit<Atleta, "id"> = {
-  nome: "", dataNascita: "", categoria: "Primavera",
-  posizione: "", piedeDominante: "Destro",
-  infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
-  stato: "In recupero", progresso: 0,
-  fisioterapista: "", telefono: "", email: "", note: "",
-};
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
-      <div className="mt-1">{children}</div>
-    </div>
-  );
-}
-
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      {...props}
-      className={`w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] ${props.className ?? ""}`}
-    />
-  );
-}
-
-function Select(props: React.SelectHTMLAttributes<HTMLSelectElement> & { children: React.ReactNode }) {
-  return (
-    <select
-      {...props}
-      className={`w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white ${props.className ?? ""}`}
-    />
-  );
-}
+type Tab = "dati" | "cartella";
 
 export default function AtletiPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Atleta | null>(null);
+  const [tab, setTab] = useState<Tab>("dati");
   const [mostraForm, setMostraForm] = useState(false);
-  const [form, setForm] = useState<Omit<Atleta, "id">>(atletaVuoto);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editAtleta, setEditAtleta] = useState<Atleta | undefined>(undefined);
 
   useEffect(() => { setAtleti(loadAtleti()); }, []);
 
   const salva = (nuovi: Atleta[]) => { setAtleti(nuovi); saveAtleti(nuovi); };
 
-  const apriNuovo = () => {
-    setForm(atletaVuoto); setEditId(null); setMostraForm(true); setSelected(null);
-  };
+  const apriNuovo = () => { setEditAtleta(undefined); setMostraForm(true); setSelected(null); };
+  const apriModifica = (a: Atleta) => { setEditAtleta(a); setMostraForm(true); };
 
-  const apriModifica = (a: Atleta) => {
-    const { id, ...rest } = a;
-    setForm(rest); setEditId(id); setMostraForm(true); setSelected(null);
-  };
-
-  const salvaAtleta = () => {
-    if (!form.nome.trim()) return;
-    if (editId) {
-      salva(atleti.map((a) => (a.id === editId ? { ...form, id: editId } : a)));
+  const onSalvaAtleta = (dati: Omit<Atleta, "id">) => {
+    if (editAtleta) {
+      const nuovi = atleti.map((a) => a.id === editAtleta.id ? { ...dati, id: editAtleta.id } : a);
+      salva(nuovi);
+      setSelected(nuovi.find((a) => a.id === editAtleta.id) ?? null);
     } else {
-      salva([...atleti, { ...form, id: uid() }]);
+      const nuovo = { ...dati, id: uid() };
+      salva([...atleti, nuovo]);
     }
     setMostraForm(false);
   };
@@ -90,11 +53,10 @@ export default function AtletiPage() {
 
   const filtered = atleti.filter(
     (a) => a.nome.toLowerCase().includes(search.toLowerCase()) ||
-           a.infortunio.toLowerCase().includes(search.toLowerCase()) ||
+           (a.infortunio ?? "").toLowerCase().includes(search.toLowerCase()) ||
            a.categoria.toLowerCase().includes(search.toLowerCase())
   );
 
-  // Raggruppamento per categoria
   const perCategoria: Record<string, Atleta[]> = {};
   CATEGORIE.forEach((cat) => {
     const lista = filtered.filter((a) => a.categoria === cat);
@@ -141,9 +103,8 @@ export default function AtletiPage() {
                 </div>
                 <div className="space-y-3">
                   {lista.map((atleta) => (
-                    <div key={atleta.id}
-                      onClick={() => setSelected(atleta)}
-                      className={`bg-white rounded-xl p-4 border cursor-pointer transition-all hover:shadow-md ${
+                    <button key={atleta.id} onClick={() => { setSelected(atleta); setTab("dati"); }}
+                      className={`w-full bg-white rounded-xl p-4 border text-left transition-all hover:shadow-md ${
                         selected?.id === atleta.id ? "border-[#C8102E] shadow-md" : "border-gray-100"
                       }`}>
                       <div className="flex items-center gap-4">
@@ -157,7 +118,9 @@ export default function AtletiPage() {
                               {atleta.stato}
                             </span>
                           </div>
-                          <p className="text-sm text-gray-400">{atleta.posizione}{atleta.piedeDominante ? ` · Piede ${atleta.piedeDominante}` : ""}</p>
+                          <p className="text-sm text-gray-400 truncate">
+                            {atleta.posizione}{atleta.piedeDominante ? ` · Piede ${atleta.piedeDominante}` : ""}
+                          </p>
                         </div>
                         <div className="text-right shrink-0">
                           <p className="text-xl font-bold text-[#C8102E]">{atleta.progresso}%</p>
@@ -174,7 +137,7 @@ export default function AtletiPage() {
                           <p className="text-xs text-gray-400 mt-1">{atleta.infortunio}</p>
                         </div>
                       )}
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
@@ -185,169 +148,112 @@ export default function AtletiPage() {
 
       {/* Pannello dettaglio */}
       {selected && !mostraForm && (
-        <div className="w-80 bg-white border-l border-gray-100 p-6 overflow-y-auto">
-          <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 mb-5 text-sm">✕ Chiudi</button>
-          <div className="text-center mb-5">
-            <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
-              {selected.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+        <div className="w-96 bg-white border-l border-gray-100 flex flex-col overflow-hidden">
+          {/* Header atleta */}
+          <div className="p-5 border-b border-gray-100">
+            <div className="flex items-start justify-between mb-3">
+              <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>
+              <div className="flex gap-2">
+                <button onClick={() => apriModifica(selected)}
+                  className="text-xs px-3 py-1.5 border border-[#C8102E] text-[#C8102E] rounded-lg hover:bg-red-50 font-medium">
+                  Modifica
+                </button>
+                <button onClick={() => elimina(selected.id)}
+                  className="text-xs px-3 py-1.5 border border-gray-200 text-gray-400 rounded-lg hover:text-red-400 hover:border-red-200">
+                  Elimina
+                </button>
+              </div>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">{selected.nome}</h2>
-            <p className="text-gray-500 text-sm">{selected.posizione} · {selected.categoria}</p>
-            <span className={`text-xs px-3 py-1 rounded-full font-medium mt-1 inline-block ${statoColor[selected.stato]}`}>
-              {selected.stato}
-            </span>
+
+            <div className="text-center">
+              <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
+                {selected.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              </div>
+              <h2 className="font-bold text-gray-900 text-lg">{selected.nome}</h2>
+              <p className="text-sm text-gray-500">{selected.posizione} · {selected.categoria}</p>
+              <span className={`text-xs px-3 py-1 rounded-full font-medium mt-1 inline-block ${statoColor[selected.stato]}`}>
+                {selected.stato}
+              </span>
+            </div>
+
+            {/* Tab switcher */}
+            <div className="flex mt-4 bg-gray-100 rounded-xl p-1">
+              {(["dati", "cartella"] as Tab[]).map((t) => (
+                <button key={t} onClick={() => setTab(t)}
+                  className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    tab === t ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
+                  }`}>
+                  {t === "dati" ? "Dati personali" : "Cartella clinica"}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-3 text-sm">
-            {[
-              ["Data di nascita", selected.dataNascita ? new Date(selected.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
-              ["Piede dominante", selected.piedeDominante || "—"],
-              ["Inizio riabilitazione", selected.inizioRehab ? new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
-              ["Fisioterapista", selected.fisioterapista || "—"],
-            ].map(([label, value]) => (
-              <div key={label} className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">{label}</p>
-                <p className="font-medium text-gray-900">{value}</p>
-              </div>
-            ))}
+          {/* Contenuto tab */}
+          <div className="flex-1 overflow-y-auto p-5">
+            {tab === "dati" ? (
+              <div className="space-y-2.5 text-sm">
+                {[
+                  ["Data di nascita", selected.dataNascita ? new Date(selected.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
+                  ["Piede dominante", selected.piedeDominante || "—"],
+                  ["Infortunio", selected.infortunio || "—"],
+                  ["Inizio riabilitazione", selected.inizioRehab ? new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+                  ["Fisioterapista", selected.fisioterapista || "—"],
+                  ["Preparatore atletico", selected.preparatoreAtletico || "—"],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400">{label}</p>
+                    <p className="font-medium text-gray-900">{value}</p>
+                  </div>
+                ))}
 
-            {selected.infortunio && (
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Infortunio</p>
-                <p className="font-medium text-gray-900">{selected.infortunio}</p>
-              </div>
-            )}
-
-            <div className="bg-gray-50 rounded-xl p-3">
-              <p className="text-xs text-gray-400 uppercase tracking-wide mb-2">Progresso</p>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${selected.progresso}%` }} />
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <div className="flex justify-between mb-1.5">
+                    <p className="text-xs text-gray-400">Progresso recupero</p>
+                    <p className="text-xs font-bold text-[#C8102E]">{selected.progresso}%</p>
+                  </div>
+                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${selected.progresso}%` }} />
+                  </div>
                 </div>
-                <span className="text-sm font-bold text-[#C8102E]">{selected.progresso}%</span>
-              </div>
-            </div>
 
-            {selected.telefono && (
-              <div className="flex items-center gap-2 text-gray-600 px-1">
-                <Phone className="w-4 h-4 text-gray-400" />{selected.telefono}
-              </div>
-            )}
-            {selected.email && (
-              <div className="flex items-center gap-2 text-gray-600 px-1">
-                <Mail className="w-4 h-4 text-gray-400" />{selected.email}
-              </div>
-            )}
-            {selected.note && (
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs text-gray-400 uppercase tracking-wide mb-0.5">Note</p>
-                <p className="text-gray-700">{selected.note}</p>
-              </div>
-            )}
-          </div>
+                {(selected.telefono || selected.email) && (
+                  <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+                    <p className="text-xs text-gray-400">Contatti</p>
+                    {selected.telefono && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" />{selected.telefono}
+                      </div>
+                    )}
+                    {selected.email && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Mail className="w-3.5 h-3.5 text-gray-400" />{selected.email}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-          <div className="flex gap-2 mt-5">
-            <button onClick={() => apriModifica(selected)}
-              className="flex-1 flex items-center justify-center gap-2 border border-[#C8102E] text-[#C8102E] py-2.5 rounded-xl text-sm font-medium hover:bg-red-50">
-              <Edit2 className="w-4 h-4" /> Modifica
-            </button>
-            <button onClick={() => elimina(selected.id)}
-              className="border border-gray-200 text-gray-400 py-2.5 px-3 rounded-xl hover:text-red-400 hover:border-red-200">
-              <Trash2 className="w-4 h-4" />
-            </button>
+                {selected.note && (
+                  <div className="bg-gray-50 rounded-xl p-3">
+                    <p className="text-xs text-gray-400">Note</p>
+                    <p className="text-gray-700">{selected.note}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <CartellaClinaca atletaId={selected.id} />
+            )}
           </div>
         </div>
       )}
 
       {/* Modale form */}
       {mostraForm && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">{editId ? "Modifica Atleta" : "Nuovo Atleta"}</h2>
-              <button onClick={() => setMostraForm(false)}><X className="w-5 h-5 text-gray-400" /></button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <Field label="Nome e Cognome *">
-                <Input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Es. Marco Rossi" />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Data di nascita">
-                  <Input type="date" value={form.dataNascita} onChange={(e) => setForm({ ...form, dataNascita: e.target.value })} />
-                </Field>
-                <Field label="Categoria">
-                  <Select value={form.categoria} onChange={(e) => setForm({ ...form, categoria: e.target.value as Categoria })}>
-                    {CATEGORIE.map((c) => <option key={c}>{c}</option>)}
-                  </Select>
-                </Field>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Ruolo / Posizione">
-                  <Input value={form.posizione} onChange={(e) => setForm({ ...form, posizione: e.target.value })} placeholder="Es. Centrocampista" />
-                </Field>
-                <Field label="Piede dominante">
-                  <Select value={form.piedeDominante} onChange={(e) => setForm({ ...form, piedeDominante: e.target.value as Piede })}>
-                    {PIEDI.map((p) => <option key={p}>{p}</option>)}
-                  </Select>
-                </Field>
-              </div>
-
-              <Field label="Infortunio">
-                <Input value={form.infortunio} onChange={(e) => setForm({ ...form, infortunio: e.target.value })} placeholder="Es. Lesione legamento crociato" />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Inizio Riabilitazione">
-                  <Input type="date" value={form.inizioRehab} onChange={(e) => setForm({ ...form, inizioRehab: e.target.value })} />
-                </Field>
-                <Field label="Stato">
-                  <Select value={form.stato} onChange={(e) => setForm({ ...form, stato: e.target.value as Stato })}>
-                    {STATI.map((s) => <option key={s}>{s}</option>)}
-                  </Select>
-                </Field>
-              </div>
-
-              <Field label={`Progresso recupero: ${form.progresso}%`}>
-                <input type="range" min={0} max={100} value={form.progresso}
-                  onChange={(e) => setForm({ ...form, progresso: Number(e.target.value) })}
-                  className="w-full accent-[#C8102E] mt-2" />
-              </Field>
-
-              <Field label="Fisioterapista">
-                <Input value={form.fisioterapista} onChange={(e) => setForm({ ...form, fisioterapista: e.target.value })} placeholder="Es. Dott. Conti" />
-              </Field>
-
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Telefono">
-                  <Input value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} placeholder="+39 333 0000000" />
-                </Field>
-                <Field label="Email">
-                  <Input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="nome@email.it" />
-                </Field>
-              </div>
-
-              <Field label="Note">
-                <textarea value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })}
-                  placeholder="Note aggiuntive..." rows={3}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
-              </Field>
-            </div>
-
-            <div className="flex gap-3 p-6 border-t border-gray-100">
-              <button onClick={() => setMostraForm(false)}
-                className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">
-                Annulla
-              </button>
-              <button onClick={salvaAtleta} disabled={!form.nome.trim()}
-                className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
-                {editId ? "Salva modifiche" : "Aggiungi atleta"}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AtletaModal
+          atletaIniziale={editAtleta}
+          onSalva={onSalvaAtleta}
+          onChiudi={() => setMostraForm(false)}
+        />
       )}
     </div>
   );

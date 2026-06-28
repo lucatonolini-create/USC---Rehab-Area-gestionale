@@ -4,12 +4,55 @@ import { useEffect, useState } from "react";
 import { Save, Plus, Trash2, Check } from "lucide-react";
 import { loadImpostazioni, saveImpostazioni, type Impostazioni } from "@/lib/store";
 
+function ListaPersonale({
+  titolo,
+  lista,
+  placeholder,
+  onAggiungi,
+  onRimuovi,
+}: {
+  titolo: string;
+  lista: string[];
+  placeholder: string;
+  onAggiungi: (v: string) => void;
+  onRimuovi: (i: number) => void;
+}) {
+  const [input, setInput] = useState("");
+  return (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">{titolo}</h3>
+      <div className="space-y-2 mb-3">
+        {lista.length === 0 && (
+          <p className="text-sm text-gray-400 text-center py-2">Nessuno ancora</p>
+        )}
+        {lista.map((s, i) => (
+          <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+            <span className="flex-1 text-sm text-gray-900">{s}</span>
+            <button onClick={() => onRimuovi(i)} className="text-gray-300 hover:text-red-400">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input value={input} onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && input.trim()) { onAggiungi(input.trim()); setInput(""); } }}
+          placeholder={placeholder}
+          className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+        <button onClick={() => { if (input.trim()) { onAggiungi(input.trim()); setInput(""); } }}
+          className="flex items-center gap-1.5 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800">
+          <Plus className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function ImpostazioniPage() {
   const [form, setForm] = useState<Impostazioni>({
-    nomeClub: "", nomeStruttura: "", indirizzo: "", staff: [],
+    nomeClub: "", nomeStruttura: "", indirizzo: "", fisioterapisti: [], preparatori: [],
   });
   const [salvato, setSalvato] = useState(false);
-  const [nuovoStaff, setNuovoStaff] = useState("");
 
   useEffect(() => { setForm(loadImpostazioni()); }, []);
 
@@ -18,15 +61,6 @@ export default function ImpostazioniPage() {
     setSalvato(true);
     setTimeout(() => setSalvato(false), 2000);
   };
-
-  const aggiungiStaff = () => {
-    if (!nuovoStaff.trim()) return;
-    setForm({ ...form, staff: [...form.staff, nuovoStaff.trim()] });
-    setNuovoStaff("");
-  };
-
-  const rimuoviStaff = (i: number) =>
-    setForm({ ...form, staff: form.staff.filter((_, idx) => idx !== i) });
 
   return (
     <div className="p-6 max-w-2xl">
@@ -49,56 +83,46 @@ export default function ImpostazioniPage() {
           <h2 className="font-bold text-gray-900 mb-4">Club e struttura</h2>
           <div className="space-y-4">
             {[
-              { label: "Nome Club", key: "nomeClub" as keyof Impostazioni, placeholder: "Es. USC Cremonese" },
-              { label: "Nome struttura / reparto", key: "nomeStruttura" as keyof Impostazioni, placeholder: "Es. Rehab Area" },
-              { label: "Indirizzo", key: "indirizzo" as keyof Impostazioni, placeholder: "Es. Via dello Sport 1, Cremona" },
-            ].map(({ label, key, placeholder }) => (
+              { label: "Nome Club",                key: "nomeClub"      as keyof Impostazioni, ph: "Es. USC Cremonese" },
+              { label: "Nome struttura / reparto", key: "nomeStruttura" as keyof Impostazioni, ph: "Es. Rehab Area" },
+              { label: "Indirizzo",                key: "indirizzo"     as keyof Impostazioni, ph: "Es. Via dello Sport 1, Cremona" },
+            ].map(({ label, key, ph }) => (
               <div key={key}>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</label>
-                <input
-                  value={form[key] as string}
+                <input value={form[key] as string}
                   onChange={(e) => setForm({ ...form, [key]: e.target.value })}
-                  placeholder={placeholder}
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
-                />
+                  placeholder={ph}
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
               </div>
             ))}
           </div>
         </div>
 
         {/* Staff */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <h2 className="font-bold text-gray-900 mb-4">Staff medico / fisioterapisti</h2>
-          <div className="space-y-2 mb-4">
-            {form.staff.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-3">Nessun membro dello staff ancora</p>
-            )}
-            {form.staff.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
-                <span className="flex-1 text-sm text-gray-900">{s}</span>
-                <button onClick={() => rimuoviStaff(i)} className="text-gray-300 hover:text-red-400">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <input
-              value={nuovoStaff}
-              onChange={(e) => setNuovoStaff(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && aggiungiStaff()}
-              placeholder="Es. Dott. Marco Conti – Fisioterapista"
-              className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm space-y-6">
+          <h2 className="font-bold text-gray-900">Staff tecnico e medico</h2>
+
+          <ListaPersonale
+            titolo="Fisioterapisti"
+            lista={form.fisioterapisti}
+            placeholder="Es. Dott. Marco Conti"
+            onAggiungi={(v) => setForm({ ...form, fisioterapisti: [...form.fisioterapisti, v] })}
+            onRimuovi={(i) => setForm({ ...form, fisioterapisti: form.fisioterapisti.filter((_, idx) => idx !== i) })}
+          />
+
+          <div className="border-t border-gray-100 pt-6">
+            <ListaPersonale
+              titolo="Preparatori atletici"
+              lista={form.preparatori}
+              placeholder="Es. Sig. Luigi Rossi"
+              onAggiungi={(v) => setForm({ ...form, preparatori: [...form.preparatori, v] })}
+              onRimuovi={(i) => setForm({ ...form, preparatori: form.preparatori.filter((_, idx) => idx !== i) })}
             />
-            <button onClick={aggiungiStaff}
-              className="flex items-center gap-1.5 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800">
-              <Plus className="w-4 h-4" /> Aggiungi
-            </button>
           </div>
         </div>
 
         <p className="text-xs text-gray-400 text-center">
-          I dati vengono salvati localmente nel browser. Premi "Salva" per confermare le modifiche.
+          Premi "Salva" per confermare le modifiche.
         </p>
       </div>
     </div>

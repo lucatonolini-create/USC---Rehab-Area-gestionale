@@ -20,6 +20,7 @@ export interface Atleta {
   stato: Stato;
   progresso: number;
   fisioterapista: string;
+  preparatoreAtletico: string;
   telefono: string;
   email: string;
   note: string;
@@ -47,7 +48,8 @@ export interface Impostazioni {
   nomeClub: string;
   nomeStruttura: string;
   indirizzo: string;
-  staff: string[];
+  fisioterapisti: string[];
+  preparatori: string[];
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -79,7 +81,8 @@ export function loadImpostazioni(): Impostazioni {
     nomeClub: "USC Cremonese",
     nomeStruttura: "Rehab Area",
     indirizzo: "",
-    staff: [],
+    fisioterapisti: [],
+    preparatori: [],
   });
 }
 export function saveImpostazioni(s: Impostazioni) {

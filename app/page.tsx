@@ -1,133 +1,249 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Users, Activity, TrendingUp, Dumbbell, User } from "lucide-react";
-import { loadAtleti, loadProgrammi, type Atleta, type Programma, CATEGORIE } from "@/lib/store";
+import { useRouter } from "next/navigation";
+import { Users, Activity, TrendingUp, Dumbbell, ChevronRight, X } from "lucide-react";
+import {
+  loadAtleti, loadProgrammi, saveAtleti,
+  CATEGORIE, type Atleta, type Programma, type Stato,
+} from "@/lib/store";
 import Link from "next/link";
+import AtletaModal from "@/components/AtletaModal";
+
+const statoColor: Record<Stato, string> = {
+  "In recupero":  "bg-blue-100 text-blue-700",
+  "Quasi guarito":"bg-green-100 text-green-700",
+  "Critico":      "bg-red-100 text-red-700",
+  "Guarito":      "bg-gray-100 text-gray-600",
+};
 
 export default function Dashboard() {
+  const router = useRouter();
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [programmi, setProgrammi] = useState<Programma[]>([]);
+  const [filtroCategoria, setFiltroCategoria] = useState<string>("Tutti");
+  const [atletaSelezionato, setAtletaSelezionato] = useState<Atleta | null>(null);
+  const [mostraModifica, setMostraModifica] = useState(false);
 
   useEffect(() => {
     setAtleti(loadAtleti());
     setProgrammi(loadProgrammi());
   }, []);
 
+  const aggiornaDopo = () => {
+    setAtleti(loadAtleti());
+    setAtletaSelezionato(null);
+    setMostraModifica(false);
+  };
+
   const inRecupero = atleti.filter((a) => a.stato === "In recupero" || a.stato === "Critico").length;
-  const guariti = atleti.filter((a) => a.stato === "Guarito").length;
+  const guariti    = atleti.filter((a) => a.stato === "Guarito").length;
+
+  const atletiFiltrati = filtroCategoria === "Tutti"
+    ? atleti
+    : atleti.filter((a) => a.categoria === filtroCategoria);
 
   const stats = [
-    { label: "Atleti Totali", value: atleti.length, icon: Users, color: "bg-[#2B2B2B]" },
-    { label: "In Recupero", value: inRecupero, icon: Activity, color: "bg-orange-500" },
-    { label: "Guariti", value: guariti, icon: TrendingUp, color: "bg-green-500" },
-    { label: "Programmi Attivi", value: programmi.length, icon: Dumbbell, color: "bg-[#C8102E]" },
+    { label: "Atleti Totali",    value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
+    { label: "In Recupero",      value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
+    { label: "Guariti",          value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
+    { label: "Programmi Attivi", value: programmi.length, icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
   ];
-
-  // Ultimi 5 atleti per stato critico / in recupero
-  const inEvidenza = atleti
-    .filter((a) => a.stato !== "Guarito")
-    .slice(0, 6);
-
-  // Distribuzione per categoria
-  const perCat = CATEGORIE.map((c) => ({
-    cat: c,
-    count: atleti.filter((a) => a.categoria === c).length,
-  })).filter((x) => x.count > 0);
 
   return (
     <div className="p-6">
-      <div className="mb-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-500 mt-1">
           {new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 
-      {/* Stats */}
+      {/* Stat cards cliccabili */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.label} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+            <Link key={stat.label} href={stat.href}
+              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-[#C8102E]/30 transition-all group">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
                   <p className="text-4xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 </div>
-                <div className={`${stat.color} p-2.5 rounded-xl`}>
+                <div className={`${stat.color} p-2.5 rounded-xl group-hover:scale-110 transition-transform`}>
                   <Icon className="w-5 h-5 text-white" />
                 </div>
               </div>
-            </div>
+            </Link>
           );
         })}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Atleti in evidenza */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-900">Atleti in Recupero</h2>
-            <Link href="/atleti" className="text-xs text-[#C8102E] font-medium hover:underline">Vedi tutti</Link>
-          </div>
-          {inEvidenza.length === 0 ? (
-            <div className="p-10 text-center">
-              <User className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-              <p className="text-gray-400 text-sm">Nessun atleta ancora</p>
+      {/* Filtro per categoria */}
+      <div className="mb-5">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Filtra per categoria</h2>
+        <div className="flex flex-wrap gap-2">
+          {["Tutti", ...CATEGORIE].map((cat) => {
+            const count = cat === "Tutti" ? atleti.length : atleti.filter((a) => a.categoria === cat).length;
+            if (count === 0 && cat !== "Tutti") return null;
+            return (
+              <button key={cat} onClick={() => setFiltroCategoria(cat)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                  filtroCategoria === cat
+                    ? "bg-[#C8102E] text-white shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-[#C8102E] hover:text-[#C8102E]"
+                }`}>
+                {cat}
+                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                  filtroCategoria === cat ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400"
+                }`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Lista atleti */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="text-base font-semibold text-gray-900">
+            {filtroCategoria === "Tutti" ? "Tutti gli atleti" : `Categoria ${filtroCategoria}`}
+            <span className="ml-2 text-xs text-gray-400 font-normal">{atletiFiltrati.length} atleti</span>
+          </h2>
+          <Link href="/atleti" className="text-xs text-[#C8102E] font-medium hover:underline flex items-center gap-1">
+            Gestisci <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {atletiFiltrati.length === 0 ? (
+          <div className="p-12 text-center">
+            <p className="text-gray-400 text-sm">
+              {atleti.length === 0
+                ? "Nessun atleta ancora. Vai su Atleti per aggiungerne uno."
+                : "Nessun atleta in questa categoria."}
+            </p>
+            {atleti.length === 0 && (
               <Link href="/atleti" className="text-[#C8102E] text-sm font-medium mt-2 inline-block hover:underline">
                 + Aggiungi atleta
               </Link>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-50">
-              {inEvidenza.map((atleta) => (
-                <div key={atleta.id} className="flex items-center gap-4 px-5 py-3.5">
-                  <div className="w-9 h-9 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{atleta.nome}</p>
-                    <p className="text-xs text-gray-400 truncate">{atleta.categoria}{atleta.infortunio ? ` · ${atleta.infortunio}` : ""}</p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="text-base font-bold text-[#C8102E]">{atleta.progresso}%</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Distribuzione per categoria */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="p-5 border-b border-gray-100">
-            <h2 className="text-base font-semibold text-gray-900">Distribuzione per Categoria</h2>
+            )}
           </div>
-          {perCat.length === 0 ? (
-            <div className="p-10 text-center">
-              <p className="text-gray-400 text-sm">Nessun dato disponibile</p>
+        ) : (
+          <div className="divide-y divide-gray-50">
+            {atletiFiltrati.map((atleta) => (
+              <button key={atleta.id} onClick={() => setAtletaSelezionato(atleta)}
+                className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors text-left">
+                <div className="w-10 h-10 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
+                  {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-gray-900">{atleta.nome}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statoColor[atleta.stato]}`}>
+                      {atleta.stato}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-0.5">
+                    {atleta.categoria}{atleta.posizione ? ` · ${atleta.posizione}` : ""}{atleta.infortunio ? ` · ${atleta.infortunio}` : ""}
+                  </p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-lg font-bold text-[#C8102E]">{atleta.progresso}%</p>
+                  <p className="text-xs text-gray-300">recupero</p>
+                </div>
+                <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Mini pannello atleta */}
+      {atletaSelezionato && !mostraModifica && (
+        <div className="fixed inset-y-0 right-0 z-40 w-80 bg-white shadow-2xl border-l border-gray-100 flex flex-col">
+          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+            <h3 className="font-bold text-gray-900">Scheda atleta</h3>
+            <button onClick={() => setAtletaSelezionato(null)} className="text-gray-400 hover:text-gray-600">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-5">
+            <div className="text-center mb-5">
+              <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
+                {atletaSelezionato.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              </div>
+              <h2 className="font-bold text-gray-900 text-lg">{atletaSelezionato.nome}</h2>
+              <p className="text-sm text-gray-500">{atletaSelezionato.categoria} · {atletaSelezionato.posizione || "—"}</p>
+              <span className={`text-xs px-3 py-1 rounded-full font-medium mt-1 inline-block ${statoColor[atletaSelezionato.stato]}`}>
+                {atletaSelezionato.stato}
+              </span>
             </div>
-          ) : (
-            <div className="p-5 space-y-4">
-              {perCat.map(({ cat, count }) => (
-                <div key={cat}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm font-medium text-gray-700">{cat}</span>
-                    <span className="text-sm font-bold text-[#C8102E]">{count}</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#C8102E] rounded-full transition-all"
-                      style={{ width: `${(count / atleti.length) * 100}%` }}
-                    />
-                  </div>
+
+            <div className="space-y-2.5 text-sm">
+              {[
+                ["Data di nascita", atletaSelezionato.dataNascita ? new Date(atletaSelezionato.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
+                ["Piede dominante", atletaSelezionato.piedeDominante || "—"],
+                ["Infortunio", atletaSelezionato.infortunio || "—"],
+                ["Inizio riabilitazione", atletaSelezionato.inizioRehab ? new Date(atletaSelezionato.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+                ["Fisioterapista", atletaSelezionato.fisioterapista || "—"],
+              ].map(([label, value]) => (
+                <div key={label} className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400">{label}</p>
+                  <p className="font-medium text-gray-900">{value}</p>
                 </div>
               ))}
+
+              <div className="bg-gray-50 rounded-xl p-3">
+                <div className="flex justify-between mb-1.5">
+                  <p className="text-xs text-gray-400">Progresso</p>
+                  <p className="text-xs font-bold text-[#C8102E]">{atletaSelezionato.progresso}%</p>
+                </div>
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${atletaSelezionato.progresso}%` }} />
+                </div>
+              </div>
+
+              {atletaSelezionato.note && (
+                <div className="bg-gray-50 rounded-xl p-3">
+                  <p className="text-xs text-gray-400">Note</p>
+                  <p className="text-gray-700">{atletaSelezionato.note}</p>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          <div className="p-5 border-t border-gray-100 space-y-2">
+            <button onClick={() => setMostraModifica(true)}
+              className="w-full bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800">
+              Modifica dati
+            </button>
+            <Link href="/atleti"
+              className="w-full border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-2">
+              Vai alla scheda completa
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Overlay */}
+      {atletaSelezionato && (
+        <div className="fixed inset-0 bg-black/20 z-30" onClick={() => { setAtletaSelezionato(null); setMostraModifica(false); }} />
+      )}
+
+      {/* Modal modifica */}
+      {mostraModifica && atletaSelezionato && (
+        <AtletaModal
+          atletaIniziale={atletaSelezionato}
+          onSalva={(dati) => {
+            const tutti = loadAtleti();
+            saveAtleti(tutti.map((a) => a.id === atletaSelezionato.id ? { ...dati, id: atletaSelezionato.id } : a));
+            aggiornaDopo();
+          }}
+          onChiudi={() => setMostraModifica(false)}
+        />
+      )}
     </div>
   );
 }
