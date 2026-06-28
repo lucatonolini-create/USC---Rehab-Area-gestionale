@@ -185,7 +185,7 @@ async function esportaExcelPanoramica(params: {
   // ── Foglio 1: Riepilogo ────────────────────────────────────────────────────
   const ws1 = wb.addWorksheet("Riepilogo");
   ws1.columns = [{ width: 38 }, { width: 22 }, { width: 20 }];
-  xlAddSheetHeader(ws1, wb, logoId, "ANALISI INFORTUNI", "Riepilogo generale", oggi);
+  xlAddSheetHeader(ws1, wb, logoId, "ANALISI REHAB AREA", "Riepilogo generale", oggi);
   ws1.addRow([]);
   xlAddColHeaders(ws1, ["Indicatore", "Valore"], xlDarkFill);
   [
@@ -198,7 +198,7 @@ async function esportaExcelPanoramica(params: {
   // ── Foglio 2: Per categoria ────────────────────────────────────────────────
   const ws2 = wb.addWorksheet("Per Categoria");
   ws2.columns = [{ width: 20 }, { width: 14 }, { width: 22 }, { width: 14 }];
-  xlAddSheetHeader(ws2, wb, logoId, "ANALISI INFORTUNI", "Atleti per categoria", oggi);
+  xlAddSheetHeader(ws2, wb, logoId, "ANALISI REHAB AREA", "Atleti per categoria", oggi);
   ws2.addRow([]);
   xlAddColHeaders(ws2, ["Categoria", "Totale", "In riabilitazione", "Guariti"]);
   params.perCategoria.forEach(({ cat, totale, attivi: a }, i) =>
@@ -207,7 +207,7 @@ async function esportaExcelPanoramica(params: {
   // ── Foglio 3: Tipi infortunio ──────────────────────────────────────────────
   const ws3 = wb.addWorksheet("Tipi Infortunio");
   ws3.columns = [{ width: 30 }, { width: 14 }, { width: 18 }];
-  xlAddSheetHeader(ws3, wb, logoId, "ANALISI INFORTUNI", "Categorie di infortunio", oggi);
+  xlAddSheetHeader(ws3, wb, logoId, "ANALISI REHAB AREA", "Categorie di infortunio", oggi);
   ws3.addRow([]);
   xlAddColHeaders(ws3, ["Tipo infortunio", "N° atleti", "% sul totale"]);
   params.perTipoInfortunio.forEach(({ nome, count }, i) => {
@@ -218,7 +218,7 @@ async function esportaExcelPanoramica(params: {
   // ── Foglio 4: Diagnosi specifiche ──────────────────────────────────────────
   const ws4 = wb.addWorksheet("Diagnosi");
   ws4.columns = [{ width: 40 }, { width: 14 }];
-  xlAddSheetHeader(ws4, wb, logoId, "ANALISI INFORTUNI", "Diagnosi specifiche più frequenti", oggi);
+  xlAddSheetHeader(ws4, wb, logoId, "ANALISI REHAB AREA", "Diagnosi specifiche più frequenti", oggi);
   ws4.addRow([]);
   xlAddColHeaders(ws4, ["Diagnosi", "N° atleti"]);
   params.perInfortunio.forEach(({ nome, count }, i) => xlAddDataRow(ws4, [nome, count], i % 2 !== 0, [2]));
@@ -226,7 +226,7 @@ async function esportaExcelPanoramica(params: {
   // ── Foglio 5: Trend mensile ────────────────────────────────────────────────
   const ws5 = wb.addWorksheet("Trend Mensile");
   ws5.columns = [{ width: 22 }, { width: 16 }];
-  xlAddSheetHeader(ws5, wb, logoId, "ANALISI INFORTUNI", "Trend mensile – ultimi 12 mesi", oggi);
+  xlAddSheetHeader(ws5, wb, logoId, "ANALISI REHAB AREA", "Trend mensile – ultimi 12 mesi", oggi);
   ws5.addRow([]);
   xlAddColHeaders(ws5, ["Mese", "Atleti attivi"]);
   params.trendMensile.forEach(({ label, count }, i) => xlAddDataRow(ws5, [label, count], i % 2 !== 0, [2]));
@@ -234,7 +234,7 @@ async function esportaExcelPanoramica(params: {
   // ── Foglio 6: Progressi medi ───────────────────────────────────────────────
   const ws6 = wb.addWorksheet("Progressi");
   ws6.columns = [{ width: 20 }, { width: 18 }, { width: 18 }];
-  xlAddSheetHeader(ws6, wb, logoId, "ANALISI INFORTUNI", "Progresso medio di recupero per categoria", oggi);
+  xlAddSheetHeader(ws6, wb, logoId, "ANALISI REHAB AREA", "Progresso medio di recupero per categoria", oggi);
   ws6.addRow([]);
   xlAddColHeaders(ws6, ["Categoria", "Atleti attivi", "Progresso medio"]);
   CATEGORIE.forEach((cat, i) => {
@@ -351,7 +351,7 @@ async function esportaPDFPanoramica(params: {
     doc.setTextColor(...red);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese – Analisi Infortuni", tx, 15);
+    doc.text("U.S. Cremonese – Analisi Rehab Area", tx, 15);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(140, 140, 140);
