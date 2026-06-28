@@ -1,133 +1,217 @@
 "use client";
 
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Plus, Clock, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Plus, Clock, Trash2, X, Calendar } from "lucide-react";
+import { loadAtleti, loadAppuntamenti, saveAppuntamenti, uid, type Atleta, type Appuntamento } from "@/lib/store";
 
-const appuntamenti = [
-  { id: 1, ora: "08:30", atleta: "Marco Rossi", tipo: "Fisioterapia", durata: 60, stanza: "Sala A", stato: "completato" },
-  { id: 2, ora: "09:45", atleta: "Giulia Ferrari", tipo: "Recupero muscolare", durata: 45, stanza: "Sala B", stato: "completato" },
-  { id: 3, ora: "11:00", atleta: "Luca Bianchi", tipo: "Valutazione", durata: 30, stanza: "Sala A", stato: "in corso" },
-  { id: 4, ora: "12:00", atleta: "Sara Esposito", tipo: "Idroterapia", durata: 60, stanza: "Piscina", stato: "programmato" },
-  { id: 5, ora: "14:00", atleta: "Andrea Colombo", tipo: "Rieducazione motoria", durata: 45, stanza: "Palestra", stato: "programmato" },
-  { id: 6, ora: "15:00", atleta: "Elena Romano", tipo: "Fisioterapia", durata: 60, stanza: "Sala B", stato: "programmato" },
-  { id: 7, ora: "16:30", atleta: "Marco Rossi", tipo: "Esercizi", durata: 45, stanza: "Palestra", stato: "programmato" },
-];
+const TIPI = ["Fisioterapia", "Recupero muscolare", "Valutazione", "Idroterapia", "Rieducazione motoria", "Esercizi", "Altro"];
+const STANZE = ["Sala A", "Sala B", "Palestra", "Piscina", "Esterno"];
 
-const ore = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"];
+const vuoto: Omit<Appuntamento, "id"> = {
+  atletaId: "",
+  data: new Date().toISOString().slice(0, 10),
+  ora: "09:00",
+  tipo: "Fisioterapia",
+  durata: "60",
+  stanza: "Sala A",
+  stato: "programmato",
+};
 
-const coloreStato: Record<string, string> = {
+const statoColor: Record<string, string> = {
   completato: "bg-green-100 border-green-300 text-green-800",
   "in corso": "bg-yellow-100 border-yellow-300 text-yellow-800",
-  programmato: "bg-blue-100 border-blue-300 text-blue-800",
+  programmato: "bg-gray-100 border-gray-200 text-gray-600",
 };
 
 export default function AppuntamentiPage() {
-  const [vista, setVista] = useState<"lista" | "giornaliera">("lista");
+  const [atleti, setAtleti] = useState<Atleta[]>([]);
+  const [appuntamenti, setAppuntamenti] = useState<Appuntamento[]>([]);
+  const [filtroData, setFiltroData] = useState(new Date().toISOString().slice(0, 10));
+  const [mostraForm, setMostraForm] = useState(false);
+  const [form, setForm] = useState<Omit<Appuntamento, "id">>(vuoto);
+
+  useEffect(() => {
+    setAtleti(loadAtleti());
+    setAppuntamenti(loadAppuntamenti());
+  }, []);
+
+  const salva = (nuovi: Appuntamento[]) => {
+    setAppuntamenti(nuovi);
+    saveAppuntamenti(nuovi);
+  };
+
+  const aggiungi = () => {
+    if (!form.atletaId) return;
+    salva([...appuntamenti, { ...form, id: uid() }]);
+    setMostraForm(false);
+  };
+
+  const eliminaApp = (id: string) => salva(appuntamenti.filter((a) => a.id !== id));
+
+  const cambiaStato = (id: string, stato: Appuntamento["stato"]) => {
+    salva(appuntamenti.map((a) => (a.id === id ? { ...a, stato } : a)));
+  };
+
+  const filtrati = appuntamenti
+    .filter((a) => a.data === filtroData)
+    .sort((a, b) => a.ora.localeCompare(b.ora));
 
   return (
     <div className="p-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Appuntamenti</h1>
-          <p className="text-gray-500 mt-1">Sabato, 28 Giugno 2026</p>
+          <p className="text-gray-500 mt-1">{filtrati.length} appuntamenti il {new Date(filtroData + "T12:00:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" })}</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex bg-gray-100 rounded-xl p-1">
-            <button
-              onClick={() => setVista("lista")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                vista === "lista" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
-              }`}
-            >
-              Lista
-            </button>
-            <button
-              onClick={() => setVista("giornaliera")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                vista === "giornaliera" ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
-              }`}
-            >
-              Vista giornaliera
-            </button>
-          </div>
-          <button className="flex items-center gap-2 bg-[#003087] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors">
+          <input
+            type="date"
+            value={filtroData}
+            onChange={(e) => setFiltroData(e.target.value)}
+            className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+          />
+          <button
+            onClick={() => { setForm({ ...vuoto, data: filtroData }); setMostraForm(true); }}
+            className="flex items-center gap-2 bg-[#003087] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-blue-800 transition-colors"
+          >
             <Plus className="w-4 h-4" />
             Nuovo
           </button>
         </div>
       </div>
 
-      {/* Navigation */}
-      <div className="flex items-center gap-4 mb-6">
-        <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-          <ChevronLeft className="w-5 h-5 text-gray-600" />
-        </button>
-        <h2 className="text-lg font-semibold text-gray-900">Oggi</h2>
-        <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-          <ChevronRight className="w-5 h-5 text-gray-600" />
-        </button>
-        <div className="ml-auto flex gap-2">
-          {["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].map((g, i) => (
-            <button
-              key={g}
-              className={`w-10 h-10 rounded-xl text-sm font-medium transition-all ${
-                i === 5
-                  ? "bg-[#003087] text-white"
-                  : "text-gray-500 hover:bg-gray-100"
-              }`}
-            >
-              {g}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {vista === "lista" ? (
-        <div className="space-y-3">
-          {appuntamenti.map((app) => (
-            <div key={app.id} className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-all">
-              <div className="flex items-center gap-5">
-                <div className="flex items-center gap-2 w-20 shrink-0">
-                  <Clock className="w-4 h-4 text-gray-400" />
-                  <span className="text-sm font-mono font-bold text-gray-700">{app.ora}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-gray-900">{app.atleta}</span>
-                  </div>
-                  <p className="text-sm text-gray-500">{app.tipo} · {app.durata} min · {app.stanza}</p>
-                </div>
-                <span className={`text-xs px-3 py-1.5 rounded-full font-medium border ${coloreStato[app.stato]}`}>
-                  {app.stato === "in corso" ? "In corso" : app.stato === "completato" ? "Completato" : "Programmato"}
-                </span>
-              </div>
-            </div>
-          ))}
+      {filtrati.length === 0 ? (
+        <div className="text-center py-20">
+          <Calendar className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+          <p className="text-gray-400 text-lg font-medium">Nessun appuntamento in questa data</p>
+          <button
+            onClick={() => { setForm({ ...vuoto, data: filtroData }); setMostraForm(true); }}
+            className="text-[#003087] text-sm font-medium mt-2 inline-block hover:underline"
+          >
+            + Aggiungi appuntamento
+          </button>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="grid" style={{ gridTemplateColumns: "80px 1fr" }}>
-            {ore.map((ora) => {
-              const app = appuntamenti.filter((a) => a.ora.startsWith(ora.split(":")[0]));
-              return (
-                <div key={ora} className="contents">
-                  <div className="border-b border-r border-gray-100 p-3 text-xs text-gray-400 font-mono">
-                    {ora}
+        <div className="space-y-3">
+          {filtrati.map((app) => {
+            const atleta = atleti.find((a) => a.id === app.atletaId);
+            return (
+              <div key={app.id} className="bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md transition-all">
+                <div className="flex items-center gap-5">
+                  <div className="flex items-center gap-2 w-20 shrink-0">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm font-mono font-bold text-gray-700">{app.ora}</span>
                   </div>
-                  <div className="border-b border-gray-100 p-2 min-h-[60px]">
-                    {app.map((a) => (
-                      <div
-                        key={a.id}
-                        className={`text-xs p-2 rounded-lg border mb-1 ${coloreStato[a.stato]}`}
-                      >
-                        <span className="font-semibold">{a.atleta}</span> — {a.tipo}
-                      </div>
-                    ))}
+                  <div className="flex-1">
+                    <p className="font-semibold text-gray-900">{atleta?.nome ?? "Atleta eliminato"}</p>
+                    <p className="text-sm text-gray-500">{app.tipo} · {app.durata} min · {app.stanza}</p>
                   </div>
+                  <select
+                    value={app.stato}
+                    onChange={(e) => cambiaStato(app.id, e.target.value as Appuntamento["stato"])}
+                    className={`text-xs px-3 py-1.5 rounded-full font-medium border cursor-pointer bg-transparent ${statoColor[app.stato]}`}
+                  >
+                    <option value="programmato">Programmato</option>
+                    <option value="in corso">In corso</option>
+                    <option value="completato">Completato</option>
+                  </select>
+                  <button onClick={() => eliminaApp(app.id)} className="text-gray-300 hover:text-red-400 ml-2">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modale */}
+      {mostraForm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-lg font-bold text-gray-900">Nuovo Appuntamento</h2>
+              <button onClick={() => setMostraForm(false)}><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Atleta *</label>
+                <select
+                  value={form.atletaId}
+                  onChange={(e) => setForm({ ...form, atletaId: e.target.value })}
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                >
+                  <option value="">Seleziona atleta...</option>
+                  {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome}</option>)}
+                </select>
+                {atleti.length === 0 && (
+                  <p className="text-xs text-orange-500 mt-1">Prima aggiungi un atleta nella sezione Atleti.</p>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</label>
+                  <input
+                    type="date"
+                    value={form.data}
+                    onChange={(e) => setForm({ ...form, data: e.target.value })}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Ora</label>
+                  <input
+                    type="time"
+                    value={form.ora}
+                    onChange={(e) => setForm({ ...form, ora: e.target.value })}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipo seduta</label>
+                <select
+                  value={form.tipo}
+                  onChange={(e) => setForm({ ...form, tipo: e.target.value })}
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                >
+                  {TIPI.map((t) => <option key={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Durata (min)</label>
+                  <input
+                    type="number"
+                    value={form.durata}
+                    onChange={(e) => setForm({ ...form, durata: e.target.value })}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087]"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Stanza</label>
+                  <select
+                    value={form.stanza}
+                    onChange={(e) => setForm({ ...form, stanza: e.target.value })}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#003087] bg-white"
+                  >
+                    {STANZE.map((s) => <option key={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 border-t border-gray-100">
+              <button onClick={() => setMostraForm(false)} className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">
+                Annulla
+              </button>
+              <button
+                onClick={aggiungi}
+                disabled={!form.atletaId}
+                className="flex-1 bg-[#003087] text-white py-3 rounded-xl text-sm font-medium hover:bg-blue-800 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Aggiungi
+              </button>
+            </div>
           </div>
         </div>
       )}
