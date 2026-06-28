@@ -55,6 +55,7 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
     if (prog.carico) {
       const c = prog.carico;
       rows.push([""], ["CARICO SESSIONE"]);
+      if (c.rpe) rows.push(["RPE sessione", `${c.rpe}/10`]);
       if (c.durata) rows.push(["Durata", `${c.durata} min`]);
       if (c.interno) rows.push(["Carico interno", c.interno]);
       if (c.esterno) rows.push(["Carico esterno", c.esterno]);
@@ -136,6 +137,14 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       margin: { left: 14, right: 14 },
       columnStyles: { 0: { cellWidth: 10 }, 1: { cellWidth: 50 } },
     });
+
+    if (prog.carico?.rpe) {
+      const rpeY = (doc as any).lastAutoTable?.finalY ?? 120;
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...dark);
+      doc.text(`RPE sessione: ${prog.carico.rpe}/10`, 14, rpeY + 8);
+    }
 
     if (prog.tests?.length) {
       const lastY = (doc as any).lastAutoTable?.finalY ?? 120;

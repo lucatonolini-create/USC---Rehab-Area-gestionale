@@ -10,7 +10,7 @@ import {
 
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
-const caricoVuoto: Carico = { interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
+const caricoVuoto: Carico = { rpe: "", interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
 
 const progVuoto: Omit<Programma, "id"> = {
   atletaId: "", nome: "", fase: "",
@@ -322,6 +322,7 @@ export default function EserciziPage() {
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                               {[
+                                { label: "RPE sessione", value: prog.carico.rpe, unit: "/10" },
                                 { label: "Durata", value: prog.carico.durata, unit: "min" },
                                 { label: "Carico interno", value: prog.carico.interno, unit: "" },
                                 { label: "Distanza", value: prog.carico.distanzaTotale, unit: "km" },
@@ -452,6 +453,18 @@ export default function EserciziPage() {
                           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                       </div>
                     ))}
+                  </div>
+
+                  {/* RPE sessione */}
+                  <div className="mt-4 bg-orange-50 border border-orange-100 rounded-xl p-4">
+                    <ScaleInput
+                      label={`RPE sessione: ${carico.rpe || 0}/10`}
+                      value={carico.rpe}
+                      max={10}
+                      onChange={(v) => aggiornaCarico("rpe", v)}
+                      color="text-orange-500"
+                    />
+                    <p className="text-xs text-orange-400 mt-2">Valutazione dello sforzo percepito a fine seduta</p>
                   </div>
                 </div>
               )}

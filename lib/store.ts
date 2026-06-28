@@ -137,6 +137,7 @@ export interface TestFisiometrico {
 }
 
 export interface Carico {
+  rpe: string;
   interno: string;
   esterno: string;
   durata: string;
@@ -167,7 +168,7 @@ export interface Impostazioni {
 }
 
 const defaultCarico: Carico = {
-  interno: "", esterno: "", durata: "", distanzaTotale: "",
+  rpe: "", interno: "", esterno: "", durata: "", distanzaTotale: "",
   velocitaMax: "", hsr: "", accelerazioni: "", note: "",
 };
 
