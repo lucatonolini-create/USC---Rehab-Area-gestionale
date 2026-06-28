@@ -7,7 +7,6 @@ import Image from "next/image";
 import {
   LayoutDashboard,
   Users,
-  Calendar,
   Dumbbell,
   TrendingUp,
   Settings,
@@ -18,7 +17,6 @@ import {
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/atleti", label: "Atleti", icon: Users },
-  { href: "/appuntamenti", label: "Appuntamenti", icon: Calendar },
   { href: "/esercizi", label: "Programmi", icon: Dumbbell },
   { href: "/progressi", label: "Progressi", icon: TrendingUp },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },

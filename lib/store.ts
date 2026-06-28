@@ -2,11 +2,19 @@
 
 export type Stato = "In recupero" | "Quasi guarito" | "Critico" | "Guarito";
 
+export const CATEGORIE = ["Primavera", "U19", "U18", "U17", "U16", "U15", "U14"] as const;
+export type Categoria = (typeof CATEGORIE)[number];
+
+export const PIEDI = ["Destro", "Sinistro", "Ambidestro"] as const;
+export type Piede = (typeof PIEDI)[number];
+
 export interface Atleta {
   id: string;
   nome: string;
-  eta: string;
+  dataNascita: string;
+  categoria: Categoria;
   posizione: string;
+  piedeDominante: Piede;
   infortunio: string;
   inizioRehab: string;
   stato: Stato;
@@ -17,15 +25,29 @@ export interface Atleta {
   note: string;
 }
 
-export interface Appuntamento {
+export interface Esercizio {
+  nome: string;
+  serie: string;
+  reps: string;
+  rpe: string;
+  vas: string;
+  note: string;
+}
+
+export interface Programma {
   id: string;
   atletaId: string;
+  nome: string;
+  fase: string;
   data: string;
-  ora: string;
-  tipo: string;
-  durata: string;
-  stanza: string;
-  stato: "programmato" | "in corso" | "completato";
+  esercizi: Esercizio[];
+}
+
+export interface Impostazioni {
+  nomeClub: string;
+  nomeStruttura: string;
+  indirizzo: string;
+  staff: string[];
 }
 
 function load<T>(key: string, fallback: T): T {
@@ -41,17 +63,27 @@ function load<T>(key: string, fallback: T): T {
 export function loadAtleti(): Atleta[] {
   return load<Atleta[]>("usc_atleti", []);
 }
-
-export function saveAtleti(atleti: Atleta[]) {
-  localStorage.setItem("usc_atleti", JSON.stringify(atleti));
+export function saveAtleti(a: Atleta[]) {
+  localStorage.setItem("usc_atleti", JSON.stringify(a));
 }
 
-export function loadAppuntamenti(): Appuntamento[] {
-  return load<Appuntamento[]>("usc_appuntamenti", []);
+export function loadProgrammi(): Programma[] {
+  return load<Programma[]>("usc_programmi", []);
+}
+export function saveProgrammi(p: Programma[]) {
+  localStorage.setItem("usc_programmi", JSON.stringify(p));
 }
 
-export function saveAppuntamenti(app: Appuntamento[]) {
-  localStorage.setItem("usc_appuntamenti", JSON.stringify(app));
+export function loadImpostazioni(): Impostazioni {
+  return load<Impostazioni>("usc_impostazioni", {
+    nomeClub: "USC Cremonese",
+    nomeStruttura: "Rehab Area",
+    indirizzo: "",
+    staff: [],
+  });
+}
+export function saveImpostazioni(s: Impostazioni) {
+  localStorage.setItem("usc_impostazioni", JSON.stringify(s));
 }
 
 export function uid() {
