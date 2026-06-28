@@ -99,7 +99,7 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
     ws.getRow(3).getCell(2).value = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "";
     ws.addRow([]);
 
-    addSectionTitle(ws, "ESERCIZI", darkFill);
+    addSectionTitle(ws, "PALESTRA", darkFill);
     const hRow = ws.addRow(["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS", "Note"]);
     hRow.height = 20;
     hRow.eachCell((cell: any) => { cell.fill = redFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
@@ -253,7 +253,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     y = HDR + 8;
 
     if (prog.esercizi?.length) {
-      y = secTitle("Esercizi", y);
+      y = secTitle("Palestra", y);
       autoTable(doc, {
         startY: y,
         head: [["#", "Esercizio", "Serie", "Reps", "Carico", "RIR", "VAS", "Note"]],
