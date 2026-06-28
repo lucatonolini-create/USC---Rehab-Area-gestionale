@@ -14,61 +14,135 @@ const statoColor: Record<Stato, string> = {
   "Guarito":      "bg-gray-100 text-gray-600",
 };
 
+async function getLogoBuffer(): Promise<ArrayBuffer | null> {
+  try { const r = await fetch("/logo.png"); return r.ok ? r.arrayBuffer() : null; } catch { return null; }
+}
+async function getLogoDataUrl(): Promise<string | null> {
+  try {
+    const r = await fetch("/logo.png"); if (!r.ok) return null;
+    const blob = await r.blob();
+    return new Promise<string>((res, rej) => { const rd = new FileReader(); rd.onloadend = () => res(rd.result as string); rd.onerror = rej; rd.readAsDataURL(blob); });
+  } catch { return null; }
+}
+
 async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
-  const { utils, writeFile } = await import("xlsx");
-  const wb = utils.book_new();
-  const infoRows = [
-    ["SCHEDA RIABILITATIVA", ""],
-    [""],
+  const { Workbook } = await import("exceljs");
+  const wb = new Workbook();
+  wb.creator = "U.S. Cremonese Rehab Area";
+  const oggi = new Date().toLocaleDateString("it-IT");
+
+  const XL_RED  = "FFC8102E";
+  const XL_DARK = "FF2B2B2B";
+  const XL_LIGHT = "FFF5F5F5";
+  const redFill  = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_RED } };
+  const darkFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_DARK } };
+  const lightFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_LIGHT } };
+  const whiteFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFFFFF" } };
+  const border = { top: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, bottom: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, left: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, right: { style: "thin" as const, color: { argb: "FFE0E0E0" } } };
+
+  const logoBuf = await getLogoBuffer();
+  const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
+
+  const addHeader = (ws: any, subtitle: string) => {
+    ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
+    if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 }, br: { col: 0.92, row: 3.8 }, editAs: "oneCell" });
+    const r1 = ws.getRow(1); r1.getCell(2).value = "U.S. CREMONESE – REHAB AREA"; r1.getCell(2).font = { bold: true, size: 13, color: { argb: XL_RED } };
+    const r2 = ws.getRow(2); r2.getCell(2).value = "SCHEDA RIABILITATIVA"; r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_RED } };
+    const r3 = ws.getRow(3); r3.getCell(2).value = subtitle; r3.getCell(2).font = { size: 9, italic: true, color: { argb: "FF999999" } };
+    ws.getRow(3).getCell(3).value = `Generato il ${oggi}`; ws.getRow(3).getCell(3).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(3).alignment = { horizontal: "right" };
+  };
+
+  const addSectionTitle = (ws: any, text: string, fill = darkFill) => {
+    const row = ws.addRow([text]);
+    row.height = 20;
+    row.getCell(1).fill = fill;
+    row.getCell(1).font = { bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+    row.getCell(1).border = border;
+    ws.mergeCells(row.number, 1, row.number, 8);
+    return row;
+  };
+
+  const addDataRow = (ws: any, label: string, value: string, odd: boolean) => {
+    const row = ws.addRow([label, value]);
+    row.height = 18;
+    [1, 2].forEach((col) => { row.getCell(col).fill = odd ? lightFill : whiteFill; row.getCell(col).border = border; row.getCell(col).alignment = { vertical: "middle" }; });
+    row.getCell(1).font = { bold: true, size: 9, color: { argb: XL_DARK } };
+    row.getCell(2).font = { size: 9, color: { argb: XL_DARK } };
+  };
+
+  // ── Foglio Atleta ────────────────────────────────────────────────────────────
+  const ws1 = wb.addWorksheet("Atleta");
+  ws1.columns = [{ width: 28 }, { width: 40 }, { width: 20 }];
+  addHeader(ws1, atleta.nome);
+  ws1.addRow([]);
+  addSectionTitle(ws1, "DATI PERSONALI", redFill);
+  [
     ["Nome", atleta.nome],
-    ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : ""],
+    ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
     ["Categoria", atleta.categoria],
     ["Ruolo", atleta.posizione],
     ["Piede dominante", atleta.piedeDominante],
-    ["Infortunio", atleta.infortunio],
-    ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT") : ""],
-    ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT") : ""],
-    ["Fisioterapista", atleta.fisioterapista],
+    ["Infortunio", atleta.infortunio || "—"],
+    ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+    ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+    ["Fisioterapista", atleta.fisioterapista || "—"],
     ["Stato attuale", atleta.stato],
     ["Progresso recupero", `${atleta.progresso}%`],
-    ["Note", atleta.note],
-  ];
-  const wsInfo = utils.aoa_to_sheet(infoRows);
-  utils.book_append_sheet(wb, wsInfo, "Atleta");
+    ["Note", atleta.note || "—"],
+  ].forEach(([l, v], i) => addDataRow(ws1, l, v, i % 2 !== 0));
 
+  // ── Fogli programmi ──────────────────────────────────────────────────────────
   programmi.forEach((prog, idx) => {
-    const rows = [
-      ["PROGRAMMA DI LAVORO", ""],
-      ["Nome", prog.nome],
-      ["Fase", prog.fase],
-      ["Data", prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : ""],
-      [""],
-      ["ESERCIZI"],
-      ["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS (0-10)", "Note"],
-      ...prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie, e.reps, e.carico, e.rir, e.vas, e.note]),
-    ];
-    if (prog.tests?.length) {
-      rows.push([""], ["TEST FISIOMETRICI E DI PERFORMANCE"]);
-      rows.push(["#", "Test", "Risultato", "Unità", "Note"]);
-      prog.tests.forEach((t, i) => rows.push([i + 1, t.nome, t.risultato, t.unita, t.note]));
-    }
-    if (prog.carico) {
+    const ws = wb.addWorksheet(`Prog ${idx + 1}`.slice(0, 31));
+    ws.columns = [{ width: 6 }, { width: 32 }, { width: 10 }, { width: 14 }, { width: 14 }, { width: 8 }, { width: 10 }, { width: 24 }];
+    addHeader(ws, `${prog.nome}${prog.fase ? ` – ${prog.fase}` : ""}`);
+    ws.getRow(3).getCell(2).value = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "";
+    ws.addRow([]);
+
+    addSectionTitle(ws, "ESERCIZI", darkFill);
+    const hRow = ws.addRow(["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS", "Note"]);
+    hRow.height = 20;
+    hRow.eachCell((cell: any) => { cell.fill = redFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
+    hRow.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
+
+    prog.esercizi.forEach((e, i) => {
+      const row = ws.addRow([i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]);
+      row.height = 18;
+      row.eachCell({ includeEmpty: true }, (cell: any, col: number) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle", horizontal: col === 2 ? "left" : "center" }; });
+    });
+
+    if (prog.carico && Object.values(prog.carico).some(Boolean)) {
+      ws.addRow([]);
+      addSectionTitle(ws, "CARICO SESSIONE", darkFill);
       const c = prog.carico;
-      rows.push([""], ["CARICO SESSIONE"]);
-      if (c.rpe) rows.push(["RPE sessione", `${c.rpe}/10`]);
-      if (c.durata) rows.push(["Durata", `${c.durata} min`]);
-      if (c.interno) rows.push(["Carico interno", c.interno]);
-      if (c.esterno) rows.push(["Carico esterno", c.esterno]);
-      if (c.distanzaTotale) rows.push(["Distanza totale", `${c.distanzaTotale} km`]);
-      if (c.velocitaMax) rows.push(["Velocità max", `${c.velocitaMax} km/h`]);
-      if (c.hsr) rows.push(["HSR (>19 km/h)", `${c.hsr} m`]);
-      if (c.accelerazioni) rows.push(["Accelerazioni", c.accelerazioni]);
+      const caricoRows: [string, string][] = [];
+      if (c.rpe) caricoRows.push(["RPE sessione", `${c.rpe}/10`]);
+      if (c.durata) caricoRows.push(["Durata", `${c.durata} min`]);
+      if (c.interno) caricoRows.push(["Carico interno", c.interno]);
+      if (c.esterno) caricoRows.push(["Carico esterno", c.esterno]);
+      if (c.distanzaTotale) caricoRows.push(["Distanza totale", `${c.distanzaTotale} km`]);
+      if (c.velocitaMax) caricoRows.push(["Velocità max", `${c.velocitaMax} km/h`]);
+      if (c.hsr) caricoRows.push(["HSR (>19 km/h)", `${c.hsr} m`]);
+      if (c.accelerazioni) caricoRows.push(["Accelerazioni", c.accelerazioni]);
+      caricoRows.forEach(([l, v], i) => addDataRow(ws, l, v, i % 2 !== 0));
     }
-    const ws = utils.aoa_to_sheet(rows);
-    utils.book_append_sheet(wb, ws, `Prog ${idx + 1}`.slice(0, 31));
+
+    if (prog.tests?.length) {
+      ws.addRow([]);
+      addSectionTitle(ws, "TEST FISIOMETRICI E DI PERFORMANCE", darkFill);
+      prog.tests.forEach((t, i) => {
+        const row = ws.addRow([i + 1, t.nome, t.risultato, t.unita, t.note]);
+        row.height = 18;
+        row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; });
+      });
+    }
   });
 
-  writeFile(wb, `${atleta.nome.replace(/ /g, "_")}_rehab.xlsx`);
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `${atleta.nome.replace(/ /g, "_")}_rehab.xlsx`; a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
@@ -77,16 +151,19 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   const doc = new jsPDF();
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
+  const logoDataUrl = await getLogoDataUrl();
 
   doc.setFillColor(248, 248, 248);
   doc.rect(0, 0, 210, 22, "F");
   doc.setDrawColor(...red);
   doc.setLineWidth(0.8);
   doc.line(0, 22, 210, 22);
+  if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 16, 16);
+  const tx = logoDataUrl ? 23 : 14;
   doc.setTextColor(...red);
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("U.S. Cremonese – Scheda Riabilitativa", 14, 14);
+  doc.text("U.S. Cremonese – Scheda Riabilitativa", tx, 14);
 
   doc.setTextColor(...dark);
   doc.setFontSize(16);
