@@ -8,7 +8,7 @@ import {
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico,
 } from "@/lib/store";
 
-const esVuoto: Esercizio = { nome: "", serie: "", reps: "", rpe: "", vas: "", note: "" };
+const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", rpe: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
 const caricoVuoto: Carico = { interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
 
@@ -223,9 +223,17 @@ export default function EserciziPage() {
                                 <div key={i} className="bg-gray-50 rounded-xl p-4">
                                   <div className="flex items-center justify-between mb-2">
                                     <p className="font-semibold text-gray-900 text-sm">{i + 1}. {es.nome}</p>
-                                    {(es.serie || es.reps) && (
-                                      <span className="text-xs text-gray-500">{es.serie && `${es.serie}×`}{es.reps}</span>
-                                    )}
+                                    <div className="flex items-center gap-2">
+                                      {(es.serie || es.reps) && (
+                                        <span className="text-xs text-gray-500">{es.serie && `${es.serie}×`}{es.reps}</span>
+                                      )}
+                                      {es.carico && (
+                                        <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full">{es.carico}</span>
+                                      )}
+                                      {es.rir && (
+                                        <span className="text-xs bg-gray-100 text-gray-600 font-medium px-2 py-0.5 rounded-full">RIR {es.rir}</span>
+                                      )}
+                                    </div>
                                   </div>
                                   <div className="grid grid-cols-2 gap-4">
                                     {es.rpe && (
@@ -444,6 +452,10 @@ export default function EserciziPage() {
                           <input value={es.serie} onChange={(e) => aggiornaEs(i, "serie", e.target.value)} placeholder="N° serie (es. 3)"
                             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                           <input value={es.reps} onChange={(e) => aggiornaEs(i, "reps", e.target.value)} placeholder="Reps / durata"
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                          <input value={es.carico} onChange={(e) => aggiornaEs(i, "carico", e.target.value)} placeholder="Carico (es. 60 kg)"
+                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                          <input value={es.rir} onChange={(e) => aggiornaEs(i, "rir", e.target.value)} placeholder="RIR (es. 2)"
                             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                         </div>
                         <div className="grid grid-cols-2 gap-4 pt-1">
