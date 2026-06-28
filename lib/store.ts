@@ -56,6 +56,7 @@ export const TESTS_PREDEFINITI = [
   "6m Timed Hop Test",
   "Side Hop Test",
   "Broad Jump",
+  "Limb Symmetry Index",
   // Balance
   "Y-Balance Test – Anteriore",
   "Y-Balance Test – Posteromediale",
