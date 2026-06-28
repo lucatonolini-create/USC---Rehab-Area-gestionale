@@ -389,8 +389,8 @@ async function esportaPDFPanoramica(params: {
       ["Programmi riabilitativi creati", String(params.programmi.length)],
     ],
     theme: "striped",
-    styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize" },
-    columnStyles: { 0: { cellWidth: 80, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 30, halign: "center", textColor: dark } },
+    styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
+    columnStyles: { 0: { cellWidth: 80, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 30, textColor: dark } },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: W / 2 },
   });
@@ -405,7 +405,7 @@ async function esportaPDFPanoramica(params: {
     bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
-    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 2: { halign: "center" }, 3: { halign: "center" } },
+    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {}, 3: {} },
   });
   y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -419,10 +419,10 @@ async function esportaPDFPanoramica(params: {
         nome, count, params.atleti.length > 0 ? `${Math.round((count / params.atleti.length) * 100)}%` : "—",
       ]),
       headStyles: { fillColor: [160, 160, 160], textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
-      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 2: { halign: "center" } },
+      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {} },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
   } else {
@@ -439,10 +439,10 @@ async function esportaPDFPanoramica(params: {
       head: [["Diagnosi", "N° atleti"]],
       body: params.perInfortunio.map(({ nome, count }) => [nome, count]),
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
-      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" } },
+      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {} },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
   }
@@ -457,7 +457,7 @@ async function esportaPDFPanoramica(params: {
     bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: W / 2 },
-    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" } },
+    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {} },
   });
   y = (doc as any).lastAutoTable.finalY + 8;
 
@@ -476,10 +476,10 @@ async function esportaPDFPanoramica(params: {
       head: [["Categoria", "Atleti attivi", "Progresso medio"]],
       body: progressiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
-      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 2: { halign: "center" } },
+      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {} },
     });
   }
 
@@ -560,8 +560,8 @@ async function esportaPDFReport(
     y = secTitle("Riepilogo per categoria", y);
     autoTable(doc, {
       startY: y, body: catRows, theme: "striped",
-      styles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
-      columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, halign: "center", textColor: dark } },
+      styles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
+      columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, textColor: dark } },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: W / 2 },
     });
@@ -579,18 +579,18 @@ async function esportaPDFReport(
       `${a.progresso}%`,
     ]),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 8, cellPadding: 2.5 },
+    bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
       0: { cellWidth: 42 },
-      1: { cellWidth: 24, halign: "center" },
+      1: { cellWidth: 24 },
       2: { cellWidth: 58 },
       3: { cellWidth: 55 },
       4: { cellWidth: 28 },
-      5: { cellWidth: 20, halign: "center" },
-      6: { cellWidth: 20, halign: "center" },
-      7: { cellWidth: 22, halign: "center" },
+      5: { cellWidth: 20 },
+      6: { cellWidth: 20 },
+      7: { cellWidth: 22 },
     },
   });
 
