@@ -9,6 +9,10 @@ export const metadata: Metadata = {
   title: "USC Cremonese – Rehab Area",
   description: "Gestionale area riabilitazione USC Cremonese",
   manifest: "/manifest.json",
+  icons: {
+    apple: "/logo.png",
+    icon: "/logo.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
