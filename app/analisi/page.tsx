@@ -341,16 +341,20 @@ async function esportaPDFPanoramica(params: {
   const FIRST_Y = HEADER_H + 8;
 
   const addHeader = () => {
-    doc.setFillColor(...red);
+    doc.setFillColor(248, 248, 248);
     doc.rect(0, 0, 210, HEADER_H, "F");
+    doc.setDrawColor(...red);
+    doc.setLineWidth(0.8);
+    doc.line(0, HEADER_H, 210, HEADER_H);
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
     const tx = logoDataUrl ? 27 : 14;
-    doc.setTextColor(255, 255, 255);
+    doc.setTextColor(...dark);
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("USC Cremonese – Analisi Infortuni", tx, 15);
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
+    doc.setTextColor(140, 140, 140);
     doc.text(oggi, 196, 15, { align: "right" });
   };
 
@@ -487,16 +491,20 @@ async function esportaPDFReport(
   const HEADER_H = 26;
 
   // Header con logo
-  doc.setFillColor(...red);
+  doc.setFillColor(248, 248, 248);
   doc.rect(0, 0, 210, HEADER_H, "F");
+  doc.setDrawColor(...red);
+  doc.setLineWidth(0.8);
+  doc.line(0, HEADER_H, 210, HEADER_H);
   if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 3, 3, 20, 20);
   const tx = logoDataUrl ? 27 : 14;
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(...dark);
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.text("USC Cremonese – Report Mensile", tx, 15);
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(140, 140, 140);
   doc.text(oggi, 196, 15, { align: "right" });
 
   // Titolo periodo
