@@ -134,17 +134,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Fisioterapista</Label>
-              <Input className="mt-1" value={form.fisioterapista} onChange={(e) => f("fisioterapista", e.target.value)} placeholder="Es. Dott. Conti" />
-            </div>
-            <div>
-              <Label>Preparatore atletico</Label>
-              <Input className="mt-1" value={form.preparatoreAtletico} onChange={(e) => f("preparatoreAtletico", e.target.value)} placeholder="Es. Sig. Rossi" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
               <Label>Telefono</Label>
               <Input className="mt-1" value={form.telefono} onChange={(e) => f("telefono", e.target.value)} placeholder="+39 333 0000000" />
             </div>
