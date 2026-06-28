@@ -63,14 +63,17 @@ export default function AtletiPage() {
         // Se l'atleta passa da Infortunato a Disponibile, archivia l'infortunio corrente
         if (editAtleta.stato === "Infortunato" && dati.stato === "Disponibile") {
           const fineRehab = dati.fineRehab ?? new Date().toISOString().slice(0, 10);
-          if (editAtleta.infortunio || editAtleta.inizioRehab) {
+          const diagnosi = dati.infortunio || editAtleta.infortunio;
+          const inizioRehab = dati.inizioRehab || editAtleta.inizioRehab;
+          const tipo = dati.tipoInfortunio || editAtleta.tipoInfortunio;
+          if (diagnosi || inizioRehab) {
             const inf: InfortunioStorico = {
               id: uid(),
-              tipo: editAtleta.tipoInfortunio,
-              diagnosi: editAtleta.infortunio || "—",
-              inizioRehab: editAtleta.inizioRehab,
+              tipo,
+              diagnosi: diagnosi || "—",
+              inizioRehab: inizioRehab || "",
               fineRehab,
-              note: editAtleta.note || undefined,
+              note: dati.note || editAtleta.note || undefined,
             };
             aggiornato = {
               ...aggiornato,
