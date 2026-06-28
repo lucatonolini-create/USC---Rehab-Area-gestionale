@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2 } from "lucide-react";
+import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 import {
   loadAtleti, upsertAtleta, deleteAtleta, uid,
-  CATEGORIE, calcolaPHV, type Atleta, type Stato,
+  CATEGORIE, calcolaPHV, type Atleta, type Stato, type InfortunioStorico,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
@@ -20,7 +20,13 @@ const FILTRI_STATO: { label: string; value: Stato | "Tutti" }[] = [
   { label: "Disponibile", value: "Disponibile" },
 ];
 
-type Tab = "dati" | "cartella";
+type Tab = "dati" | "cartella" | "storia";
+
+function giorniPersi(inizio: string, fine: string): number {
+  if (!inizio || !fine) return 0;
+  const ms = new Date(fine).getTime() - new Date(inizio).getTime();
+  return Math.max(0, Math.round(ms / 864e5));
+}
 
 export default function AtletiPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
@@ -35,6 +41,20 @@ export default function AtletiPage() {
 
   const apriNuovo = () => { setEditAtleta(undefined); setMostraForm(true); setSelected(null); };
   const apriModifica = (a: Atleta) => { setEditAtleta(a); setMostraForm(true); };
+
+  const apriNuovoInfortunio = (a: Atleta) => {
+    const template: Atleta = {
+      ...a,
+      stato: "Infortunato",
+      infortunio: "",
+      tipoInfortunio: undefined,
+      inizioRehab: "",
+      fineRehab: undefined,
+      progresso: 0,
+    };
+    setEditAtleta(template);
+    setMostraForm(true);
+  };
 
   const onSalvaAtleta = async (dati: Omit<Atleta, "id">) => {
     try {
@@ -234,13 +254,20 @@ export default function AtletiPage() {
               </span>
             </div>
 
-            <div className="flex mt-4 bg-gray-100 rounded-xl p-1">
-              {(["dati", "cartella"] as Tab[]).map((t) => (
+            {selected.stato === "Disponibile" && (
+              <button onClick={() => apriNuovoInfortunio(selected)}
+                className="mt-3 w-full flex items-center justify-center gap-2 bg-orange-500 text-white py-2 rounded-xl text-xs font-semibold hover:bg-orange-600 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Nuovo infortunio
+              </button>
+            )}
+
+            <div className="flex mt-3 bg-gray-100 rounded-xl p-1">
+              {(["dati", "cartella", "storia"] as Tab[]).map((t) => (
                 <button key={t} onClick={() => setTab(t)}
                   className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-all ${
                     tab === t ? "bg-white shadow-sm text-gray-900" : "text-gray-500"
                   }`}>
-                  {t === "dati" ? "Dati personali" : "Cartella clinica"}
+                  {t === "dati" ? "Dati" : t === "cartella" ? "Cartella" : "Storico"}
                 </button>
               ))}
             </div>
@@ -353,8 +380,105 @@ export default function AtletiPage() {
                   </div>
                 )}
               </div>
-            ) : (
+            ) : tab === "cartella" ? (
               <CartellaClinaca atletaId={selected.id} />
+            ) : (
+              /* ── Storico infortuni ── */
+              (() => {
+                const storico = selected.storicoInfortuni ?? [];
+                const giorni = storico.map((inf) => giorniPersi(inf.inizioRehab, inf.fineRehab));
+                const totaleArchivio = giorni.reduce((s, g) => s + g, 0);
+                const giorniCorrente = selected.stato === "Infortunato" && selected.inizioRehab
+                  ? giorniPersi(selected.inizioRehab, new Date().toISOString().slice(0, 10))
+                  : 0;
+                const totale = totaleArchivio + giorniCorrente;
+
+                const fmtData = (d: string) =>
+                  d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
+
+                return (
+                  <div className="space-y-4 text-sm">
+                    {/* Riepilogo giorni persi */}
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
+                      <div>
+                        <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Giorni persi totali</p>
+                        <p className="text-2xl font-bold text-orange-600">{totale}</p>
+                      </div>
+                      <AlertTriangle className="w-8 h-8 text-orange-300" />
+                    </div>
+
+                    {/* Infortunio corrente */}
+                    {selected.stato === "Infortunato" && (selected.infortunio || selected.inizioRehab) && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">In corso</p>
+                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-gray-900">{selected.infortunio || "—"}</span>
+                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">
+                              {giorniCorrente} gg
+                            </span>
+                          </div>
+                          {selected.tipoInfortunio && (
+                            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block">{selected.tipoInfortunio}</span>
+                          )}
+                          <p className="text-xs text-gray-500">
+                            Inizio: {fmtData(selected.inizioRehab)}
+                            <span className="ml-2 text-orange-400 font-medium">· in corso</span>
+                          </p>
+                          <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden mt-1">
+                            <div className="h-full bg-orange-400 rounded-full" style={{ width: `${selected.progresso}%` }} />
+                          </div>
+                          <p className="text-xs text-gray-400 text-right">{selected.progresso}% recupero</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Storico archiviato */}
+                    {storico.length > 0 && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Infortuni precedenti</p>
+                        <div className="space-y-2">
+                          {[...storico].reverse().map((inf, i) => (
+                            <div key={inf.id} className="bg-gray-50 border border-gray-100 rounded-xl p-3 space-y-1.5">
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold text-gray-900">{inf.diagnosi}</span>
+                                <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-semibold">
+                                  {giorni[storico.length - 1 - i]} gg
+                                </span>
+                              </div>
+                              {inf.tipo && (
+                                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block">{inf.tipo}</span>
+                              )}
+                              <p className="text-xs text-gray-500">
+                                {fmtData(inf.inizioRehab)} → {fmtData(inf.fineRehab)}
+                              </p>
+                              {inf.note && <p className="text-xs text-gray-400 italic">{inf.note}</p>}
+                              <div className="flex items-center gap-1 text-green-600">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span className="text-xs font-medium">Recuperato</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {storico.length === 0 && selected.stato === "Disponibile" && (
+                      <div className="text-center py-10">
+                        <Clock className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm">Nessun infortunio in archivio</p>
+                      </div>
+                    )}
+
+                    {storico.length === 0 && selected.stato === "Infortunato" && !selected.infortunio && !selected.inizioRehab && (
+                      <div className="text-center py-10">
+                        <Clock className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm">Nessun dato disponibile</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()
             )}
           </div>
         </div>
