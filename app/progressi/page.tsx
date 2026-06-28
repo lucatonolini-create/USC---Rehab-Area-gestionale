@@ -44,8 +44,8 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
       ["Data", prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : ""],
       [""],
       ["ESERCIZI"],
-      ["#", "Esercizio", "Serie", "Reps/Durata", "RPE (0-10)", "VAS (0-10)", "Note"],
-      ...prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie, e.reps, e.rpe, e.vas, e.note]),
+      ["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS (0-10)", "Note"],
+      ...prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie, e.reps, e.carico, e.rir, e.vas, e.note]),
     ];
     if (prog.tests?.length) {
       rows.push([""], ["TEST FISIOMETRICI E DI PERFORMANCE"]);
@@ -129,8 +129,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
 
     autoTable(doc, {
       startY: 26,
-      head: [["#", "Esercizio", "Serie", "Reps/Durata", "RPE", "VAS", "Note"]],
-      body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.rpe ? `${e.rpe}/10` : "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]),
+      head: [["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS", "Note"]],
+      body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]),
       headStyles: { fillColor: dark, textColor: 255 },
       alternateRowStyles: { fillColor: [248, 248, 248] },
       margin: { left: 14, right: 14 },

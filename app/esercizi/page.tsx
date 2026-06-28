@@ -8,7 +8,7 @@ import {
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico,
 } from "@/lib/store";
 
-const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", rpe: "", vas: "", note: "" };
+const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
 const caricoVuoto: Carico = { interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
 
@@ -235,30 +235,17 @@ export default function EserciziPage() {
                                       )}
                                     </div>
                                   </div>
-                                  <div className="grid grid-cols-2 gap-4">
-                                    {es.rpe && (
-                                      <div>
-                                        <p className="text-xs text-gray-400 mb-1">RPE</p>
-                                        <div className="flex items-center gap-2">
-                                          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                            <div className="h-full bg-orange-400 rounded-full" style={{ width: `${(Number(es.rpe) / 10) * 100}%` }} />
-                                          </div>
-                                          <span className="text-xs font-bold text-orange-500">{es.rpe}/10</span>
+                                  {es.vas && (
+                                    <div className="mt-2">
+                                      <p className="text-xs text-gray-400 mb-1">VAS</p>
+                                      <div className="flex items-center gap-2">
+                                        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                          <div className="h-full bg-red-400 rounded-full" style={{ width: `${(Number(es.vas) / 10) * 100}%` }} />
                                         </div>
+                                        <span className="text-xs font-bold text-red-500">{es.vas}/10</span>
                                       </div>
-                                    )}
-                                    {es.vas && (
-                                      <div>
-                                        <p className="text-xs text-gray-400 mb-1">VAS</p>
-                                        <div className="flex items-center gap-2">
-                                          <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                            <div className="h-full bg-red-400 rounded-full" style={{ width: `${(Number(es.vas) / 10) * 100}%` }} />
-                                          </div>
-                                          <span className="text-xs font-bold text-red-500">{es.vas}/10</span>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
+                                    </div>
+                                  )}
                                   {es.note && <p className="text-xs text-gray-500 mt-2 italic">{es.note}</p>}
                                 </div>
                               ))}
@@ -458,8 +445,7 @@ export default function EserciziPage() {
                           <input value={es.rir} onChange={(e) => aggiornaEs(i, "rir", e.target.value)} placeholder="RIR (es. 2)"
                             className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                         </div>
-                        <div className="grid grid-cols-2 gap-4 pt-1">
-                          <ScaleInput label={`RPE: ${es.rpe || 0}/10`} value={es.rpe} max={10} onChange={(v) => aggiornaEs(i, "rpe", v)} color="text-orange-500" />
+                        <div className="pt-1">
                           <ScaleInput label={`VAS: ${es.vas || 0}/10`} value={es.vas} max={10} onChange={(v) => aggiornaEs(i, "vas", v)} color="text-red-500" />
                         </div>
                         <input value={es.note} onChange={(e) => aggiornaEs(i, "note", e.target.value)} placeholder="Note sull'esercizio"

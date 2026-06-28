@@ -68,7 +68,6 @@ export interface Esercizio {
   reps: string;
   carico: string;
   rir: string;
-  rpe: string;
   vas: string;
   note: string;
 }
