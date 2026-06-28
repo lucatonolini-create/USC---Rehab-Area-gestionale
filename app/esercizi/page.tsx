@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, saveProgrammi, uid,
+  loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid,
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico,
 } from "@/lib/store";
 
@@ -83,11 +83,9 @@ export default function EserciziPage() {
   const gpsInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setAtleti(loadAtleti());
-    setProgrammi(loadProgrammi());
+    loadAtleti().then(setAtleti);
+    loadProgrammi().then(setProgrammi);
   }, []);
-
-  const salva = (nuovi: Programma[]) => { setProgrammi(nuovi); saveProgrammi(nuovi); };
 
   const apriNuovo = () => {
     setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [{ ...esVuoto }], tests: [], carico: { ...caricoVuoto } });
@@ -100,18 +98,19 @@ export default function EserciziPage() {
     setEditId(id); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
-  const salvaProgramma = () => {
+  const salvaProgramma = async () => {
     if (!form.atletaId || !form.nome.trim()) return;
     const pulito = { ...form, esercizi: form.esercizi.filter((e) => e.nome.trim()), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
-    if (editId) {
-      salva(programmi.map((p) => (p.id === editId ? { ...pulito, id: editId } : p)));
-    } else {
-      salva([...programmi, { ...pulito, id: uid() }]);
-    }
+    const prog: Programma = editId ? { ...pulito, id: editId } : { ...pulito, id: uid() };
+    setProgrammi((prev) => editId ? prev.map((p) => p.id === editId ? prog : p) : [...prev, prog]);
+    await upsertProgramma(prog);
     setMostraForm(false);
   };
 
-  const eliminaProgramma = (id: string) => salva(programmi.filter((p) => p.id !== id));
+  const eliminaProgramma = async (id: string) => {
+    setProgrammi((prev) => prev.filter((p) => p.id !== id));
+    await deleteProgramma(id);
+  };
 
   // Esercizi
   const aggiungiEs = () => setForm({ ...form, esercizi: [...form.esercizi, { ...esVuoto }] });

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Download, FileText, Calendar, Filter } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, saveAtleti,
+  loadAtleti, loadProgrammi, upsertAtleta,
   CATEGORIE, type Atleta, type Stato, type Programma,
 } from "@/lib/store";
 
@@ -186,21 +186,23 @@ export default function ProgressiPage() {
   const [filtroInf, setFiltroInf] = useState("");
 
   useEffect(() => {
-    setAtleti(loadAtleti());
-    setProgrammi(loadProgrammi());
+    loadAtleti().then(setAtleti);
+    loadProgrammi().then(setProgrammi);
   }, []);
 
   const aggiorna = (id: string, campo: keyof Atleta, valore: string | number) => {
+    let updatedAtleta: Atleta | undefined;
     const nuovi = atleti.map((a) => {
       if (a.id !== id) return a;
       const updated = { ...a, [campo]: valore };
       if (campo === "stato" && valore === "Guarito" && !a.fineRehab) {
         updated.fineRehab = new Date().toISOString().slice(0, 10);
       }
+      updatedAtleta = updated;
       return updated;
     });
     setAtleti(nuovi);
-    saveAtleti(nuovi);
+    if (updatedAtleta) upsertAtleta(updatedAtleta);
   };
 
   const handleExport = async (atleta: Atleta, tipo: "excel" | "pdf") => {

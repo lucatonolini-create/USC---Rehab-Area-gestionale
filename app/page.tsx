@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Activity, TrendingUp, Dumbbell, ChevronRight, X } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, saveAtleti,
+  loadAtleti, loadProgrammi, upsertAtleta,
   CATEGORIE, type Atleta, type Programma, type Stato,
 } from "@/lib/store";
 import Link from "next/link";
@@ -25,12 +25,12 @@ export default function Dashboard() {
   const [mostraModifica, setMostraModifica] = useState(false);
 
   useEffect(() => {
-    setAtleti(loadAtleti());
-    setProgrammi(loadProgrammi());
+    loadAtleti().then(setAtleti);
+    loadProgrammi().then(setProgrammi);
   }, []);
 
   const aggiornaDopo = () => {
-    setAtleti(loadAtleti());
+    loadAtleti().then(setAtleti);
     setAtletaSelezionato(null);
     setMostraModifica(false);
   };
@@ -235,9 +235,8 @@ export default function Dashboard() {
       {mostraModifica && atletaSelezionato && (
         <AtletaModal
           atletaIniziale={atletaSelezionato}
-          onSalva={(dati) => {
-            const tutti = loadAtleti();
-            saveAtleti(tutti.map((a) => a.id === atletaSelezionato.id ? { ...dati, id: atletaSelezionato.id } : a));
+          onSalva={async (dati) => {
+            await upsertAtleta({ ...dati, id: atletaSelezionato.id });
             aggiornaDopo();
           }}
           onChiudi={() => setMostraModifica(false)}

@@ -429,8 +429,8 @@ export default function AnalisiPage() {
   const [filtroInf, setFiltroInf] = useState("");
 
   useEffect(() => {
-    setAtleti(loadAtleti());
-    setProgrammi(loadProgrammi());
+    loadAtleti().then(setAtleti);
+    loadProgrammi().then(setProgrammi);
   }, []);
 
   const attivi = atleti.filter((a) => a.stato !== "Guarito");

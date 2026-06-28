@@ -54,10 +54,10 @@ export default function ImpostazioniPage() {
   });
   const [salvato, setSalvato] = useState(false);
 
-  useEffect(() => { setForm(loadImpostazioni()); }, []);
+  useEffect(() => { loadImpostazioni().then(setForm); }, []);
 
-  const salva = () => {
-    saveImpostazioni(form);
+  const salva = async () => {
+    await saveImpostazioni(form);
     setSalvato(true);
     setTimeout(() => setSalvato(false), 2000);
   };

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2 } from "lucide-react";
 import {
-  loadAtleti, saveAtleti, uid,
+  loadAtleti, upsertAtleta, deleteAtleta, uid,
   CATEGORIE, type Atleta, type Stato,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
@@ -33,28 +33,29 @@ export default function AtletiPage() {
   const [mostraForm, setMostraForm] = useState(false);
   const [editAtleta, setEditAtleta] = useState<Atleta | undefined>(undefined);
 
-  useEffect(() => { setAtleti(loadAtleti()); }, []);
-
-  const salva = (nuovi: Atleta[]) => { setAtleti(nuovi); saveAtleti(nuovi); };
+  useEffect(() => { loadAtleti().then(setAtleti); }, []);
 
   const apriNuovo = () => { setEditAtleta(undefined); setMostraForm(true); setSelected(null); };
   const apriModifica = (a: Atleta) => { setEditAtleta(a); setMostraForm(true); };
 
-  const onSalvaAtleta = (dati: Omit<Atleta, "id">) => {
+  const onSalvaAtleta = async (dati: Omit<Atleta, "id">) => {
     if (editAtleta) {
-      const nuovi = atleti.map((a) => a.id === editAtleta.id ? { ...dati, id: editAtleta.id } : a);
-      salva(nuovi);
-      setSelected(nuovi.find((a) => a.id === editAtleta.id) ?? null);
+      const aggiornato = { ...dati, id: editAtleta.id };
+      setAtleti((prev) => prev.map((a) => a.id === editAtleta.id ? aggiornato : a));
+      setSelected(aggiornato);
+      await upsertAtleta(aggiornato);
     } else {
       const nuovo = { ...dati, id: uid() };
-      salva([...atleti, nuovo]);
+      setAtleti((prev) => [...prev, nuovo]);
+      await upsertAtleta(nuovo);
     }
     setMostraForm(false);
   };
 
-  const elimina = (id: string) => {
-    salva(atleti.filter((a) => a.id !== id));
+  const elimina = async (id: string) => {
+    setAtleti((prev) => prev.filter((a) => a.id !== id));
     if (selected?.id === id) setSelected(null);
+    await deleteAtleta(id);
   };
 
   const filtered = atleti.filter((a) => {
