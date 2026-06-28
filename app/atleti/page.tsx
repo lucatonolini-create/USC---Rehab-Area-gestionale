@@ -39,17 +39,21 @@ export default function AtletiPage() {
   const apriModifica = (a: Atleta) => { setEditAtleta(a); setMostraForm(true); };
 
   const onSalvaAtleta = async (dati: Omit<Atleta, "id">) => {
-    if (editAtleta) {
-      const aggiornato = { ...dati, id: editAtleta.id };
-      setAtleti((prev) => prev.map((a) => a.id === editAtleta.id ? aggiornato : a));
-      setSelected(aggiornato);
-      await upsertAtleta(aggiornato);
-    } else {
-      const nuovo = { ...dati, id: uid() };
-      setAtleti((prev) => [...prev, nuovo]);
-      await upsertAtleta(nuovo);
+    try {
+      if (editAtleta) {
+        const aggiornato = { ...dati, id: editAtleta.id };
+        setAtleti((prev) => prev.map((a) => a.id === editAtleta.id ? aggiornato : a));
+        setSelected(aggiornato);
+        await upsertAtleta(aggiornato);
+      } else {
+        const nuovo = { ...dati, id: uid() };
+        setAtleti((prev) => [...prev, nuovo]);
+        await upsertAtleta(nuovo);
+      }
+      setMostraForm(false);
+    } catch (err: any) {
+      alert(`Errore nel salvataggio: ${err.message}`);
     }
-    setMostraForm(false);
   };
 
   const elimina = async (id: string) => {

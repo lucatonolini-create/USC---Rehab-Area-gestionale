@@ -260,7 +260,8 @@ export async function loadAtleti(): Promise<Atleta[]> {
 }
 
 export async function upsertAtleta(a: Atleta): Promise<void> {
-  await supabase.from("atleti").upsert(atletaToRow(a));
+  const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteAtleta(id: string): Promise<void> {
