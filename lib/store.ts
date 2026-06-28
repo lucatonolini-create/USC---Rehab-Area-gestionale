@@ -72,6 +72,27 @@ export interface Esercizio {
   note: string;
 }
 
+export const TIPI_ESERCIZIO_CAMPO = [
+  "CCVV",
+  "Intermittente",
+  "Corsa continua",
+  "Metabolico",
+  "Sprint",
+  "COD",
+  "Lavoro neuromuscolare",
+  "Lavoro tecnico",
+  "HSR",
+  "RSA",
+] as const;
+export type TipoEsercizioCampo = (typeof TIPI_ESERCIZIO_CAMPO)[number];
+
+export interface EsercizioCampo {
+  tipo: TipoEsercizioCampo | "";
+  serie: string;
+  durata: string;
+  descrizione: string;
+}
+
 export const TESTS_PREDEFINITI = [
   // Hop
   "Single Leg Hop Test",
@@ -155,6 +176,7 @@ export interface Programma {
   fase: string;
   data: string;
   esercizi: Esercizio[];
+  esercizicampo?: EsercizioCampo[];
   tests: TestFisiometrico[];
   carico: Carico;
 }
@@ -232,6 +254,7 @@ function rowToProgramma(r: Record<string, any>): Programma {
     fase: r.fase ?? "",
     data: r.data,
     esercizi: r.esercizi ?? [],
+    esercizicampo: r.esercizicampo ?? [],
     tests: r.tests ?? [],
     carico: r.carico ?? { ...defaultCarico },
   };
@@ -245,6 +268,7 @@ function programmaToRow(p: Programma): Record<string, any> {
     fase: p.fase,
     data: p.data,
     esercizi: p.esercizi,
+    esercizicampo: p.esercizicampo ?? [],
     tests: p.tests,
     carico: p.carico,
   };

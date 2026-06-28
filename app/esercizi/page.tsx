@@ -1,21 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid,
-  TESTS_PREDEFINITI,
-  type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico,
+  TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO,
+  type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo,
 } from "@/lib/store";
 
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
 const caricoVuoto: Carico = { rpe: "", interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
+const campoVuoto: EsercizioCampo = { tipo: "", serie: "", durata: "", descrizione: "" };
 
 const progVuoto: Omit<Programma, "id"> = {
   atletaId: "", nome: "", fase: "",
   data: new Date().toISOString().slice(0, 10),
   esercizi: [{ ...esVuoto }],
+  esercizicampo: [],
   tests: [],
   carico: { ...caricoVuoto },
 };
@@ -76,7 +78,7 @@ function parseGpsCsv(text: string): Partial<Carico> {
   };
 }
 
-type FormSection = "esercizi" | "test" | "carico";
+type FormSection = "esercizi" | "campo" | "test" | "carico";
 
 export default function EserciziPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
@@ -95,19 +97,19 @@ export default function EserciziPage() {
   }, []);
 
   const apriNuovo = () => {
-    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [{ ...esVuoto }], tests: [], carico: { ...caricoVuoto } });
+    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [{ ...esVuoto }], esercizicampo: [], tests: [], carico: { ...caricoVuoto } });
     setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
   const apriModifica = (p: Programma) => {
     const { id, ...rest } = p;
-    setForm({ ...rest, esercizi: rest.esercizi.map((e) => ({ ...e })), tests: (rest.tests ?? []).map((t) => ({ ...t })), carico: rest.carico ?? { ...caricoVuoto } });
+    setForm({ ...rest, esercizi: rest.esercizi.map((e) => ({ ...e })), esercizicampo: (rest.esercizicampo ?? []).map((c) => ({ ...c })), tests: (rest.tests ?? []).map((t) => ({ ...t })), carico: rest.carico ?? { ...caricoVuoto } });
     setEditId(id); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
   const salvaProgramma = async () => {
     if (!form.atletaId || !form.nome.trim()) return;
-    const pulito = { ...form, esercizi: form.esercizi.filter((e) => e.nome.trim()), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
+    const pulito = { ...form, esercizi: form.esercizi.filter((e) => e.nome.trim()), esercizicampo: (form.esercizicampo ?? []).filter((c) => c.tipo), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
     const prog: Programma = editId ? { ...pulito, id: editId } : { ...pulito, id: uid() };
     setProgrammi((prev) => editId ? prev.map((p) => p.id === editId ? prog : p) : [...prev, prog]);
     await upsertProgramma(prog);
@@ -124,6 +126,14 @@ export default function EserciziPage() {
   const rimuoviEs = (i: number) => setForm({ ...form, esercizi: form.esercizi.filter((_, idx) => idx !== i) });
   const aggiornaEs = (i: number, campo: keyof Esercizio, val: string) => {
     setForm({ ...form, esercizi: form.esercizi.map((e, idx) => idx === i ? { ...e, [campo]: val } : e) });
+  };
+
+  // Esercizi in campo
+  const esercizicampo = form.esercizicampo ?? [];
+  const aggiungiCampo = () => setForm({ ...form, esercizicampo: [...esercizicampo, { ...campoVuoto }] });
+  const rimuoviCampo = (i: number) => setForm({ ...form, esercizicampo: esercizicampo.filter((_, idx) => idx !== i) });
+  const aggiornaCampo = (i: number, campo: keyof EsercizioCampo, val: string) => {
+    setForm({ ...form, esercizicampo: esercizicampo.map((c, idx) => idx === i ? { ...c, [campo]: val } : c) });
   };
 
   // Test
@@ -206,6 +216,7 @@ export default function EserciziPage() {
                         <p className="text-xs text-gray-400">
                           {prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : ""} ·{" "}
                           {prog.esercizi.length} esercizi
+                          {prog.esercizicampo?.length ? ` · ${prog.esercizicampo.length} in campo` : ""}
                           {prog.tests?.length ? ` · ${prog.tests.length} test` : ""}
                         </p>
                       </div>
@@ -247,6 +258,29 @@ export default function EserciziPage() {
                                     </div>
                                   )}
                                   {es.note && <p className="text-xs text-gray-500 mt-2 italic">{es.note}</p>}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Esercizi in campo */}
+                        {prog.esercizicampo && prog.esercizicampo.length > 0 && (
+                          <div className="mb-4">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                              <Footprints className="w-3.5 h-3.5" /> Esercizi in campo
+                            </p>
+                            <div className="space-y-2">
+                              {prog.esercizicampo.map((c, i) => (
+                                <div key={i} className="bg-green-50 border border-green-100 rounded-xl p-3">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <p className="font-semibold text-gray-900 text-sm">{c.tipo}</p>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      {c.serie && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{c.serie} serie</span>}
+                                      {c.durata && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{c.durata}</span>}
+                                    </div>
+                                  </div>
+                                  {c.descrizione && <p className="text-xs text-gray-500 mt-1.5 italic">{c.descrizione}</p>}
                                 </div>
                               ))}
                             </div>
@@ -405,13 +439,16 @@ export default function EserciziPage() {
               {/* Tab selector */}
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
                 <button className={tabClass("esercizi")} onClick={() => setSezioneAttiva("esercizi")}>
-                  <span className="flex items-center justify-center gap-1"><Dumbbell className="w-3.5 h-3.5" /> Esercizi ({form.esercizi.length})</span>
+                  <span className="flex items-center justify-center gap-1"><Dumbbell className="w-3.5 h-3.5" /> Palestra ({form.esercizi.length})</span>
+                </button>
+                <button className={tabClass("campo")} onClick={() => setSezioneAttiva("campo")}>
+                  <span className="flex items-center justify-center gap-1"><Footprints className="w-3.5 h-3.5" /> Campo ({esercizicampo.length})</span>
                 </button>
                 <button className={tabClass("test")} onClick={() => setSezioneAttiva("test")}>
                   <span className="flex items-center justify-center gap-1"><FlaskConical className="w-3.5 h-3.5" /> Test ({tests.length})</span>
                 </button>
                 <button className={tabClass("carico")} onClick={() => setSezioneAttiva("carico")}>
-                  <span className="flex items-center justify-center gap-1"><Gauge className="w-3.5 h-3.5" /> Carico GPS</span>
+                  <span className="flex items-center justify-center gap-1"><Gauge className="w-3.5 h-3.5" /> GPS</span>
                 </button>
               </div>
 
@@ -466,6 +503,58 @@ export default function EserciziPage() {
                     />
                     <p className="text-xs text-orange-400 mt-2">Valutazione dello sforzo percepito a fine seduta</p>
                   </div>
+                </div>
+              )}
+
+              {/* Sezione Campo */}
+              {sezioneAttiva === "campo" && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi in campo</label>
+                    <button onClick={aggiungiCampo} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
+                  </div>
+                  {esercizicampo.length === 0 ? (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      <Footprints className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                      Nessun esercizio in campo. Clicca "+ Aggiungi" per inserirne uno.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {esercizicampo.map((c, i) => {
+                        const inp = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white";
+                        return (
+                          <div key={i} className="bg-gray-50 rounded-xl p-4 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{i + 1}</span>
+                              <select value={c.tipo} onChange={(e) => aggiornaCampo(i, "tipo", e.target.value)}
+                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
+                                <option value="">Seleziona tipo...</option>
+                                {TIPI_ESERCIZIO_CAMPO.map((t) => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                              <button onClick={() => rimuoviCampo(i)} className="text-gray-300 hover:text-red-400 shrink-0">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Serie</p>
+                                <input value={c.serie} onChange={(e) => aggiornaCampo(i, "serie", e.target.value)} placeholder="Es. 4" className={inp} />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">Durata</p>
+                                <input value={c.durata} onChange={(e) => aggiornaCampo(i, "durata", e.target.value)} placeholder="Es. 30'' / 5'" className={inp} />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Descrizione</p>
+                              <input value={c.descrizione} onChange={(e) => aggiornaCampo(i, "descrizione", e.target.value)}
+                                placeholder="Es. 3×10'' lavoro a 90% VMax con recupero 30''" className={inp} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
 
