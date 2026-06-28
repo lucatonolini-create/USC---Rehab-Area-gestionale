@@ -185,7 +185,6 @@ export default function Dashboard() {
                 ["Piede dominante", atletaSelezionato.piedeDominante || "—"],
                 ["Infortunio", atletaSelezionato.infortunio || "—"],
                 ["Inizio riabilitazione", atletaSelezionato.inizioRehab ? new Date(atletaSelezionato.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
-                ["Fisioterapista", atletaSelezionato.fisioterapista || "—"],
               ].map(([label, value]) => (
                 <div key={label} className="bg-gray-50 rounded-xl p-3">
                   <p className="text-xs text-gray-400">{label}</p>
