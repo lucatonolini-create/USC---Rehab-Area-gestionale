@@ -228,7 +228,7 @@ export default function EserciziPage() {
                         {/* Esercizi */}
                         {prog.esercizi.length > 0 && (
                           <div className="mb-4">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Esercizi</p>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Palestra</p>
                             <div className="space-y-3">
                               {prog.esercizi.map((es, i) => (
                                 <div key={i} className="bg-gray-50 rounded-xl p-4">
@@ -456,7 +456,7 @@ export default function EserciziPage() {
               {sezioneAttiva === "esercizi" && (
                 <div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Palestra</label>
                     <button onClick={aggiungiEs} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
                   </div>
                   <div className="space-y-4">
