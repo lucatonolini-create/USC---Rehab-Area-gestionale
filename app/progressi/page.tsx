@@ -445,10 +445,10 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
       `${a.progresso}%`,
     ]),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
+    bodyStyles: { fontSize: 8, cellPadding: 2.5 },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
-    columnStyles: { 0: { cellWidth: 36 }, 1: { cellWidth: 22 }, 2: { cellWidth: 42 }, 3: { cellWidth: 26 }, 4: { cellWidth: 18, halign: "center" }, 5: { cellWidth: 18, halign: "center" }, 6: { cellWidth: 20, halign: "center" } },
+    columnStyles: { 0: { cellWidth: 36 }, 1: { cellWidth: 22 }, 2: { cellWidth: 50 }, 3: { cellWidth: 28 }, 4: { cellWidth: 18, halign: "center" }, 5: { cellWidth: 18, halign: "center" }, 6: { cellWidth: 10, halign: "center" } },
   });
 
   addFooter();

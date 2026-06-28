@@ -497,13 +497,13 @@ async function esportaPDFReport(
 ) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: "landscape" });
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
   const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
   const logoDataUrl = await getLogoDataUrl();
-  const M = 14; const W = 210; const H = 297; const HDR = 30;
+  const M = 14; const W = 297; const H = 210; const HDR = 30;
 
   const addHeader = () => {
     doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
@@ -579,18 +579,18 @@ async function esportaPDFReport(
       `${a.progresso}%`,
     ]),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize" },
+    bodyStyles: { fontSize: 8, cellPadding: 2.5 },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 35 },
-      1: { cellWidth: 17, halign: "center" },
-      2: { cellWidth: 26 },
-      3: { cellWidth: 40 },
-      4: { cellWidth: 22 },
-      5: { cellWidth: 17, halign: "center" },
-      6: { cellWidth: 17, halign: "center" },
-      7: { cellWidth: 8, halign: "center" },
+      0: { cellWidth: 42 },
+      1: { cellWidth: 24, halign: "center" },
+      2: { cellWidth: 58 },
+      3: { cellWidth: 55 },
+      4: { cellWidth: 28 },
+      5: { cellWidth: 20, halign: "center" },
+      6: { cellWidth: 20, halign: "center" },
+      7: { cellWidth: 22, halign: "center" },
     },
   });
 
