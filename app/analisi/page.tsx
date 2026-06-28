@@ -331,6 +331,7 @@ async function esportaPDFReport(
   mese: number,
   anno: number,
   filtroCat: string,
+  filtroTipoInf?: string,
 ) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
@@ -338,7 +339,7 @@ async function esportaPDFReport(
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
   const oggi = new Date().toLocaleDateString("it-IT");
-  const titolo = `${MESI_LUNGHI[mese]} ${anno}${filtroCat !== "Tutte" ? ` · ${filtroCat}` : ""}`;
+  const titolo = `${MESI_LUNGHI[mese]} ${anno}${filtroCat !== "Tutte" ? ` · ${filtroCat}` : ""}${filtroTipoInf ? ` · ${filtroTipoInf}` : ""}`;
 
   doc.setFillColor(...red);
   doc.rect(0, 0, 210, 22, "F");
@@ -426,7 +427,7 @@ export default function AnalisiPage() {
   const [reportAnno, setReportAnno] = useState(oggi.getFullYear());
   const [reportMese, setReportMese] = useState(oggi.getMonth());
   const [filtroCat, setFiltroCat] = useState("Tutte");
-  const [filtroInf, setFiltroInf] = useState("");
+  const [filtroTipoInf, setFiltroTipoInf] = useState("Tutti");
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -478,7 +479,7 @@ export default function AnalisiPage() {
   const atletiMese = atleti.filter((a) => {
     if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
     if (filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
-    if (filtroInf && !(a.infortunio ?? "").toLowerCase().includes(filtroInf.toLowerCase())) return false;
+    if (filtroTipoInf !== "Tutti" && a.tipoInfortunio !== filtroTipoInf) return false;
     return true;
   });
 
@@ -497,8 +498,8 @@ export default function AnalisiPage() {
         if (tipo === "excel") await esportaExcelPanoramica(params);
         else await esportaPDFPanoramica(params);
       } else {
-        if (tipo === "excel") await esportaExcelReport(atletiMese, reportMese, reportAnno, filtroCat, filtroInf);
-        else await esportaPDFReport(atletiMese, reportMese, reportAnno, filtroCat);
+        if (tipo === "excel") await esportaExcelReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "");
+        else await esportaPDFReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "");
       }
     } finally {
       setEsportando(null);
@@ -700,9 +701,11 @@ export default function AnalisiPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Tipo infortunio</label>
-                <input value={filtroInf} onChange={(e) => setFiltroInf(e.target.value)}
-                  placeholder="Es. LCA, menisco…"
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                <select value={filtroTipoInf} onChange={(e) => setFiltroTipoInf(e.target.value)}
+                  className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
+                  <option value="Tutti">Tutti</option>
+                  {TIPI_INFORTUNIO.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
               </div>
             </div>
           </div>
@@ -726,6 +729,7 @@ export default function AnalisiPage() {
               <h2 className="font-bold text-gray-900">
                 {MESI_LUNGHI[reportMese]} {reportAnno}
                 {filtroCat !== "Tutte" && ` · ${filtroCat}`}
+                {filtroTipoInf !== "Tutti" && ` · ${filtroTipoInf}`}
               </h2>
               <span className="text-sm font-bold text-[#C8102E]">{atletiMese.length} atleti</span>
             </div>
