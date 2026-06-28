@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart2, Users, Activity, TrendingUp, Calendar } from "lucide-react";
-import { loadAtleti, loadProgrammi, CATEGORIE, type Atleta, type Programma } from "@/lib/store";
+import { loadAtleti, loadProgrammi, CATEGORIE, TIPI_INFORTUNIO, type Atleta, type Programma } from "@/lib/store";
 
 const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 
@@ -88,7 +88,22 @@ export default function AnalisiPage() {
     })).filter((x) => x.totale > 0);
   }, [atleti]);
 
-  // Per tipologia infortunio (top 8 tra attivi)
+  // Per categoria infortunio (usa tipoInfortunio se disponibile, altrimenti free-text)
+  const perTipoInfortunio = useMemo(() => {
+    const map: Record<string, number> = {};
+    TIPI_INFORTUNIO.forEach((t) => { map[t] = 0; });
+    atleti.forEach((a) => {
+      if (a.tipoInfortunio) {
+        map[a.tipoInfortunio] = (map[a.tipoInfortunio] ?? 0) + 1;
+      }
+    });
+    return Object.entries(map)
+      .filter(([, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([nome, count]) => ({ nome, count }));
+  }, [atleti]);
+
+  // Per diagnosi specifica (free text, top 8)
   const perInfortunio = useMemo(() => {
     const map: Record<string, number> = {};
     atleti.forEach((a) => {
@@ -115,6 +130,7 @@ export default function AnalisiPage() {
 
   const maxTrend = Math.max(...trendMensile.map((t) => t.count), 1);
   const maxCat = Math.max(...perCategoria.map((x) => x.totale), 1);
+  const maxTipo = Math.max(...perTipoInfortunio.map((x) => x.count), 1);
   const maxInf = Math.max(...perInfortunio.map((x) => x.count), 1);
 
   // Report mensile
@@ -192,19 +208,35 @@ export default function AnalisiPage() {
               )}
             </div>
 
-            {/* Tipologie infortunio */}
+            {/* Categorie infortunio */}
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h2 className="font-bold text-gray-900 mb-1">Tipologie di infortunio</h2>
-              <p className="text-xs text-gray-400 mb-5">Infortuni più frequenti (tutti gli atleti)</p>
-              {perInfortunio.length === 0 ? (
-                <p className="text-gray-400 text-sm text-center py-6">Nessun dato disponibile</p>
+              <h2 className="font-bold text-gray-900 mb-1">Categorie di infortunio</h2>
+              <p className="text-xs text-gray-400 mb-5">Distribuzione per tipo (muscolare, tendineo, osseo…)</p>
+              {perTipoInfortunio.length === 0 ? (
+                <div className="text-center py-6">
+                  <p className="text-gray-400 text-sm">Nessun dato ancora</p>
+                  <p className="text-gray-300 text-xs mt-1">Compila il "Tipo infortunio" nella scheda atleta</p>
+                </div>
               ) : (
                 <div className="space-y-3">
-                  {perInfortunio.map(({ nome, count }) => (
-                    <BarraOrizzontale key={nome} label={nome} value={count} max={maxInf}
-                      sub={count === 1 ? "1 atleta" : `${count} atleti`} />
+                  {perTipoInfortunio.map(({ nome, count }) => (
+                    <BarraOrizzontale key={nome} label={nome} value={count} max={maxTipo}
+                      color="bg-purple-500" sub={count === 1 ? "1 atleta" : `${count} atleti`} />
                   ))}
                 </div>
+              )}
+              {perInfortunio.length > 0 && (
+                <>
+                  <div className="border-t border-gray-100 mt-5 pt-5">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Diagnosi specifiche più frequenti</p>
+                    <div className="space-y-3">
+                      {perInfortunio.map(({ nome, count }) => (
+                        <BarraOrizzontale key={nome} label={nome} value={count} max={maxInf}
+                          sub={count === 1 ? "1 atleta" : `${count} atleti`} />
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           </div>

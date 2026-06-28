@@ -8,6 +8,18 @@ export type Categoria = (typeof CATEGORIE)[number];
 export const PIEDI = ["Destro", "Sinistro", "Ambidestro"] as const;
 export type Piede = (typeof PIEDI)[number];
 
+export const TIPI_INFORTUNIO = [
+  "Muscolare",
+  "Articolare-Legamentoso",
+  "Cartilagineo",
+  "Tendineo",
+  "Osseo",
+  "Cutaneo",
+  "Concussion",
+  "Altro",
+] as const;
+export type TipoInfortunio = (typeof TIPI_INFORTUNIO)[number];
+
 export interface Atleta {
   id: string;
   nome: string;
@@ -15,6 +27,7 @@ export interface Atleta {
   categoria: Categoria;
   posizione: string;
   piedeDominante: Piede;
+  tipoInfortunio?: TipoInfortunio;
   infortunio: string;
   inizioRehab: string;
   fineRehab?: string;

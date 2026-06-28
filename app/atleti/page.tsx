@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, Trash2, User, ChevronRight, Phone, Mail } from "lucide-react";
+import { Plus, Search, User, ChevronRight, Phone, Mail } from "lucide-react";
 import {
   loadAtleti, saveAtleti, uid,
   CATEGORIE, type Atleta, type Stato,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
-import dynamic from "next/dynamic";
 
 const statoColor: Record<Stato, string> = {
   "In recupero":  "bg-blue-100 text-blue-700",
@@ -16,11 +15,19 @@ const statoColor: Record<Stato, string> = {
   "Guarito":      "bg-gray-100 text-gray-600",
 };
 
+const FILTRI_STATO: { label: string; value: Stato | "Tutti" }[] = [
+  { label: "Tutti", value: "Tutti" },
+  { label: "In recupero", value: "In recupero" },
+  { label: "Quasi guarito", value: "Quasi guarito" },
+  { label: "Guarito", value: "Guarito" },
+];
+
 type Tab = "dati" | "cartella";
 
 export default function AtletiPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [search, setSearch] = useState("");
+  const [filtroStato, setFiltroStato] = useState<Stato | "Tutti">("Tutti");
   const [selected, setSelected] = useState<Atleta | null>(null);
   const [tab, setTab] = useState<Tab>("dati");
   const [mostraForm, setMostraForm] = useState(false);
@@ -50,17 +57,24 @@ export default function AtletiPage() {
     if (selected?.id === id) setSelected(null);
   };
 
-  const filtered = atleti.filter(
-    (a) => a.nome.toLowerCase().includes(search.toLowerCase()) ||
-           (a.infortunio ?? "").toLowerCase().includes(search.toLowerCase()) ||
-           a.categoria.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = atleti.filter((a) => {
+    const matchSearch =
+      a.nome.toLowerCase().includes(search.toLowerCase()) ||
+      (a.infortunio ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (a.tipoInfortunio ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      a.categoria.toLowerCase().includes(search.toLowerCase());
+    const matchStato = filtroStato === "Tutti" || a.stato === filtroStato;
+    return matchSearch && matchStato;
+  });
 
   const perCategoria: Record<string, Atleta[]> = {};
   CATEGORIE.forEach((cat) => {
     const lista = filtered.filter((a) => a.categoria === cat);
     if (lista.length > 0) perCategoria[cat] = lista;
   });
+
+  const countPerStato = (s: Stato | "Tutti") =>
+    s === "Tutti" ? atleti.length : atleti.filter((a) => a.stato === s).length;
 
   return (
     <div className="flex h-full">
@@ -77,7 +91,8 @@ export default function AtletiPage() {
           </button>
         </div>
 
-        <div className="relative mb-6">
+        {/* Barra ricerca */}
+        <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input type="text" placeholder="Cerca per nome, infortunio o categoria..."
             value={search} onChange={(e) => setSearch(e.target.value)}
@@ -85,11 +100,35 @@ export default function AtletiPage() {
           />
         </div>
 
+        {/* Filtro per stato */}
+        <div className="flex gap-2 mb-6 flex-wrap">
+          {FILTRI_STATO.map(({ label, value }) => {
+            const count = countPerStato(value);
+            return (
+              <button key={value} onClick={() => setFiltroStato(value)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                  filtroStato === value
+                    ? "bg-[#C8102E] text-white shadow-sm"
+                    : "bg-white border border-gray-200 text-gray-500 hover:border-gray-300"
+                }`}>
+                {label}
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                  filtroStato === value ? "bg-white/20 text-white" : "bg-gray-100 text-gray-400"
+                }`}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {filtered.length === 0 ? (
           <div className="text-center py-20">
             <User className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg font-medium">Nessun atleta ancora</p>
-            <p className="text-gray-300 text-sm mt-1">Clicca "Nuovo Atleta" per aggiungerne uno</p>
+            <p className="text-gray-400 text-lg font-medium">
+              {atleti.length === 0 ? "Nessun atleta ancora" : "Nessun risultato"}
+            </p>
+            <p className="text-gray-300 text-sm mt-1">
+              {atleti.length === 0 ? "Clicca \"Nuovo Atleta\" per aggiungerne uno" : "Prova a modificare i filtri di ricerca"}
+            </p>
           </div>
         ) : (
           <div className="space-y-8">
@@ -107,33 +146,41 @@ export default function AtletiPage() {
                         selected?.id === atleta.id ? "border-[#C8102E] shadow-md" : "border-gray-100"
                       }`}>
                       <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                        <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${
+                          atleta.stato === "Guarito" ? "bg-gray-400" : "bg-[#2B2B2B]"
+                        }`}>
                           {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <p className="font-semibold text-gray-900">{atleta.nome}</p>
+                            <p className={`font-semibold ${atleta.stato === "Guarito" ? "text-gray-500" : "text-gray-900"}`}>{atleta.nome}</p>
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statoColor[atleta.stato]}`}>
                               {atleta.stato}
                             </span>
+                            {atleta.tipoInfortunio && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-medium">
+                                {atleta.tipoInfortunio}
+                              </span>
+                            )}
                           </div>
                           <p className="text-sm text-gray-400 truncate">
-                            {atleta.posizione}{atleta.piedeDominante ? ` · Piede ${atleta.piedeDominante}` : ""}
+                            {atleta.posizione}{atleta.infortunio ? ` · ${atleta.infortunio}` : ""}
                           </p>
                         </div>
                         <div className="text-right shrink-0">
-                          <p className="text-xl font-bold text-[#C8102E]">{atleta.progresso}%</p>
+                          <p className={`text-xl font-bold ${atleta.stato === "Guarito" ? "text-green-500" : "text-[#C8102E]"}`}>
+                            {atleta.progresso}%
+                          </p>
                         </div>
                         <ChevronRight className="w-4 h-4 text-gray-300" />
                       </div>
-                      {atleta.infortunio && (
+                      {atleta.infortunio && atleta.stato !== "Guarito" && (
                         <div className="mt-3">
                           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                             <div className={`h-full rounded-full ${
                               atleta.progresso >= 80 ? "bg-green-500" : atleta.progresso >= 50 ? "bg-yellow-400" : "bg-orange-500"
                             }`} style={{ width: `${atleta.progresso}%` }} />
                           </div>
-                          <p className="text-xs text-gray-400 mt-1">{atleta.infortunio}</p>
                         </div>
                       )}
                     </button>
@@ -148,7 +195,6 @@ export default function AtletiPage() {
       {/* Pannello dettaglio */}
       {selected && !mostraForm && (
         <div className="w-96 bg-white border-l border-gray-100 flex flex-col overflow-hidden">
-          {/* Header atleta */}
           <div className="p-5 border-b border-gray-100">
             <div className="flex items-start justify-between mb-3">
               <button onClick={() => setSelected(null)} className="text-gray-400 hover:text-gray-600 text-sm">✕</button>
@@ -165,7 +211,9 @@ export default function AtletiPage() {
             </div>
 
             <div className="text-center">
-              <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2 ${
+                selected.stato === "Guarito" ? "bg-gray-400" : "bg-[#2B2B2B]"
+              }`}>
                 {selected.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
               </div>
               <h2 className="font-bold text-gray-900 text-lg">{selected.nome}</h2>
@@ -175,7 +223,6 @@ export default function AtletiPage() {
               </span>
             </div>
 
-            {/* Tab switcher */}
             <div className="flex mt-4 bg-gray-100 rounded-xl p-1">
               {(["dati", "cartella"] as Tab[]).map((t) => (
                 <button key={t} onClick={() => setTab(t)}
@@ -188,15 +235,21 @@ export default function AtletiPage() {
             </div>
           </div>
 
-          {/* Contenuto tab */}
           <div className="flex-1 overflow-y-auto p-5">
             {tab === "dati" ? (
               <div className="space-y-2.5 text-sm">
+                {selected.tipoInfortunio && (
+                  <div className="bg-purple-50 rounded-xl p-3 border border-purple-100">
+                    <p className="text-xs text-purple-500">Tipo infortunio</p>
+                    <p className="font-semibold text-purple-900">{selected.tipoInfortunio}</p>
+                  </div>
+                )}
                 {[
                   ["Data di nascita", selected.dataNascita ? new Date(selected.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
                   ["Piede dominante", selected.piedeDominante || "—"],
-                  ["Infortunio", selected.infortunio || "—"],
+                  ["Diagnosi / Infortunio", selected.infortunio || "—"],
                   ["Inizio riabilitazione", selected.inizioRehab ? new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+                  ...(selected.fineRehab ? [["Fine riabilitazione", new Date(selected.fineRehab + "T12:00").toLocaleDateString("it-IT")]] : []),
                   ["Fisioterapista", selected.fisioterapista || "—"],
                   ["Preparatore atletico", selected.preparatoreAtletico || "—"],
                 ].map(([label, value]) => (

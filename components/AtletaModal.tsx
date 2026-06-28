@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { CATEGORIE, PIEDI, type Atleta, type Stato, type Categoria, type Piede } from "@/lib/store";
+import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 
 const STATI: Stato[] = ["In recupero", "Quasi guarito", "Guarito"];
 
@@ -90,9 +90,18 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             </div>
           </div>
 
-          <div>
-            <Label>Infortunio</Label>
-            <Input className="mt-1" value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione legamento crociato" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Tipo infortunio</Label>
+              <Sel className="mt-1" value={form.tipoInfortunio ?? ""} onChange={(e) => f("tipoInfortunio", e.target.value as TipoInfortunio)}>
+                <option value="">Seleziona categoria...</option>
+                {TIPI_INFORTUNIO.map((t) => <option key={t}>{t}</option>)}
+              </Sel>
+            </div>
+            <div>
+              <Label>Diagnosi / Infortunio</Label>
+              <Input className="mt-1" value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione LCA" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
