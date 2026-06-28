@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid,
+  TESTS_PREDEFINITI,
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico,
 } from "@/lib/store";
 
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", rpe: "", vas: "", note: "" };
-const testVuoto: TestFisiometrico = { nome: "", risultato: "", unita: "", note: "" };
+const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
 const caricoVuoto: Carico = { interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
 
 const progVuoto: Omit<Programma, "id"> = {
@@ -36,6 +37,12 @@ function ScaleInput({ label, value, max, onChange, color }: {
       </div>
     </div>
   );
+}
+
+function calcolaAsimmetria(sx: string, dx: string): number | null {
+  const a = parseFloat(sx), b = parseFloat(dx);
+  if (isNaN(a) || isNaN(b) || a <= 0 || b <= 0) return null;
+  return Math.abs(a - b) / Math.max(a, b) * 100;
 }
 
 function parseGpsCsv(text: string): Partial<Carico> {
@@ -257,25 +264,39 @@ export default function EserciziPage() {
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
                               <FlaskConical className="w-3.5 h-3.5" /> Test fisiometrici
                             </p>
-                            <div className="overflow-hidden rounded-xl border border-gray-100">
-                              <table className="w-full text-sm">
-                                <thead>
-                                  <tr className="bg-gray-50 text-xs text-gray-500 uppercase">
-                                    <th className="text-left px-4 py-2">Test</th>
-                                    <th className="text-right px-4 py-2">Risultato</th>
-                                    <th className="text-right px-4 py-2">Unità</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                  {prog.tests.map((t, i) => (
-                                    <tr key={i} className="hover:bg-gray-50">
-                                      <td className="px-4 py-2.5 font-medium text-gray-900">{t.nome}</td>
-                                      <td className="px-4 py-2.5 text-right font-bold text-[#C8102E]">{t.risultato}</td>
-                                      <td className="px-4 py-2.5 text-right text-gray-500">{t.unita}</td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                            <div className="space-y-2">
+                              {prog.tests.map((t, i) => {
+                                const asim = calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
+                                const isDropJump = t.nome === "Drop Jump";
+                                return (
+                                  <div key={i} className={`rounded-xl p-3 border ${asim !== null && asim > 10 ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-100"}`}>
+                                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                                      <p className="font-semibold text-gray-900 text-sm">{t.nome === "Personalizzato" ? t.risultato : t.nome}</p>
+                                      {asim !== null && (
+                                        <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                                          {asim > 10 && <AlertTriangle className="w-3 h-3" />}
+                                          {asim.toFixed(1)}% asim.
+                                        </span>
+                                      )}
+                                    </div>
+                                    {isDropJump ? (
+                                      <div className="flex gap-4 mt-1.5 text-xs text-gray-600">
+                                        {t.altezzaSalto && <span>Altezza: <strong>{t.altezzaSalto} cm</strong></span>}
+                                        {t.tempoContatto && <span>Contatto: <strong>{t.tempoContatto} ms</strong></span>}
+                                        {t.rsi && <span>RSI: <strong>{t.rsi}</strong></span>}
+                                      </div>
+                                    ) : (t.risultatoSx || t.risultatoDx) ? (
+                                      <div className="flex gap-4 mt-1.5 text-xs text-gray-600">
+                                        {t.risultatoSx && <span>Sx: <strong className="text-gray-900">{t.risultatoSx}{t.unita && ` ${t.unita}`}</strong></span>}
+                                        {t.risultatoDx && <span>Dx: <strong className="text-gray-900">{t.risultatoDx}{t.unita && ` ${t.unita}`}</strong></span>}
+                                      </div>
+                                    ) : t.risultato ? (
+                                      <p className="text-xs text-gray-600 mt-0.5">{t.risultato} {t.unita}</p>
+                                    ) : null}
+                                    {t.note && <p className="text-xs text-gray-400 mt-1 italic">{t.note}</p>}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -429,34 +450,95 @@ export default function EserciziPage() {
                   {tests.length === 0 ? (
                     <div className="text-center py-8 text-gray-400 text-sm">
                       <FlaskConical className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                      Nessun test. Clicca "+ Aggiungi test" per inserire risultati di test fisiometrici o di performance.
+                      Nessun test. Clicca "+ Aggiungi test" per inserire risultati.
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {tests.map((t, i) => (
-                        <div key={i} className="bg-gray-50 rounded-xl p-4 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <span className="w-6 h-6 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{i + 1}</span>
-                            <input value={t.nome} onChange={(e) => aggiornaTest(i, "nome", e.target.value)}
-                              placeholder="Nome test (es. Single Leg Hop, Y-Balance, Quadricipite/Hamstring…)"
-                              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                            <button onClick={() => rimuoviTest(i)} className="text-gray-300 hover:text-red-400 shrink-0">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                      {tests.map((t, i) => {
+                        const asim = calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
+                        const isDropJump = t.nome === "Drop Jump";
+                        const isPersonalizzato = t.nome === "Personalizzato";
+                        return (
+                          <div key={i} className={`rounded-xl p-4 space-y-3 ${asim !== null && asim > 10 ? "bg-red-50 border border-red-200" : "bg-gray-50"}`}>
+                            <div className="flex items-center gap-2">
+                              <span className="w-6 h-6 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{i + 1}</span>
+                              <select value={t.nome} onChange={(e) => aggiornaTest(i, "nome", e.target.value)}
+                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
+                                <option value="">Seleziona test...</option>
+                                {TESTS_PREDEFINITI.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
+                              </select>
+                              <button onClick={() => rimuoviTest(i)} className="text-gray-300 hover:text-red-400 shrink-0">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            {isPersonalizzato && (
+                              <input value={t.risultato} onChange={(e) => aggiornaTest(i, "risultato", e.target.value)}
+                                placeholder="Nome test personalizzato"
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                            )}
+
+                            {isDropJump ? (
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Altezza salto (cm)</p>
+                                    <input value={t.altezzaSalto ?? ""} onChange={(e) => aggiornaTest(i, "altezzaSalto", e.target.value)}
+                                      placeholder="es. 32"
+                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Tempo contatto (ms)</p>
+                                    <input value={t.tempoContatto ?? ""} onChange={(e) => aggiornaTest(i, "tempoContatto", e.target.value)}
+                                      placeholder="es. 210"
+                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">RSI</p>
+                                    <input value={t.rsi ?? ""} onChange={(e) => aggiornaTest(i, "rsi", e.target.value)}
+                                      placeholder="es. 1.52"
+                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  </div>
+                                </div>
+                              </div>
+                            ) : !isPersonalizzato && (
+                              <div className="space-y-2">
+                                <div className="grid grid-cols-3 gap-2">
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Arto Sx</p>
+                                    <input value={t.risultatoSx} onChange={(e) => aggiornaTest(i, "risultatoSx", e.target.value)}
+                                      placeholder="es. 85"
+                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Arto Dx</p>
+                                    <input value={t.risultatoDx} onChange={(e) => aggiornaTest(i, "risultatoDx", e.target.value)}
+                                      placeholder="es. 92"
+                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-xs text-gray-500 mb-1">Unità</p>
+                                    <input value={t.unita} onChange={(e) => aggiornaTest(i, "unita", e.target.value)}
+                                      placeholder="cm / Nm / %"
+                                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                                  </div>
+                                </div>
+                                {asim !== null && (
+                                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                                    {asim > 10 && <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
+                                    Asimmetria: {asim.toFixed(1)}%
+                                    {asim > 10 ? " — superiore al 10%, attenzione!" : " — nella norma"}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            <input value={t.note} onChange={(e) => aggiornaTest(i, "note", e.target.value)}
+                              placeholder="Note aggiuntive"
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                           </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <input value={t.risultato} onChange={(e) => aggiornaTest(i, "risultato", e.target.value)}
-                              placeholder="Risultato (es. 85, 12.4, Positivo)"
-                              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                            <input value={t.unita} onChange={(e) => aggiornaTest(i, "unita", e.target.value)}
-                              placeholder="Unità (es. cm, Nm, %, s)"
-                              className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                          </div>
-                          <input value={t.note} onChange={(e) => aggiornaTest(i, "note", e.target.value)}
-                            placeholder="Note (confronto con baseline, lato sx/dx…)"
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

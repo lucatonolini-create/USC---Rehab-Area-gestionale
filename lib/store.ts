@@ -49,11 +49,56 @@ export interface Esercizio {
   note: string;
 }
 
+export const TESTS_PREDEFINITI = [
+  // Hop
+  "Single Leg Hop Test",
+  "Triple Hop Test",
+  "Crossover Hop Test",
+  "6m Timed Hop Test",
+  "Side Hop Test",
+  // Balance
+  "Y-Balance Test – Anteriore",
+  "Y-Balance Test – Posteromediale",
+  "Y-Balance Test – Posterolaterale",
+  "SEBT",
+  // Forza
+  "Isokinetic 60°/s",
+  "Isokinetic 180°/s",
+  "Isokinetic 240°/s",
+  "Rapporto H/Q",
+  "Forza quadricipite (dinamometro)",
+  "Forza hamstring (dinamometro)",
+  "Single Leg Press",
+  "Heel Rise Test",
+  // Salto
+  "CMJ – Counter Movement Jump",
+  "Squat Jump",
+  "Drop Jump",
+  // ROM
+  "Dorsiflexion Lunge Test",
+  "ROM ginocchio – flessione",
+  "ROM ginocchio – estensione",
+  "ROM caviglia – dorsiflessione",
+  "ROM anca – flessione",
+  // Funzionale
+  "Single Leg Squat",
+  "FMS",
+  // Personalizzato
+  "Personalizzato",
+] as const;
+export type TestPredefinito = (typeof TESTS_PREDEFINITI)[number];
+
 export interface TestFisiometrico {
   nome: string;
+  risultatoSx: string;
+  risultatoDx: string;
   risultato: string;
   unita: string;
   note: string;
+  // Drop Jump specifico
+  altezzaSalto?: string;
+  tempoContatto?: string;
+  rsi?: string;
 }
 
 export interface Carico {
