@@ -447,19 +447,58 @@ async function esportaPDFPanoramica(params: {
     y = (doc as any).lastAutoTable.finalY + 8;
   }
 
-  if (y > 200) { doc.addPage(); addHeader(); y = HDR + 12; }
+  // Ensure enough vertical space so the trend table never splits across pages
+  const trendRows = params.trendMensile;
+  const estTrendH = (trendRows.length + 1) * 7 + 15; // rows × row-height + secTitle
+  if (y + estTrendH > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
   y = secTitle("Trend mensile – ultimi 12 mesi", y);
+  const trendStartY = y;
+
+  // Table – left half
   autoTable(doc, {
-    startY: y,
+    startY: trendStartY,
     head: [["Mese", "Atleti attivi"]],
-    body: params.trendMensile.map(({ label, count }) => [label, count]),
+    body: trendRows.map(({ label, count }) => [label, count]),
     headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
+    bodyStyles: { fontSize: 8, cellPadding: 2, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: W / 2 },
     columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {} },
   });
-  y = (doc as any).lastAutoTable.finalY + 8;
+  const trendEndY = (doc as any).lastAutoTable.finalY;
+
+  // Bar chart – right half
+  const cX = W / 2 + 8; const cW = W - M - cX;
+  const cH = Math.max(trendEndY - trendStartY, 60);
+  const cY = trendStartY;
+  const maxVal = Math.max(...trendRows.map(t => t.count), 1);
+  const barSlot = cW / Math.max(trendRows.length, 1);
+
+  doc.setFontSize(6.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
+  doc.text("Andamento mensile atleti attivi", cX + cW / 2, cY - 2, { align: "center" });
+  doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
+  doc.rect(cX, cY, cW, cH, "FD");
+
+  ([0.25, 0.5, 0.75, 1] as number[]).forEach(pct => {
+    const ly = cY + cH - pct * cH;
+    doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.2); doc.line(cX, ly, cX + cW, ly);
+    doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(`${Math.round(maxVal * pct)}`, cX - 1, ly + 1.5, { align: "right" });
+  });
+
+  trendRows.forEach((t, i) => {
+    const barH = t.count > 0 ? (t.count / maxVal) * (cH - 2) : 0;
+    const bx = cX + i * barSlot + 1; const bw = barSlot - 2;
+    if (barH > 0) {
+      doc.setFillColor(...red); doc.rect(bx, cY + cH - barH, bw, barH, "F");
+      doc.setFontSize(5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
+      doc.text(`${t.count}`, bx + bw / 2, cY + cH - barH - 1, { align: "center" });
+    }
+    doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(t.label.split(" ")[0], bx + bw / 2, cY + cH + 4, { align: "center" });
+  });
+
+  y = Math.max(trendEndY, cY + cH) + 12;
 
   const progressiRows = CATEGORIE.map((cat) => {
     const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Disponibile");
