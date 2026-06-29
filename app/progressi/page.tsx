@@ -493,13 +493,10 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   const inizio = new Date(a.inizioRehab + "T12:00");
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
-  if (inizio > meseEnd) return false;
+  if (inizio > meseEnd) return false; // rehab not yet started this month
   if (a.stato === "Disponibile") {
-    if (a.fineRehab) {
-      const fine = new Date(a.fineRehab + "T12:00");
-      return fine >= meseStart;
-    }
-    return inizio >= meseStart;
+    if (a.fineRehab) return new Date(a.fineRehab + "T12:00") >= meseStart;
+    return true; // no fineRehab set: include from start month onwards
   }
   return true;
 }
@@ -745,7 +742,7 @@ export default function ProgressiPage() {
             {atletiMese.length === 0 ? (
               <div className="py-12 text-center">
                 <Filter className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">Nessun atleta attivo in questo periodo</p>
+                <p className="text-gray-400 text-sm">Nessun atleta con percorso riabilitativo in questo periodo</p>
               </div>
             ) : (
               <div className="divide-y divide-gray-50">

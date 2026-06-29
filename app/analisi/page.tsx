@@ -51,10 +51,10 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   const inizio = new Date(a.inizioRehab + "T12:00");
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
-  if (inizio > meseEnd) return false;
+  if (inizio > meseEnd) return false; // rehab not yet started this month
   if (a.stato === "Disponibile") {
     if (a.fineRehab) return new Date(a.fineRehab + "T12:00") >= meseStart;
-    return inizio >= meseStart;
+    return true; // no fineRehab set: include from start month onwards
   }
   return true;
 }
@@ -735,6 +735,7 @@ export default function AnalisiPage() {
 
   const anni = Array.from({ length: 5 }, (_, i) => oggi.getFullYear() - 2 + i);
   const atletiMese = atleti.filter((a) => {
+    if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
     if (filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
     if (filtroTipoInf !== "Tutti" && a.tipoInfortunio !== filtroTipoInf) return false;
     return true;
