@@ -67,21 +67,10 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Data di nascita</Label>
-              <Input className="mt-1" type="date" value={form.dataNascita} onChange={(e) => f("dataNascita", e.target.value)} />
-            </div>
-            <div>
               <Label>Categoria</Label>
               <Sel className="mt-1" value={form.categoria} onChange={(e) => f("categoria", e.target.value as Categoria)}>
                 {CATEGORIE.map((c) => <option key={c}>{c}</option>)}
               </Sel>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Ruolo / Posizione</Label>
-              <Input className="mt-1" value={form.posizione} onChange={(e) => f("posizione", e.target.value)} placeholder="Es. Centrocampista" />
             </div>
             <div>
               <Label>Piede dominante</Label>
@@ -91,31 +80,39 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Tipo infortunio</Label>
-              <Sel className="mt-1" value={form.tipoInfortunio ?? ""} onChange={(e) => f("tipoInfortunio", e.target.value as TipoInfortunio)}>
-                <option value="">Seleziona categoria...</option>
-                {TIPI_INFORTUNIO.map((t) => <option key={t}>{t}</option>)}
-              </Sel>
-            </div>
-            <div>
-              <Label>Diagnosi / Infortunio</Label>
-              <Input className="mt-1" value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione LCA" />
-            </div>
+          <div>
+            <Label>Ruolo / Posizione</Label>
+            <Input className="mt-1" value={form.posizione} onChange={(e) => f("posizione", e.target.value)} placeholder="Es. Centrocampista" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Inizio Riabilitazione</Label>
-              <Input className="mt-1" type="date" value={form.inizioRehab} onChange={(e) => f("inizioRehab", e.target.value)} />
-            </div>
-            <div>
-              <Label>Stato</Label>
-              <Sel className="mt-1" value={form.stato} onChange={(e) => f("stato", e.target.value as Stato)}>
-                {STATI.map((s) => <option key={s}>{s}</option>)}
-              </Sel>
-            </div>
+          <div>
+            <Label>Data di nascita</Label>
+            <Input className="mt-1" type="date" value={form.dataNascita} onChange={(e) => f("dataNascita", e.target.value)} />
+          </div>
+
+          <div>
+            <Label>Tipo infortunio</Label>
+            <Sel className="mt-1" value={form.tipoInfortunio ?? ""} onChange={(e) => f("tipoInfortunio", e.target.value as TipoInfortunio)}>
+              <option value="">Seleziona categoria...</option>
+              {TIPI_INFORTUNIO.map((t) => <option key={t}>{t}</option>)}
+            </Sel>
+          </div>
+
+          <div>
+            <Label>Diagnosi / Infortunio</Label>
+            <Input className="mt-1" value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione LCA" />
+          </div>
+
+          <div>
+            <Label>Inizio Riabilitazione</Label>
+            <Input className="mt-1" type="date" value={form.inizioRehab} onChange={(e) => f("inizioRehab", e.target.value)} />
+          </div>
+
+          <div>
+            <Label>Stato</Label>
+            <Sel className="mt-1" value={form.stato} onChange={(e) => f("stato", e.target.value as Stato)}>
+              {STATI.map((s) => <option key={s}>{s}</option>)}
+            </Sel>
           </div>
 
           {form.stato === "Disponibile" && (
