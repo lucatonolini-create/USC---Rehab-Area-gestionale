@@ -798,6 +798,7 @@ export default function AtletiPage() {
               <div className="space-y-5">
                 <QuestionarioTSK
                   questionari={selected.questionariKinesiofobia ?? []}
+                  atletaNome={selected.nome}
                   infortuni={[
                     ...(selected.stato === "Infortunato" && (selected.infortunio || selected.inizioRehab) ? [{
                       id: "__corrente__",

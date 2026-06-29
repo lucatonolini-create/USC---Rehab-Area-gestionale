@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Plus, X, Link2 } from "lucide-react";
+import { ClipboardList, Plus, X, Link2, ChevronDown, ChevronUp, Download } from "lucide-react";
 import { uid, type QuestionarioKinesiofobia } from "@/lib/store";
 
 interface InfortunioOpzione {
@@ -29,23 +29,25 @@ function calcolaPunteggio(risposte: number[]): number {
   return Math.round((tot / (DOMANDE.length * 10)) * 100);
 }
 
-function interpreta(p: number): { label: string; sub: string; bg: string } {
-  if (p >= 75) return { label: "Alta prontezza psicologica", sub: "Pronto per il ritorno in campo", bg: "bg-green-50 border-green-200 text-green-700" };
-  if (p >= 56) return { label: "Prontezza moderata", sub: "Valutare con attenzione prima del ritorno", bg: "bg-orange-50 border-orange-200 text-orange-700" };
-  return { label: "Bassa prontezza psicologica", sub: "Ritorno in campo non raccomandato", bg: "bg-red-50 border-red-200 text-red-700" };
+function interpreta(p: number): { label: string; sub: string; bg: string; color: string } {
+  if (p >= 75) return { label: "Alta prontezza psicologica", sub: "Pronto per il ritorno in campo", bg: "bg-green-50 border-green-200 text-green-700", color: "#15803d" };
+  if (p >= 56) return { label: "Prontezza moderata", sub: "Valutare con attenzione prima del ritorno", bg: "bg-orange-50 border-orange-200 text-orange-700", color: "#c2410c" };
+  return { label: "Bassa prontezza psicologica", sub: "Ritorno in campo non raccomandato", bg: "bg-red-50 border-red-200 text-red-700", color: "#b91c1c" };
 }
 
 interface Props {
   questionari: QuestionarioKinesiofobia[];
   infortuni: InfortunioOpzione[];
   onSalva: (questionari: QuestionarioKinesiofobia[]) => Promise<void>;
+  atletaNome?: string;
 }
 
-export default function QuestionarioTSK({ questionari, infortuni, onSalva }: Props) {
+export default function QuestionarioTSK({ questionari, infortuni, onSalva, atletaNome }: Props) {
   const [mostraForm, setMostraForm] = useState(false);
   const [infortunioSelId, setInfortunioSelId] = useState("");
   const [risposte, setRisposte] = useState<(number | null)[]>(Array(DOMANDE.length).fill(null));
   const [salvando, setSalvando] = useState(false);
+  const [viewId, setViewId] = useState<string | null>(null);
 
   const risposteDate = risposte.filter((r) => r !== null).length;
   const complete = risposteDate === DOMANDE.length && infortunioSelId !== "";
@@ -83,6 +85,80 @@ export default function QuestionarioTSK({ questionari, infortuni, onSalva }: Pro
     await onSalva(questionari.filter((q) => q.id !== id));
   };
 
+  const esportaPDF = async (q: QuestionarioKinesiofobia) => {
+    const { default: jsPDF } = await import("jspdf");
+    const { default: autoTable } = await import("jspdf-autotable");
+    const doc = new jsPDF();
+
+    const M = 14, W = 210;
+    const red: [number, number, number] = [200, 16, 46];
+    const dark: [number, number, number] = [40, 40, 40];
+    const gray: [number, number, number] = [120, 120, 120];
+    const lightGray: [number, number, number] = [250, 250, 250];
+
+    // Header bar
+    doc.setFillColor(...red);
+    doc.rect(0, 0, W, 22, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(255, 255, 255);
+    doc.text("RTS Score – Ritorno in Campo", M, 14);
+
+    let y = 30;
+
+    // Atleta e meta
+    if (atletaNome) {
+      doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...dark);
+      doc.text(atletaNome, M, y);
+      y += 6;
+    }
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...gray);
+    const dataStr = new Date(q.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" });
+    doc.text(`Data: ${dataStr}`, M, y);
+    y += 5;
+    if (q.infortunioLabel) {
+      doc.text(`Infortunio: ${q.infortunioLabel}`, M, y);
+      y += 5;
+    }
+
+    // Score box
+    y += 4;
+    const { label, sub } = interpreta(q.punteggio);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(...red);
+    doc.text(`${q.punteggio}`, M, y + 7);
+    const scoreW = doc.getTextWidth(`${q.punteggio}`);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(...gray);
+    doc.text("/ 100", M + scoreW + 1, y + 7);
+    doc.setFont("helvetica", "bold"); doc.setFontSize(8); doc.setTextColor(...dark);
+    doc.text(label, M + scoreW + 14, y + 3);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+    doc.text(sub, M + scoreW + 14, y + 9);
+    y += 18;
+
+    // Questions table
+    const domandaIndexed = DOMANDE.map((d, i) => ({ ...d, i }));
+    const categorie = ["Emozioni", "Fiducia", "Rischio"] as const;
+    const rows: (string | number)[][] = [];
+    categorie.forEach((cat) => {
+      rows.push([{ content: cat, colSpan: 3, styles: { fillColor: [230, 230, 230] as [number, number, number], fontStyle: "bold" as const, fontSize: 7, textColor: dark } }] as any);
+      domandaIndexed.filter((d) => d.categoria === cat).forEach(({ testo, ancoraMin, ancoraMax, i }) => {
+        rows.push([`${i + 1}. ${testo}`, `${ancoraMin} → ${ancoraMax}`, `${q.risposte[i] ?? "—"} / 10`]);
+      });
+    });
+
+    autoTable(doc, {
+      startY: y,
+      head: [["Domanda", "Scala", "Risposta"]],
+      body: rows,
+      styles: { fontSize: 7.5, cellPadding: 3 },
+      headStyles: { fillColor: dark, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 7.5 },
+      columnStyles: { 0: { cellWidth: 110 }, 1: { cellWidth: 52 }, 2: { cellWidth: 20, halign: "center", fontStyle: "bold" } },
+      alternateRowStyles: { fillColor: lightGray },
+    });
+
+    doc.save(`RTS_${atletaNome ? atletaNome.replace(/\s+/g, "_") + "_" : ""}${q.data}.pdf`);
+  };
+
   const categorie = ["Emozioni", "Fiducia", "Rischio"] as const;
 
   return (
@@ -109,30 +185,80 @@ export default function QuestionarioTSK({ questionari, infortuni, onSalva }: Pro
             <div className="space-y-2 mb-1">
               {[...questionari].reverse().map((q) => {
                 const { label, sub, bg } = interpreta(q.punteggio);
+                const expanded = viewId === q.id;
                 return (
-                  <div key={q.id} className={`rounded-xl border p-3 ${bg}`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold opacity-70">
-                          {new Date(q.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })}
-                        </p>
-                        {q.infortunioLabel && (
-                          <div className="flex items-center gap-1 mt-0.5 mb-1">
-                            <Link2 className="w-3 h-3 opacity-50 shrink-0" />
-                            <p className="text-[11px] opacity-60 truncate">{q.infortunioLabel}</p>
-                          </div>
-                        )}
-                        <p className="text-2xl font-bold">
-                          {q.punteggio}
-                          <span className="text-sm font-normal opacity-60 ml-1">/ 100</span>
-                        </p>
-                        <p className="text-xs font-semibold">{label}</p>
-                        <p className="text-xs opacity-70 mt-0.5">{sub}</p>
+                  <div key={q.id} className={`rounded-xl border ${bg}`}>
+                    <div className="p-3">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold opacity-70">
+                            {new Date(q.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })}
+                          </p>
+                          {q.infortunioLabel && (
+                            <div className="flex items-center gap-1 mt-0.5 mb-1">
+                              <Link2 className="w-3 h-3 opacity-50 shrink-0" />
+                              <p className="text-[11px] opacity-60 truncate">{q.infortunioLabel}</p>
+                            </div>
+                          )}
+                          <p className="text-2xl font-bold">
+                            {q.punteggio}
+                            <span className="text-sm font-normal opacity-60 ml-1">/ 100</span>
+                          </p>
+                          <p className="text-xs font-semibold">{label}</p>
+                          <p className="text-xs opacity-70 mt-0.5">{sub}</p>
+                        </div>
+                        <div className="flex items-center gap-1 ml-2 mt-0.5">
+                          <button
+                            onClick={() => esportaPDF(q)}
+                            title="Scarica PDF"
+                            className="opacity-40 hover:opacity-80 transition-opacity p-0.5">
+                            <Download className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setViewId(expanded ? null : q.id)}
+                            title={expanded ? "Nascondi risposte" : "Vedi risposte"}
+                            className="opacity-40 hover:opacity-80 transition-opacity p-0.5">
+                            {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={() => elimina(q.id)} className="opacity-30 hover:opacity-70 transition-opacity p-0.5">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <button onClick={() => elimina(q.id)} className="opacity-30 hover:opacity-70 transition-opacity ml-2 mt-0.5">
-                        <X className="w-3.5 h-3.5" />
-                      </button>
                     </div>
+
+                    {/* Expanded detail */}
+                    {expanded && (
+                      <div className="border-t border-current border-opacity-20 px-3 pb-3 pt-2 space-y-3">
+                        {categorie.map((cat) => {
+                          const items = DOMANDE.map((d, i) => ({ ...d, i })).filter((d) => d.categoria === cat);
+                          return (
+                            <div key={cat}>
+                              <p className="text-[10px] font-bold opacity-50 uppercase tracking-widest mb-2">{cat}</p>
+                              <div className="space-y-2">
+                                {items.map(({ testo, ancoraMin, ancoraMax, i }) => (
+                                  <div key={i} className="flex items-start gap-2">
+                                    <span className="text-[10px] font-bold opacity-40 mt-0.5 w-4 shrink-0">{i + 1}.</span>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-[11px] leading-snug opacity-80">{testo}</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <span className="text-[10px] opacity-40">{ancoraMin}</span>
+                                        <span className="text-[10px] opacity-30">→</span>
+                                        <span className="text-[10px] opacity-40">{ancoraMax}</span>
+                                      </div>
+                                    </div>
+                                    <span className="text-sm font-bold shrink-0 tabular-nums">
+                                      {q.risposte[i] ?? "—"}
+                                      <span className="text-[10px] font-normal opacity-50">/10</span>
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 );
               })}
