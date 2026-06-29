@@ -735,11 +735,10 @@ export default function AnalisiPage() {
 
   const anni = Array.from({ length: 5 }, (_, i) => oggi.getFullYear() - 2 + i);
   const atletiMese = atleti.filter((a) => {
-    if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
     if (filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
     if (filtroTipoInf !== "Tutti" && a.tipoInfortunio !== filtroTipoInf) return false;
     return true;
-  });
+  }).sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1);
 
   const statoColor: Record<string, string> = {
     "Infortunato": "bg-orange-100 text-orange-700",
@@ -1048,7 +1047,7 @@ export default function AnalisiPage() {
             {atletiMese.length === 0 ? (
               <div className="py-12 text-center">
                 <Calendar className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">Nessun atleta attivo in questo periodo</p>
+                <p className="text-gray-400 text-sm">Nessun atleta trovato</p>
               </div>
             ) : (
               <>
