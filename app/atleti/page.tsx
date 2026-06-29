@@ -287,7 +287,6 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
     // Injury info bar (white bg, red text + underline, dates below)
     doc.setFillColor(255, 255, 255); doc.rect(M, y, W - 2 * M, 22, "F");
-    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.rect(M, y, W - 2 * M, 22, "S");
     doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(...red);
     doc.text(injLabel, M + 5, y + 9);
     const injLabelW = doc.getTextWidth(injLabel);
