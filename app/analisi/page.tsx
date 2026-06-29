@@ -47,16 +47,19 @@ function StatCard({ label, value, sub, icon: Icon, color }: {
 type AnalisiTab = "overview" | "report";
 
 function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
-  if (!a.inizioRehab) return false;
-  const inizio = new Date(a.inizioRehab + "T12:00");
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
-  if (inizio > meseEnd) return false; // rehab not yet started this month
-  if (a.stato === "Disponibile") {
-    if (a.fineRehab) return new Date(a.fineRehab + "T12:00") >= meseStart;
-    return true; // no fineRehab set: include from start month onwards
-  }
-  return true;
+  const periodoAttivo = (inizioStr?: string, fineStr?: string): boolean => {
+    if (!inizioStr) return false;
+    const inizio = new Date(inizioStr + "T12:00");
+    if (inizio > meseEnd) return false; // not yet started this month
+    if (fineStr) return new Date(fineStr + "T12:00") >= meseStart;
+    return true; // still ongoing
+  };
+  // Infortunio attivo corrente
+  if (periodoAttivo(a.inizioRehab, a.fineRehab)) return true;
+  // Infortuni passati archiviati (atleta guarito): contano nei mesi in cui si è svolta la riabilitazione
+  return (a.storicoInfortuni ?? []).some((s) => periodoAttivo(s.inizioRehab, s.fineRehab));
 }
 
 // ─── Logo helpers ─────────────────────────────────────────────────────────────

@@ -489,16 +489,19 @@ type PageTab = "progressi" | "report";
 const MESI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 
 function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
-  if (!a.inizioRehab) return false;
-  const inizio = new Date(a.inizioRehab + "T12:00");
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
-  if (inizio > meseEnd) return false; // rehab not yet started this month
-  if (a.stato === "Disponibile") {
-    if (a.fineRehab) return new Date(a.fineRehab + "T12:00") >= meseStart;
-    return true; // no fineRehab set: include from start month onwards
-  }
-  return true;
+  const periodoAttivo = (inizioStr?: string, fineStr?: string): boolean => {
+    if (!inizioStr) return false;
+    const inizio = new Date(inizioStr + "T12:00");
+    if (inizio > meseEnd) return false; // not yet started this month
+    if (fineStr) return new Date(fineStr + "T12:00") >= meseStart;
+    return true; // still ongoing
+  };
+  // Infortunio attivo corrente
+  if (periodoAttivo(a.inizioRehab, a.fineRehab)) return true;
+  // Infortuni passati archiviati (atleta guarito): contano nei mesi in cui si è svolta la riabilitazione
+  return (a.storicoInfortuni ?? []).some((s) => periodoAttivo(s.inizioRehab, s.fineRehab));
 }
 
 export default function ProgressiPage() {
@@ -605,14 +608,14 @@ export default function ProgressiPage() {
               const nProg = programmi.filter((p) => p.atletaId === atleta.id).length;
               return (
                 <div key={atleta.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-                  <div className="flex items-start justify-between gap-4 mb-5">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
+                    <div className="flex items-center gap-4 min-w-0">
                       <div className="w-12 h-12 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
                         {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900">{atleta.nome}</h3>
-                        <p className="text-sm text-gray-500">
+                      <div className="min-w-0">
+                        <h3 className="font-bold text-gray-900 truncate">{atleta.nome}</h3>
+                        <p className="text-sm text-gray-500 truncate">
                           {atleta.categoria}{atleta.posizione ? ` · ${atleta.posizione}` : ""}
                           {nProg > 0 ? ` · ${nProg} programm${nProg === 1 ? "a" : "i"}` : ""}
                         </p>
