@@ -285,17 +285,16 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     addHeader(sub);
     y = HDR + 8;
 
-    // Injury info bar
-    doc.setFillColor(240, 240, 240); doc.rect(M, y, W - 2 * M, 12, "F");
-    doc.setFillColor(...red); doc.rect(M, y, 3, 12, "F");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9); doc.setTextColor(...dark);
-    doc.text(injLabel, M + 7, y + 8);
+    // Injury info bar (dark grey, two lines)
+    doc.setFillColor(...dark); doc.rect(M, y, W - 2 * M, 22, "F");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(255, 255, 255);
+    doc.text(injLabel, M + 5, y + 9);
     const periodStr = inj.attivo
       ? `Dal ${fmtD(inj.inizio)} · In corso (${giorni} giorni)`
       : `${fmtD(inj.inizio)} → ${fmtD(inj.fine ?? "")} · ${giorni} giorni`;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(...gray);
-    doc.text(periodStr, W - M, y + 8, { align: "right" });
-    y += 18;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(180, 180, 180);
+    doc.text(periodStr, M + 5, y + 17);
+    y += 28;
 
     // RTS evaluations for this injury
     if (injQRTS.length > 0) {
