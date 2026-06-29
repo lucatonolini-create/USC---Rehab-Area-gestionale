@@ -136,7 +136,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     }
     if (prog.esercizicampo?.length) {
       checkPage(20, sub); miniLabel("CAMPO");
-      autoTable(doc, { startY: y, head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]], body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]), headStyles: hS([100, 100, 100]), bodyStyles: bS, alternateRowStyles: { fillColor: [245, 245, 245] as [number, number, number] }, margin: { left: M, right: M }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } } });
+      autoTable(doc, { startY: y, head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]], body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]), headStyles: hS([100, 100, 100]), bodyStyles: bS, alternateRowStyles: aS, margin: { left: M, right: M }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } } });
       y = (doc as any).lastAutoTable.finalY + 5;
     }
     if (prog.carico?.rpe) {
@@ -289,10 +289,13 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.setFillColor(...dark); doc.rect(M, y, W - 2 * M, 22, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(255, 255, 255);
     doc.text(injLabel, M + 5, y + 9);
+    const injLabelW = doc.getTextWidth(injLabel);
+    doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5);
+    doc.line(M + 5, y + 10.5, M + 5 + injLabelW, y + 10.5);
     const periodStr = inj.attivo
       ? `Dal ${fmtD(inj.inizio)} · In corso (${giorni} giorni)`
       : `${fmtD(inj.inizio)} → ${fmtD(inj.fine ?? "")} · ${giorni} giorni`;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7.5); doc.setTextColor(180, 180, 180);
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(210, 210, 210);
     doc.text(periodStr, M + 5, y + 17);
     y += 28;
 
