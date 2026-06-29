@@ -47,10 +47,12 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.text(oggi, W - M, 13, { align: "right" });
   };
 
-  const secTitle = (text: string, y: number) => {
-    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
-    doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
+  const secTitle = (text: string, y: number, fill?: [number, number, number]) => {
+    const bg = fill ?? [245, 245, 245] as [number, number, number];
+    const tc: [number, number, number] = fill ? [255, 255, 255] : dark;
+    doc.setFillColor(...bg); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    if (!fill) { doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F"); }
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...tc);
     doc.text(text.toUpperCase(), M + 5, y + 1.5);
     return y + 11;
   };
@@ -324,7 +326,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     // Programs for this injury
     if (injProgs.length > 0) {
       checkPage(20, sub);
-      y = secTitle(`Sessioni di lavoro — ${injProgs.length} sessioni`, y);
+      y = secTitle(`Sessioni di lavoro — ${injProgs.length} sessioni`, y, red);
       for (const prog of injProgs) renderProg(prog, sub);
     } else {
       checkPage(12, sub);
@@ -342,7 +344,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.addPage();
     addHeader(`${atleta.nome}  ·  Sessioni non associate`);
     y = HDR + 8;
-    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.length} sessioni`, y);
+    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.length} sessioni`, y, red);
     for (const prog of unassigned) renderProg(prog, `${atleta.nome}  ·  Sessioni non associate`);
   }
 
