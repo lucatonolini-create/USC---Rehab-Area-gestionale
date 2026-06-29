@@ -167,7 +167,86 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         2: { textColor: dark },
       },
     });
-    y = (doc as any).lastAutoTable.finalY + 10;
+    y = (doc as any).lastAutoTable.finalY + 8;
+
+    // ── Trend chart (2+ questionnaires) ───────────────────────────────────
+    if (questionari.length >= 2) {
+      if (y + 65 > H - 20) { doc.addPage(); addHeader(); y = HDR + 14; }
+
+      const sorted = [...questionari].sort((a, b) => a.data.localeCompare(b.data));
+      const n = sorted.length;
+      const yAxisW = 10;
+      const cX = M + yAxisW;
+      const cW = W - M - cX;
+      const cH = 44;
+      const cY = y + 7;
+
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...dark);
+      doc.text("Andamento RTS Score nel tempo", M, y + 2);
+
+      // Chart background + border
+      doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
+      doc.rect(cX, cY, cW, cH, "FD");
+
+      // Reference lines
+      const refLines: [number, [number, number, number], boolean][] = [
+        [100, [210, 210, 210], false],
+        [75,  [34, 139, 34],  true],
+        [56,  [210, 100, 0],  true],
+        [0,   [210, 210, 210], false],
+      ];
+      refLines.forEach(([val, col, dash]) => {
+        const ly = cY + cH - (val / 100) * cH;
+        doc.setDrawColor(...col); doc.setLineWidth(dash ? 0.45 : 0.2);
+        if (dash) {
+          let dx = cX;
+          while (dx < cX + cW) { doc.line(dx, ly, Math.min(dx + 2.5, cX + cW), ly); dx += 4; }
+        } else {
+          doc.line(cX, ly, cX + cW, ly);
+        }
+        doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...col);
+        doc.text(`${val}`, cX - 1.5, ly + 1.5, { align: "right" });
+      });
+
+      const padX = 10;
+      const getX = (i: number) => cX + padX + (n > 1 ? (i / (n - 1)) * (cW - 2 * padX) : (cW - 2 * padX) / 2);
+      const getY = (s: number) => cY + cH - (s / 100) * cH;
+
+      // Connecting line
+      doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.7);
+      for (let i = 0; i < n - 1; i++) {
+        doc.line(getX(i), getY(sorted[i].punteggio), getX(i + 1), getY(sorted[i + 1].punteggio));
+      }
+
+      // Points, score labels, date labels
+      sorted.forEach((q, i) => {
+        const px = getX(i); const py = getY(q.punteggio);
+        const col: [number, number, number] = q.punteggio >= 75 ? [34, 139, 34] : q.punteggio >= 56 ? [234, 88, 12] : red;
+        doc.setFillColor(...col); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5);
+        doc.circle(px, py, 2, "FD");
+        doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.setTextColor(...col);
+        doc.text(`${q.punteggio}`, px, q.punteggio > 90 ? py + 5 : py - 3.5, { align: "center" });
+        const dateStr = new Date(q.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });
+        doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+        doc.text(dateStr, px, cY + cH + 4.5, { align: "center" });
+      });
+
+      // Legend
+      const legY = cY + cH + 10;
+      ([
+        { col: [210, 100, 0] as [number, number, number], label: "Soglia moderata (56)" },
+        { col: [34, 139, 34] as [number, number, number], label: "Alta prontezza (75)" },
+      ]).forEach(({ col, label }, i) => {
+        const lx = M + i * 72;
+        doc.setDrawColor(...col); doc.setLineWidth(0.5);
+        let dx = lx;
+        while (dx < lx + 9) { doc.line(dx, legY, Math.min(dx + 2.5, lx + 9), legY); dx += 4; }
+        doc.setFontSize(6); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+        doc.text(label, lx + 11, legY + 1);
+      });
+
+      y = legY + 10;
+    }
   }
 
   // ── Pagine programmi ──────────────────────────────────────────────────────
