@@ -346,7 +346,7 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
   const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
 
   const ws = wb.addWorksheet("Report Mensile");
-  ws.columns = [{ width: 30 }, { width: 16 }, { width: 30 }, { width: 20 }, { width: 18 }, { width: 18 }, { width: 12 }];
+  ws.columns = [{ width: 30 }, { width: 16 }, { width: 10 }, { width: 40 }, { width: 20 }, { width: 18 }, { width: 18 }, { width: 12 }];
 
   ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
   if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 0.92, row: 3.8 } as any, editAs: "oneCell" });
@@ -356,19 +356,26 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
   ws.getRow(3).getCell(4).value = `Generato il ${oggi}`; ws.getRow(3).getCell(4).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(4).alignment = { horizontal: "right" };
 
   ws.addRow([]);
-  const hRow = ws.addRow(["Nome", "Categoria", "Diagnosi / Infortunio", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso"]);
+  const hRow = ws.addRow(["Nome", "Categoria", "N° Infort.", "Diagnosi / Infortuni nel mese", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso"]);
   hRow.height = 20;
   hRow.eachCell((cell: any) => { cell.fill = darkFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle" }; });
 
   atletiMese.forEach((a, i) => {
+    const infortuni = infortunitNelMese(a, anno, mese);
+    const diagnosiTesto = infortuni.length > 0
+      ? infortuni.map((inf) => inf.tipo ? `${inf.diagnosi} (${inf.tipo})` : inf.diagnosi).join("\n")
+      : "—";
     const row = ws.addRow([
-      a.nome, a.categoria, a.infortunio || "—", a.stato,
+      a.nome, a.categoria, infortuni.length || "—", diagnosiTesto, a.stato,
       a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
       a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
       `${a.progresso}%`,
     ]);
-    row.height = 18;
-    row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle" }; });
+    row.height = infortuni.length > 1 ? 18 * infortuni.length : 18;
+    row.eachCell({ includeEmpty: true }, (cell: any) => {
+      cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 };
+      cell.alignment = { vertical: "middle", wrapText: true };
+    });
   });
 
   ws.addRow([]);
@@ -466,18 +473,24 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
   y = secTitle("Atleti del periodo", y);
   autoTable(doc, {
     startY: y,
-    head: [["Nome", "Categoria", "Diagnosi / Infortunio", "Stato", "Inizio", "Fine", "%"]],
-    body: atletiMese.map((a) => [
-      a.nome, a.categoria, a.infortunio || "—", a.stato,
-      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
-      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
-      `${a.progresso}%`,
-    ]),
+    head: [["Nome", "Categoria", "N°", "Diagnosi / Infortuni nel mese", "Stato", "Inizio", "Fine", "%"]],
+    body: atletiMese.map((a) => {
+      const infortuni = infortunitNelMese(a, anno, mese);
+      const diagnosiTesto = infortuni.length > 0
+        ? infortuni.map((inf) => inf.tipo ? `${inf.diagnosi} (${inf.tipo})` : inf.diagnosi).join("\n")
+        : "—";
+      return [
+        a.nome, a.categoria, infortuni.length || "—", diagnosiTesto, a.stato,
+        a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
+        a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
+        `${a.progresso}%`,
+      ];
+    }),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
-    columnStyles: { 0: { cellWidth: 36 }, 1: { cellWidth: 22 }, 2: { cellWidth: 50 }, 3: { cellWidth: 28 }, 4: { cellWidth: 18 }, 5: { cellWidth: 18 }, 6: { cellWidth: 10 } },
+    columnStyles: { 0: { cellWidth: 34 }, 1: { cellWidth: 20 }, 2: { cellWidth: 11 }, 3: { cellWidth: 50 }, 4: { cellWidth: 24 }, 5: { cellWidth: 16 }, 6: { cellWidth: 16 }, 7: { cellWidth: 10 } },
   });
 
   addFooter();
@@ -502,6 +515,27 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   if (periodoAttivo(a.inizioRehab, a.fineRehab)) return true;
   // Infortuni passati archiviati (atleta guarito): contano nei mesi in cui si è svolta la riabilitazione
   return (a.storicoInfortuni ?? []).some((s) => periodoAttivo(s.inizioRehab, s.fineRehab));
+}
+
+type InfortunioNelMese = { diagnosi: string; tipo?: string; inizio: string; fine?: string };
+function infortunitNelMese(a: Atleta, anno: number, mese: number): InfortunioNelMese[] {
+  const meseStart = new Date(anno, mese, 1);
+  const meseEnd = new Date(anno, mese + 1, 0);
+  const inMese = (inizioStr?: string, fineStr?: string): boolean => {
+    if (!inizioStr) return false;
+    const inizio = new Date(inizioStr + "T12:00");
+    if (inizio > meseEnd) return false;
+    if (fineStr) return new Date(fineStr + "T12:00") >= meseStart;
+    return true;
+  };
+  const result: InfortunioNelMese[] = [];
+  if (inMese(a.inizioRehab, a.fineRehab) && a.infortunio)
+    result.push({ diagnosi: a.infortunio, tipo: a.tipoInfortunio, inizio: a.inizioRehab, fine: a.fineRehab });
+  (a.storicoInfortuni ?? []).forEach((s) => {
+    if (inMese(s.inizioRehab, s.fineRehab))
+      result.push({ diagnosi: s.diagnosi, tipo: s.tipo, inizio: s.inizioRehab, fine: s.fineRehab });
+  });
+  return result;
 }
 
 export default function ProgressiPage() {

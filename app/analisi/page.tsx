@@ -62,6 +62,27 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   return (a.storicoInfortuni ?? []).some((s) => periodoAttivo(s.inizioRehab, s.fineRehab));
 }
 
+type InfortunioNelMese = { diagnosi: string; tipo?: string; inizio: string; fine?: string };
+function infortunitNelMese(a: Atleta, anno: number, mese: number): InfortunioNelMese[] {
+  const meseStart = new Date(anno, mese, 1);
+  const meseEnd = new Date(anno, mese + 1, 0);
+  const inMese = (inizioStr?: string, fineStr?: string): boolean => {
+    if (!inizioStr) return false;
+    const inizio = new Date(inizioStr + "T12:00");
+    if (inizio > meseEnd) return false;
+    if (fineStr) return new Date(fineStr + "T12:00") >= meseStart;
+    return true;
+  };
+  const result: InfortunioNelMese[] = [];
+  if (inMese(a.inizioRehab, a.fineRehab) && a.infortunio)
+    result.push({ diagnosi: a.infortunio, tipo: a.tipoInfortunio, inizio: a.inizioRehab, fine: a.fineRehab });
+  (a.storicoInfortuni ?? []).forEach((s) => {
+    if (inMese(s.inizioRehab, s.fineRehab))
+      result.push({ diagnosi: s.diagnosi, tipo: s.tipo, inizio: s.inizioRehab, fine: s.fineRehab });
+  });
+  return result;
+}
+
 // ─── Logo helpers ─────────────────────────────────────────────────────────────
 
 async function getLogoDataUrl(): Promise<string | null> {
@@ -274,9 +295,8 @@ async function esportaExcelReport(
 
   const ws = wb.addWorksheet("Report Mensile");
   ws.columns = [
-    { width: 30 }, { width: 15 }, { width: 22 }, { width: 30 },
-    { width: 18 }, { width: 14 }, { width: 14 }, { width: 13 },
-    { width: 22 }, { width: 22 },
+    { width: 30 }, { width: 15 }, { width: 10 }, { width: 22 }, { width: 38 },
+    { width: 20 }, { width: 14 }, { width: 14 }, { width: 13 },
   ];
 
   xlAddSheetHeader(ws, wb, logoId, "REPORT MENSILE", subtitle, oggi);
@@ -288,23 +308,31 @@ async function esportaExcelReport(
   ws.addRow([]);
 
   // Intestazioni colonne
-  xlAddColHeaders(ws, ["Nome", "Categoria", "Tipo Infortunio", "Diagnosi", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso %"], xlDarkFill);
+  xlAddColHeaders(ws, ["Nome", "Categoria", "N° Infort.", "Tipo Infortuni nel mese", "Diagnosi nel mese", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso %"], xlDarkFill);
 
   // Righe dati
   atletiMese.forEach((a, i) => {
+    const infortuni = infortunitNelMese(a, anno, mese);
+    const tipiTesto = infortuni.length > 0
+      ? [...new Set(infortuni.map((inf) => inf.tipo).filter(Boolean))].join("\n") || "—"
+      : "—";
+    const diagnosiTesto = infortuni.length > 0
+      ? infortuni.map((inf) => inf.diagnosi).join("\n")
+      : "—";
     xlAddDataRow(ws, [
       a.nome,
       a.categoria,
-      a.tipoInfortunio ?? "—",
-      a.infortunio || "—",
+      infortuni.length || "—",
+      tipiTesto,
+      diagnosiTesto,
       a.stato,
       a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
       a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
       `${a.progresso}%`,
-    ], i % 2 !== 0, [8]);
-    // Diagnosi e Nome: allineamento sinistra
+    ], i % 2 !== 0, [9]);
     const row = ws.getRow(ws.rowCount);
-    row.getCell(4).alignment = { vertical: "middle", horizontal: "left" };
+    row.height = infortuni.length > 1 ? 18 * infortuni.length : 18;
+    [4, 5].forEach((c) => { row.getCell(c).alignment = { vertical: "middle", horizontal: "left", wrapText: true }; });
   });
 
   // Riepilogo per categoria
@@ -650,26 +678,36 @@ async function esportaPDFReport(
   y = secTitle("Dettaglio atleti", y);
   autoTable(doc, {
     startY: y,
-    head: [["Atleta", "Categoria", "Tipo Infort.", "Diagnosi", "Stato", "Inizio", "Fine", "%"]],
-    body: atletiMese.map((a) => [
-      a.nome, a.categoria, a.tipoInfortunio ?? "—", a.infortunio || "—", a.stato,
-      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
-      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
-      `${a.progresso}%`,
-    ]),
+    head: [["Atleta", "Categoria", "N°", "Tipo Infort. nel mese", "Diagnosi nel mese", "Stato", "Inizio", "Fine", "%"]],
+    body: atletiMese.map((a) => {
+      const infortuni = infortunitNelMese(a, anno, mese);
+      const tipiTesto = infortuni.length > 0
+        ? [...new Set(infortuni.map((inf) => inf.tipo).filter(Boolean))].join("\n") || "—"
+        : "—";
+      const diagnosiTesto = infortuni.length > 0
+        ? infortuni.map((inf) => inf.diagnosi).join("\n")
+        : "—";
+      return [
+        a.nome, a.categoria, infortuni.length || "—", tipiTesto, diagnosiTesto, a.stato,
+        a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
+        a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
+        `${a.progresso}%`,
+      ];
+    }),
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 42 },
-      1: { cellWidth: 24 },
-      2: { cellWidth: 58 },
-      3: { cellWidth: 55 },
-      4: { cellWidth: 28 },
-      5: { cellWidth: 20 },
-      6: { cellWidth: 20 },
-      7: { cellWidth: 22 },
+      0: { cellWidth: 38 },
+      1: { cellWidth: 22 },
+      2: { cellWidth: 11 },
+      3: { cellWidth: 34 },
+      4: { cellWidth: 50 },
+      5: { cellWidth: 24 },
+      6: { cellWidth: 18 },
+      7: { cellWidth: 18 },
+      8: { cellWidth: 14 },
     },
   });
 
