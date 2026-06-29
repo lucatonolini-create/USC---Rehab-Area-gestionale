@@ -10,7 +10,7 @@ export type Piede = (typeof PIEDI)[number];
 
 export const TIPI_INFORTUNIO = [
   "Muscolare",
-  "Articolare - Legamentoso - Cartilagineo",
+  "Art. - Leg. - Cart.",
   "Tendineo",
   "Osseo",
   "Cutaneo",
