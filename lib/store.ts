@@ -195,6 +195,8 @@ export interface Programma {
   nome: string;
   fase: string;
   data: string;
+  infortunioId?: string;
+  infortunioLabel?: string;
   esercizi: Esercizio[];
   esercizicampo?: EsercizioCampo[];
   tests: TestFisiometrico[];
@@ -277,6 +279,8 @@ function rowToProgramma(r: Record<string, any>): Programma {
     nome: r.nome,
     fase: r.fase ?? "",
     data: r.data,
+    infortunioId: r.infortunio_id ?? undefined,
+    infortunioLabel: r.infortunio_label ?? undefined,
     esercizi: r.esercizi ?? [],
     esercizicampo: r.esercizicampo ?? [],
     tests: r.tests ?? [],
@@ -291,6 +295,8 @@ function programmaToRow(p: Programma): Record<string, any> {
     nome: p.nome,
     fase: p.fase,
     data: p.data,
+    infortunio_id: p.infortunioId ?? null,
+    infortunio_label: p.infortunioLabel ?? null,
     esercizi: p.esercizi,
     esercizicampo: p.esercizicampo ?? [],
     tests: p.tests,

@@ -267,6 +267,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   for (const inj of allInjuries) {
     const injProgs = programmi
       .filter((p) => {
+        if (p.infortunioId) return p.infortunioId === inj.id;
         if (!p.data || !inj.inizio) return false;
         if (p.data < inj.inizio) return false;
         if (inj.fine && p.data > inj.fine) return false;

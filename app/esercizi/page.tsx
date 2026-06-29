@@ -408,7 +408,7 @@ export default function EserciziPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Atleta *</label>
-                  <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value })}
+                  <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value, infortunioId: undefined, infortunioLabel: undefined })}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
                     <option value="">Seleziona atleta...</option>
                     {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome} ({a.categoria})</option>)}
@@ -420,6 +420,38 @@ export default function EserciziPage() {
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                 </div>
               </div>
+
+              {/* Injury selector */}
+              {(() => {
+                const atletaSelezionato = atleti.find((a) => a.id === form.atletaId);
+                if (!atletaSelezionato) return null;
+                const opzioniInf = [
+                  ...(atletaSelezionato.stato === "Infortunato" && (atletaSelezionato.infortunio || atletaSelezionato.inizioRehab)
+                    ? [{ id: "__corrente__", label: `In corso: ${atletaSelezionato.infortunio || "—"}` }]
+                    : []),
+                  ...[...(atletaSelezionato.storicoInfortuni ?? [])].reverse().map((inf) => ({
+                    id: inf.id,
+                    label: `${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""}`,
+                  })),
+                ];
+                if (opzioniInf.length === 0) return null;
+                return (
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Infortunio di riferimento</label>
+                    <select
+                      value={form.infortunioId ?? ""}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        const label = opzioniInf.find((o) => o.id === id)?.label ?? "";
+                        setForm({ ...form, infortunioId: id || undefined, infortunioLabel: id ? label : undefined });
+                      }}
+                      className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
+                      <option value="">— Nessuno / Non specificato —</option>
+                      {opzioniInf.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                    </select>
+                  </div>
+                );
+              })()}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
