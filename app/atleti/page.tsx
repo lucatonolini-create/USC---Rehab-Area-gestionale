@@ -290,15 +290,15 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     // Injury info bar (white bg, red text + underline, dates below)
     doc.setFillColor(255, 255, 255); doc.rect(M, y, W - 2 * M, 22, "F");
     doc.setFont("helvetica", "bolditalic"); doc.setFontSize(9.5); doc.setTextColor(...red);
-    doc.text(injLabel, M + 5, y + 9);
+    doc.text(injLabel, M, y + 9);
     const injLabelW = doc.getTextWidth(injLabel);
     doc.setDrawColor(...red); doc.setLineWidth(0.5);
-    doc.line(M + 5, y + 10.5, M + 5 + injLabelW, y + 10.5);
+    doc.line(M, y + 10.5, M + injLabelW, y + 10.5);
     const periodStr = inj.attivo
       ? `Dal ${fmtD(inj.inizio)} - In corso (${giorni} giorni)`
       : `${fmtD(inj.inizio)} - ${fmtD(inj.fine ?? "")}  (${giorni} giorni)`;
     doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
-    doc.text(periodStr, M + 5, y + 17);
+    doc.text(periodStr, M, y + 17);
     y += 28;
 
     // RTS evaluations for this injury
