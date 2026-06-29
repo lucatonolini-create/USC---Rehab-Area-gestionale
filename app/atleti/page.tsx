@@ -131,12 +131,12 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     y += 13;
     if (prog.esercizi?.length) {
       checkPage(20, sub); miniLabel("PALESTRA");
-      autoTable(doc, { startY: y, head: [["#", "Esercizio", "Serie", "Reps", "Carico", "RIR", "VAS", "Note"]], body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]), headStyles: hS(red), bodyStyles: bS, alternateRowStyles: aS, margin: { left: M, right: M }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 50 }, 2: { cellWidth: 12 }, 3: { cellWidth: 18 }, 4: { cellWidth: 20 }, 5: { cellWidth: 10 }, 6: { cellWidth: 14 } } });
+      autoTable(doc, { startY: y, head: [["#", "Esercizio", "Serie", "Reps", "Carico", "RIR", "VAS", "Note"]], body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]), headStyles: hS(dark), bodyStyles: bS, alternateRowStyles: aS, margin: { left: M, right: M }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 50 }, 2: { cellWidth: 12 }, 3: { cellWidth: 18 }, 4: { cellWidth: 20 }, 5: { cellWidth: 10 }, 6: { cellWidth: 14 } } });
       y = (doc as any).lastAutoTable.finalY + 5;
     }
     if (prog.esercizicampo?.length) {
       checkPage(20, sub); miniLabel("CAMPO");
-      autoTable(doc, { startY: y, head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]], body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]), headStyles: hS([100, 100, 100]), bodyStyles: bS, alternateRowStyles: aS, margin: { left: M, right: M }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } } });
+      autoTable(doc, { startY: y, head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]], body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]), headStyles: hS(dark), bodyStyles: bS, alternateRowStyles: aS, margin: { left: M, right: M }, columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } } });
       y = (doc as any).lastAutoTable.finalY + 5;
     }
     if (prog.carico?.rpe) {
@@ -160,7 +160,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       if (c.hsr) rows.push(["HSR (>19 km/h)", `${c.hsr} m`]);
       if (c.accelerazioni) rows.push(["Accelerazioni", c.accelerazioni]);
       if (rows.length) {
-        autoTable(doc, { startY: y, body: rows, theme: "striped", styles: { ...bS, fontSize: 8 }, columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark } }, alternateRowStyles: aS, margin: { left: M, right: W / 2 } });
+        autoTable(doc, { startY: y, body: rows, styles: { ...bS, fontSize: 8 }, columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark } }, alternateRowStyles: aS, margin: { left: M, right: W / 2 } });
         y = (doc as any).lastAutoTable.finalY + 5;
       }
     }
@@ -285,17 +285,18 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     addHeader(sub);
     y = HDR + 8;
 
-    // Injury info bar (dark grey, two lines)
-    doc.setFillColor(...dark); doc.rect(M, y, W - 2 * M, 22, "F");
-    doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(255, 255, 255);
+    // Injury info bar (white bg, red text + underline, dates below)
+    doc.setFillColor(255, 255, 255); doc.rect(M, y, W - 2 * M, 22, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.rect(M, y, W - 2 * M, 22, "S");
+    doc.setFont("helvetica", "bold"); doc.setFontSize(9.5); doc.setTextColor(...red);
     doc.text(injLabel, M + 5, y + 9);
     const injLabelW = doc.getTextWidth(injLabel);
-    doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5);
+    doc.setDrawColor(...red); doc.setLineWidth(0.5);
     doc.line(M + 5, y + 10.5, M + 5 + injLabelW, y + 10.5);
     const periodStr = inj.attivo
-      ? `Dal ${fmtD(inj.inizio)} · In corso (${giorni} giorni)`
-      : `${fmtD(inj.inizio)} → ${fmtD(inj.fine ?? "")} · ${giorni} giorni`;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(210, 210, 210);
+      ? `Dal ${fmtD(inj.inizio)} - In corso (${giorni} giorni)`
+      : `${fmtD(inj.inizio)} - ${fmtD(inj.fine ?? "")}  (${giorni} giorni)`;
+    doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
     doc.text(periodStr, M + 5, y + 17);
     y += 28;
 
