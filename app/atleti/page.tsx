@@ -137,6 +137,39 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.text("Nessun infortunio registrato.", M, y); y += 10;
   }
 
+  // ── Questionari RTS ────────────────────────────────────────────────────────
+  const questionari = atleta.questionariKinesiofobia ?? [];
+  if (questionari.length > 0) {
+    if (y > 210) { doc.addPage(); addHeader(); y = HDR + 14; }
+
+    const interpretaRTS = (p: number) => {
+      if (p >= 75) return "Alta prontezza psicologica — Pronto per il ritorno";
+      if (p >= 56) return "Prontezza moderata — Valutare con attenzione";
+      return "Bassa prontezza psicologica — Ritorno non raccomandato";
+    };
+
+    y = secTitle("Valutazione psicologica – RTS Score (ACL-RSI adattato)", y);
+    autoTable(doc, {
+      startY: y,
+      head: [["Data", "Punteggio", "Interpretazione"]],
+      body: [...questionari].reverse().map((q) => [
+        new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
+        `${q.punteggio} / 100`,
+        interpretaRTS(q.punteggio),
+      ]),
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: M },
+      columnStyles: {
+        0: { cellWidth: 30 },
+        1: { cellWidth: 26, halign: "center", fontStyle: "bold" },
+        2: { textColor: dark },
+      },
+    });
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
+
   // ── Pagine programmi ──────────────────────────────────────────────────────
   programmi.forEach((prog) => {
     doc.addPage();
