@@ -142,7 +142,7 @@ export default function QuestionarioTSK({ questionari, infortuni, onSalva, atlet
     categorie.forEach((cat) => {
       rows.push([{ content: cat, colSpan: 3, styles: { fillColor: [230, 230, 230] as [number, number, number], fontStyle: "bold" as const, fontSize: 7, textColor: dark } }] as any);
       domandaIndexed.filter((d) => d.categoria === cat).forEach(({ testo, ancoraMin, ancoraMax, i }) => {
-        rows.push([`${i + 1}. ${testo}`, `${ancoraMin} → ${ancoraMax}`, `${q.risposte[i] ?? "—"} / 10`]);
+        rows.push([`${i + 1}. ${testo}`, `${ancoraMin} - ${ancoraMax}`, `${q.risposte[i] ?? "-"} / 10`]);
       });
     });
 
