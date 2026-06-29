@@ -95,6 +95,7 @@ export default function QuestionarioTSK({ questionari, infortuni, onSalva, atlet
     const dark: [number, number, number] = [40, 40, 40];
     const gray: [number, number, number] = [120, 120, 120];
     const lightGray: [number, number, number] = [250, 250, 250];
+    const ascii = (s: string) => s.replace(/[–—]/g, "-").replace(/→/g, "-").replace(/·|•/g, "-");
 
     // Header bar
     doc.setFillColor(...red);
@@ -102,7 +103,7 @@ export default function QuestionarioTSK({ questionari, infortuni, onSalva, atlet
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
     doc.setTextColor(255, 255, 255);
-    doc.text("RTS Score – Ritorno in Campo", M, 14);
+    doc.text("RTS Score - Ritorno in Campo", M, 14);
 
     let y = 30;
 
@@ -117,7 +118,7 @@ export default function QuestionarioTSK({ questionari, infortuni, onSalva, atlet
     doc.text(`Data: ${dataStr}`, M, y);
     y += 5;
     if (q.infortunioLabel) {
-      doc.text(`Infortunio: ${q.infortunioLabel}`, M, y);
+      doc.text(`Infortunio: ${ascii(q.infortunioLabel)}`, M, y);
       y += 5;
     }
 
