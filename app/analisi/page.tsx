@@ -522,6 +522,41 @@ async function esportaPDFPanoramica(params: {
     });
   }
 
+  // Lista completa atleti (tutti, inclusi guariti)
+  const fmtD = (d?: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
+  const tuttiRows = [...params.atleti]
+    .sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1)
+    .map(a => [a.nome, a.categoria, a.infortunio || "—", a.stato, fmtD(a.inizioRehab), fmtD(a.fineRehab), `${a.progresso}%`]);
+
+  if (tuttiRows.length > 0) {
+    doc.addPage(); addHeader(); y = HDR + 12;
+    y = secTitle("Lista completa atleti", y);
+    autoTable(doc, {
+      startY: y,
+      head: [["Atleta", "Categoria", "Diagnosi", "Stato", "Inizio", "Fine", "%"]],
+      body: tuttiRows,
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+      bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: M },
+      columnStyles: {
+        0: { cellWidth: 42, fontStyle: "bold", textColor: dark },
+        1: { cellWidth: 24 },
+        2: { cellWidth: 55 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 14 },
+      },
+      didParseCell: (data: any) => {
+        if (data.column.index === 3) {
+          data.cell.styles.textColor = data.cell.raw === "Disponibile" ? [34, 139, 34] : red;
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+    });
+  }
+
   addFooter();
   doc.save(`USC_Analisi_${oggi.replace(/\//g, "-")}.pdf`);
 }
@@ -887,6 +922,60 @@ export default function AnalisiPage() {
                   );
                 }).filter(Boolean)}
               </div>
+            )}
+          </div>
+
+          {/* Lista completa atleti */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="font-bold text-gray-900">Lista completa atleti</h2>
+                <p className="text-xs text-gray-400 mt-0.5">Tutti gli atleti in gestione, inclusi i guariti</p>
+              </div>
+              <span className="text-sm font-bold text-[#C8102E]">{atleti.length} atleti</span>
+            </div>
+            {atleti.length === 0 ? (
+              <div className="py-12 text-center">
+                <Users className="w-10 h-10 text-gray-200 mx-auto mb-2" />
+                <p className="text-gray-400 text-sm">Nessun atleta ancora</p>
+              </div>
+            ) : (
+              <>
+                <div className="hidden md:grid grid-cols-5 px-5 py-2 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                  <span className="col-span-2">Atleta</span>
+                  <span>Infortunio</span>
+                  <span className="text-center">Stato</span>
+                  <span className="text-right">Progresso</span>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {[...atleti]
+                    .sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1)
+                    .map((a) => (
+                      <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-center px-5 py-4 hover:bg-gray-50 gap-2">
+                        <div className="col-span-2 flex items-center gap-3">
+                          <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
+                            <p className="text-xs text-gray-400">{a.categoria}{a.tipoInfortunio ? ` · ${a.tipoInfortunio}` : ""}</p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-gray-600 truncate">{a.infortunio || "—"}</p>
+                        <div className="flex md:justify-center">
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>{a.stato}</span>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className="text-sm font-bold text-gray-900">{a.progresso}%</span>
+                          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className={`h-full rounded-full ${a.progresso >= 75 ? "bg-green-500" : a.progresso >= 40 ? "bg-yellow-400" : "bg-orange-500"}`}
+                              style={{ width: `${a.progresso}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </>
             )}
           </div>
         </div>
