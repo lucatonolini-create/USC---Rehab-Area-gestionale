@@ -176,18 +176,20 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
     const tx = logoDataUrl ? 30 : M;
-    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese – Scheda Riabilitativa", tx, 13);
-    if (subtitle) { doc.setFontSize(8); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 21); }
+    doc.setTextColor(...red); doc.setFontSize(13); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese", tx, 11);
+    doc.setFontSize(8.5); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
+    doc.text("Scheda Riabilitativa", tx, 19);
+    if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 26); }
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 13, { align: "right" });
+    doc.text(oggi, W - M, 11, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
     doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
     doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
-    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    doc.text(text.toUpperCase(), M + 5, y + 0.8);
     return y + 11;
   };
 
@@ -415,7 +417,7 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
     doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
-    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    doc.text(text.toUpperCase(), M + 5, y + 0.8);
     return y + 11;
   };
 
