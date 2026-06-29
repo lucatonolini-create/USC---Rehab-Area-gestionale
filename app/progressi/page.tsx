@@ -176,13 +176,13 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
     const tx = logoDataUrl ? 30 : M;
-    doc.setTextColor(...red); doc.setFontSize(13); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese", tx, 13);
-    doc.setFontSize(8.5); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
-    doc.text("Scheda Riabilitativa", tx, 17);
-    if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 23); }
+    doc.setTextColor(...red); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese", tx, 15);
+    doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
+    doc.text("Scheda Riabilitativa", tx, 19);
+    if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 24); }
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 13, { align: "right" });
+    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
