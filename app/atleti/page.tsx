@@ -41,12 +41,12 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
     const tx = logoDataUrl ? 30 : M;
     doc.setTextColor(...red); doc.setFontSize(13); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese", tx, 11);
+    doc.text("U.S. Cremonese", tx, 13);
     doc.setFontSize(8.5); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
-    doc.text("Scheda Completa Atleta", tx, 15);
-    if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 26); }
+    doc.text("Scheda Completa Atleta", tx, 17);
+    if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 23); }
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 11, { align: "right" });
+    doc.text(oggi, W - M, 13, { align: "right" });
   };
 
   const secTitle = (text: string, y: number, fill?: [number, number, number]) => {
