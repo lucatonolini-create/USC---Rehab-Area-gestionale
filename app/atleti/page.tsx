@@ -164,9 +164,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         startY: y,
         head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]],
         body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]),
-        headStyles: { fillColor: [34, 139, 34], textColor: 255, fontSize: 7.5 },
+        headStyles: { fillColor: [255, 204, 0], textColor: [43, 43, 43], fontSize: 7.5 },
         bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
-        alternateRowStyles: { fillColor: [245, 252, 245] },
+        alternateRowStyles: { fillColor: [255, 252, 220] },
         margin: { left: M, right: M },
         columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } },
       });

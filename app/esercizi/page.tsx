@@ -272,7 +272,7 @@ export default function EserciziPage() {
                             </p>
                             <div className="space-y-2">
                               {prog.esercizicampo.map((c, i) => (
-                                <div key={i} className="bg-green-50 border border-green-100 rounded-xl p-3">
+                                <div key={i} className="bg-yellow-50 border border-yellow-200 rounded-xl p-3">
                                   <div className="flex items-center justify-between gap-2 flex-wrap">
                                     <p className="font-semibold text-gray-900 text-sm">{c.tipo}</p>
                                     <div className="flex items-center gap-2 text-xs text-gray-500">
