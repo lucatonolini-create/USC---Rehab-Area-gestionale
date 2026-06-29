@@ -929,21 +929,27 @@ export default function AnalisiPage() {
             {atleti.length === 0 ? (
               <p className="text-gray-400 text-sm text-center py-8">Nessun dato disponibile</p>
             ) : (
-              <div className="flex items-end gap-2 h-40 pt-4">
-                {trendMensile.map(({ label, count }) => {
-                  const h = maxTrend > 0 ? Math.max((count / maxTrend) * 100, count > 0 ? 8 : 0) : 0;
-                  const isOggi = label.startsWith(MESI[oggi.getMonth()]) && !label.includes(String(oggi.getFullYear() - 1));
-                  return (
-                    <div key={label} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-xs font-bold text-gray-600">{count > 0 ? count : ""}</span>
-                      <div className="w-full flex items-end" style={{ height: "80px" }}>
-                        <div className={`w-full rounded-t-lg transition-all duration-500 ${isOggi ? "bg-[#C8102E]" : "bg-gray-200"}`}
-                          style={{ height: `${h}%` }} />
+              <div className="overflow-x-auto -mx-2 px-2 pb-1">
+                <div className="flex items-end gap-1.5 pt-4" style={{ minWidth: "420px", height: "140px" }}>
+                  {trendMensile.map(({ label, count }, idx) => {
+                    const [nomeMese, annoLabel] = label.split(" ");
+                    const showAnno = !!annoLabel && (idx === 0 || !trendMensile[idx - 1].label.includes(annoLabel));
+                    const h = maxTrend > 0 ? Math.max((count / maxTrend) * 100, count > 0 ? 8 : 0) : 0;
+                    const isOggi = label.startsWith(MESI[oggi.getMonth()]) && !label.includes(String(oggi.getFullYear() - 1));
+                    return (
+                      <div key={label} className="flex-1 flex flex-col items-center gap-0.5" style={{ minWidth: "28px" }}>
+                        <span className="text-[10px] font-bold text-gray-600">{count > 0 ? count : ""}</span>
+                        <div className="w-full flex items-end" style={{ height: "72px" }}>
+                          <div className={`w-full rounded-t transition-all duration-500 ${isOggi ? "bg-[#C8102E]" : "bg-gray-200"}`}
+                            style={{ height: `${h}%` }} />
+                        </div>
+                        <span className="text-[9px] text-gray-400 text-center leading-none font-medium">{nomeMese}</span>
+                        {showAnno && <span className="text-[8px] text-gray-300 text-center leading-none">{annoLabel}</span>}
+                        {!showAnno && <span className="text-[8px] leading-none">&nbsp;</span>}
                       </div>
-                      <span className="text-[10px] text-gray-400 text-center leading-tight">{label}</span>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
