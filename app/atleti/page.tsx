@@ -151,20 +151,22 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     y = secTitle("Valutazione psicologica – RTS Score (ACL-RSI adattato)", y);
     autoTable(doc, {
       startY: y,
-      head: [["Data", "Punteggio", "Interpretazione"]],
+      head: [["Data", "Infortunio", "Punteggio", "Interpretazione"]],
       body: [...questionari].reverse().map((q) => [
         new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
+        q.infortunioLabel || "—",
         `${q.punteggio} / 100`,
         interpretaRTS(q.punteggio),
       ]),
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
+      bodyStyles: { fontSize: 8, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 30 },
-        1: { cellWidth: 26, halign: "center", fontStyle: "bold" },
-        2: { textColor: dark },
+        0: { cellWidth: 28 },
+        1: { cellWidth: 68, textColor: dark },
+        2: { cellWidth: 24, halign: "center", fontStyle: "bold" },
+        3: { textColor: dark },
       },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
@@ -778,6 +780,16 @@ export default function AtletiPage() {
               <div className="space-y-5">
                 <QuestionarioTSK
                   questionari={selected.questionariKinesiofobia ?? []}
+                  infortuni={[
+                    ...(selected.stato === "Infortunato" && (selected.infortunio || selected.inizioRehab) ? [{
+                      id: "__corrente__",
+                      label: `In corso: ${selected.infortunio || "—"}${selected.inizioRehab ? ` · dal ${new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT")}` : ""}`,
+                    }] : []),
+                    ...[...(selected.storicoInfortuni ?? [])].reverse().map((inf) => ({
+                      id: inf.id,
+                      label: `${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""} · ${inf.inizioRehab ? new Date(inf.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"} → ${inf.fineRehab ? new Date(inf.fineRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"}`,
+                    })),
+                  ]}
                   onSalva={salvaQuestionnaire}
                 />
                 <div className="border-t border-gray-100 pt-4">

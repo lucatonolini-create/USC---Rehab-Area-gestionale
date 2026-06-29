@@ -33,6 +33,8 @@ export interface QuestionarioKinesiofobia {
   data: string;
   risposte: number[];
   punteggio: number;
+  infortunioId?: string;
+  infortunioLabel?: string;
 }
 
 export interface Atleta {

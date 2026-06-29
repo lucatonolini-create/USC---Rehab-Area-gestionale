@@ -1,33 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { ClipboardList, Plus, X } from "lucide-react";
+import { ClipboardList, Plus, X, Link2 } from "lucide-react";
 import { uid, type QuestionarioKinesiofobia } from "@/lib/store";
 
-// ACL-RSI adattato per infortuni sportivi generali (Webster et al. 2008)
-// Scala 0-10 per item · punteggio normalizzato 0-100 · soglia clinica: < 56
-
-interface Domanda {
-  testo: string;
-  categoria: "Emozioni" | "Fiducia" | "Rischio";
-  ancoraMin: string;
-  ancoraMax: string;
-  reversed: boolean;
+interface InfortunioOpzione {
+  id: string;
+  label: string;
 }
 
-const DOMANDE: Domanda[] = [
-  // Emozioni
+const DOMANDE: { testo: string; categoria: "Emozioni" | "Fiducia" | "Rischio"; ancoraMin: string; ancoraMax: string; reversed: boolean }[] = [
   { testo: "Sei ansioso riguardo al tuo ritorno in campo?", categoria: "Emozioni", ancoraMin: "Per niente", ancoraMax: "Moltissimo", reversed: true },
   { testo: "Hai paura di farti nuovamente del male durante l'attività sportiva?", categoria: "Emozioni", ancoraMin: "Per niente", ancoraMax: "Moltissimo", reversed: true },
   { testo: "È frustrante dover essere ancora cauto nei movimenti sportivi?", categoria: "Emozioni", ancoraMin: "Per niente", ancoraMax: "Moltissimo", reversed: true },
   { testo: "Sei nervoso riguardo alla tua prestazione quando torni a competere?", categoria: "Emozioni", ancoraMin: "Per niente", ancoraMax: "Moltissimo", reversed: true },
   { testo: "Ti senti a disagio per le limitazioni che l'infortunio ha ancora imposto alla tua attività?", categoria: "Emozioni", ancoraMin: "Per niente", ancoraMax: "Moltissimo", reversed: true },
-  // Fiducia nelle prestazioni
   { testo: "Sei fiducioso nella capacità della zona infortunata di reggere gli sforzi richiesti dallo sport ad alto livello?", categoria: "Fiducia", ancoraMin: "Per niente", ancoraMax: "Completamente", reversed: false },
   { testo: "Sei fiducioso nelle tue abilità tecniche e atletiche al livello pre-infortunio?", categoria: "Fiducia", ancoraMin: "Per niente", ancoraMax: "Completamente", reversed: false },
   { testo: "Sei fiducioso di poter eseguire movimenti esplosivi (sprint, salti, cambi di direzione) senza trattenerti?", categoria: "Fiducia", ancoraMin: "Per niente", ancoraMax: "Completamente", reversed: false },
   { testo: "Sei fiducioso di poter affrontare contrasti e duelli fisici senza preoccuparti per la zona infortunata?", categoria: "Fiducia", ancoraMin: "Per niente", ancoraMax: "Completamente", reversed: false },
-  // Valutazione del rischio
   { testo: "Pensi di poterti fare nuovamente del male tornando a praticare sport al tuo livello?", categoria: "Rischio", ancoraMin: "Per niente", ancoraMax: "Moltissimo", reversed: true },
   { testo: "Pensi che la zona infortunata sia abbastanza solida per reggere le sollecitazioni dello sport d'élite?", categoria: "Rischio", ancoraMin: "Per niente", ancoraMax: "Completamente", reversed: false },
   { testo: "Pensi di essere fisicamente e mentalmente pronto per tornare a competere al massimo livello?", categoria: "Rischio", ancoraMin: "Per niente", ancoraMax: "Completamente", reversed: false },
@@ -46,27 +37,45 @@ function interpreta(p: number): { label: string; sub: string; bg: string } {
 
 interface Props {
   questionari: QuestionarioKinesiofobia[];
+  infortuni: InfortunioOpzione[];
   onSalva: (questionari: QuestionarioKinesiofobia[]) => Promise<void>;
 }
 
-export default function QuestionarioTSK({ questionari, onSalva }: Props) {
+export default function QuestionarioTSK({ questionari, infortuni, onSalva }: Props) {
   const [mostraForm, setMostraForm] = useState(false);
+  const [infortunioSelId, setInfortunioSelId] = useState("");
   const [risposte, setRisposte] = useState<(number | null)[]>(Array(DOMANDE.length).fill(null));
   const [salvando, setSalvando] = useState(false);
 
   const risposteDate = risposte.filter((r) => r !== null).length;
-  const complete = risposteDate === DOMANDE.length;
-  const punteggioPreview = complete ? calcolaPunteggio(risposte as number[]) : null;
+  const complete = risposteDate === DOMANDE.length && infortunioSelId !== "";
+  const punteggioPreview = risposteDate === DOMANDE.length ? calcolaPunteggio(risposte as number[]) : null;
+
+  const infortunioLabel = infortuni.find((i) => i.id === infortunioSelId)?.label ?? "";
 
   const handleSalva = async () => {
     if (!complete) return;
     setSalvando(true);
     const r = risposte as number[];
-    const nuovo: QuestionarioKinesiofobia = { id: uid(), data: new Date().toISOString().slice(0, 10), risposte: r, punteggio: calcolaPunteggio(r) };
+    const nuovo: QuestionarioKinesiofobia = {
+      id: uid(),
+      data: new Date().toISOString().slice(0, 10),
+      risposte: r,
+      punteggio: calcolaPunteggio(r),
+      infortunioId: infortunioSelId,
+      infortunioLabel,
+    };
     await onSalva([...questionari, nuovo]);
     setMostraForm(false);
+    setInfortunioSelId("");
     setRisposte(Array(DOMANDE.length).fill(null));
     setSalvando(false);
+  };
+
+  const chiudiForm = () => {
+    setMostraForm(false);
+    setInfortunioSelId("");
+    setRisposte(Array(DOMANDE.length).fill(null));
   };
 
   const elimina = async (id: string) => {
@@ -74,9 +83,6 @@ export default function QuestionarioTSK({ questionari, onSalva }: Props) {
     await onSalva(questionari.filter((q) => q.id !== id));
   };
 
-  const chiudiForm = () => { setMostraForm(false); setRisposte(Array(DOMANDE.length).fill(null)); };
-
-  // Group questions by category for form display
   const categorie = ["Emozioni", "Fiducia", "Rischio"] as const;
 
   return (
@@ -106,18 +112,24 @@ export default function QuestionarioTSK({ questionari, onSalva }: Props) {
                 return (
                   <div key={q.id} className={`rounded-xl border p-3 ${bg}`}>
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-xs font-semibold opacity-70">
                           {new Date(q.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })}
                         </p>
-                        <p className="text-2xl font-bold mt-0.5">
+                        {q.infortunioLabel && (
+                          <div className="flex items-center gap-1 mt-0.5 mb-1">
+                            <Link2 className="w-3 h-3 opacity-50 shrink-0" />
+                            <p className="text-[11px] opacity-60 truncate">{q.infortunioLabel}</p>
+                          </div>
+                        )}
+                        <p className="text-2xl font-bold">
                           {q.punteggio}
                           <span className="text-sm font-normal opacity-60 ml-1">/ 100</span>
                         </p>
                         <p className="text-xs font-semibold">{label}</p>
                         <p className="text-xs opacity-70 mt-0.5">{sub}</p>
                       </div>
-                      <button onClick={() => elimina(q.id)} className="opacity-30 hover:opacity-70 transition-opacity mt-0.5 ml-2">
+                      <button onClick={() => elimina(q.id)} className="opacity-30 hover:opacity-70 transition-opacity ml-2 mt-0.5">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -141,6 +153,30 @@ export default function QuestionarioTSK({ questionari, onSalva }: Props) {
             <button onClick={chiudiForm} className="text-gray-400 hover:text-gray-600 shrink-0">
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* Injury selector */}
+          <div>
+            <p className="text-xs font-semibold text-gray-600 mb-1.5">
+              <Link2 className="w-3 h-3 inline mr-1 opacity-60" />
+              Infortunio di riferimento *
+            </p>
+            {infortuni.length === 0 ? (
+              <p className="text-xs text-gray-400 italic bg-white border border-gray-200 rounded-xl px-3 py-2">
+                Nessun infortunio registrato da associare
+              </p>
+            ) : (
+              <select
+                value={infortunioSelId}
+                onChange={(e) => setInfortunioSelId(e.target.value)}
+                className="w-full text-xs border border-gray-200 rounded-xl px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
+              >
+                <option value="">— Seleziona infortunio —</option>
+                {infortuni.map((inf) => (
+                  <option key={inf.id} value={inf.id}>{inf.label}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           {/* Progress */}
@@ -205,7 +241,7 @@ export default function QuestionarioTSK({ questionari, onSalva }: Props) {
             )}
             <button onClick={handleSalva} disabled={!complete || salvando}
               className="w-full bg-[#C8102E] text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-red-800 disabled:opacity-40 transition-colors">
-              {salvando ? "Salvataggio…" : complete ? "Salva valutazione" : `Rispondi a tutte le domande (${DOMANDE.length - risposteDate} rimast${DOMANDE.length - risposteDate === 1 ? "a" : "e"})`}
+              {salvando ? "Salvataggio…" : !infortunioSelId ? "Seleziona prima l'infortunio" : risposteDate < DOMANDE.length ? `Rispondi a tutte le domande (${DOMANDE.length - risposteDate} rimaste)` : "Salva valutazione"}
             </button>
           </div>
         </div>
