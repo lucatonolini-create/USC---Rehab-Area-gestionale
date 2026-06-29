@@ -53,7 +53,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.setFillColor(...bg); doc.rect(M, y - 4, W - M * 2, 8, "F");
     if (!fill) { doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F"); }
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...tc);
-    doc.text(text.toUpperCase(), M + 5, fill ? y + 1.0 : y + 1.5);
+    doc.text(text.toUpperCase(), M + 5, fill ? y - 0.5 : y + 1.5);
     return y + 11;
   };
 
