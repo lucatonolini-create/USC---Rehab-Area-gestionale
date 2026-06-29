@@ -28,6 +28,13 @@ export interface InfortunioStorico {
   note?: string;
 }
 
+export interface QuestionarioKinesiofobia {
+  id: string;
+  data: string;
+  risposte: number[];
+  punteggio: number;
+}
+
 export interface Atleta {
   id: string;
   nome: string;
@@ -47,6 +54,7 @@ export interface Atleta {
   email: string;
   note: string;
   storicoInfortuni?: InfortunioStorico[];
+  questionariKinesiofobia?: QuestionarioKinesiofobia[];
   // Antropometria
   peso?: string;
   altezza?: string;
@@ -226,6 +234,7 @@ function rowToAtleta(r: Record<string, any>): Atleta {
     email: r.email ?? "",
     note: r.note ?? "",
     storicoInfortuni: r.storico_infortuni ?? [],
+    questionariKinesiofobia: r.questionari_kinesiofobia ?? [],
     peso: r.peso ?? "",
     altezza: r.altezza ?? "",
     altezzaDaSeduto: r.altezza_da_seduto ?? "",
@@ -252,6 +261,7 @@ function atletaToRow(a: Atleta): Record<string, any> {
     email: a.email,
     note: a.note,
     storico_infortuni: a.storicoInfortuni ?? [],
+    questionari_kinesiofobia: a.questionariKinesiofobia ?? [],
     peso: a.peso ?? null,
     altezza: a.altezza ?? null,
     altezza_da_seduto: a.altezzaDaSeduto ?? null,

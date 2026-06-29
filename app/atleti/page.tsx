@@ -5,10 +5,11 @@ import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, C
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid,
   CATEGORIE, TIPI_INFORTUNIO, calcolaPHV,
-  type Atleta, type Stato, type InfortunioStorico, type Programma,
+  type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
+import QuestionarioTSK from "@/components/QuestionarioTSK";
 
 async function getLogoDataUrl(): Promise<string | null> {
   try {
@@ -349,6 +350,14 @@ export default function AtletiPage() {
     await esportaStoricoCompletoPDF(selected, programmi);
   };
 
+  const salvaQuestionnaire = async (questionari: QuestionarioKinesiofobia[]) => {
+    if (!selected) return;
+    const aggiornato = { ...selected, questionariKinesiofobia: questionari };
+    setAtleti((prev) => prev.map((a) => a.id === selected.id ? aggiornato : a));
+    setSelected(aggiornato);
+    await upsertAtleta(aggiornato);
+  };
+
   const elimina = async (id: string) => {
     setAtleti((prev) => prev.filter((a) => a.id !== id));
     if (selected?.id === id) setSelected(null);
@@ -654,7 +663,16 @@ export default function AtletiPage() {
                 )}
               </div>
             ) : tab === "cartella" ? (
-              <CartellaClinaca atletaId={selected.id} />
+              <div className="space-y-5">
+                <QuestionarioTSK
+                  questionari={selected.questionariKinesiofobia ?? []}
+                  onSalva={salvaQuestionnaire}
+                />
+                <div className="border-t border-gray-100 pt-4">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Documenti</p>
+                  <CartellaClinaca atletaId={selected.id} />
+                </div>
+              </div>
             ) : (
               /* ── Storico infortuni ── */
               (() => {
