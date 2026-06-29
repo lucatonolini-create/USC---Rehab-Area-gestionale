@@ -22,10 +22,18 @@ interface Props {
   onChiudi: () => void;
 }
 
-function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function Input({ className, type, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+  if (type === "date") {
+    return (
+      <div className={`mt-1 w-full border border-gray-200 rounded-xl px-4 focus-within:ring-2 focus-within:ring-[#C8102E] bg-white ${className ?? ""}`}>
+        <input type="date" {...props}
+          className="w-full py-3 text-sm bg-transparent border-0 outline-none focus:outline-none text-gray-900" />
+      </div>
+    );
+  }
   return (
-    <input {...props}
-      className={`w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] ${props.className ?? ""}`} />
+    <input type={type} {...props}
+      className={`w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] ${className ?? ""}`} />
   );
 }
 
