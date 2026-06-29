@@ -342,17 +342,19 @@ async function esportaPDFPanoramica(params: {
     doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
     const tx = logoDataUrl ? 30 : M;
-    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese – Analisi Rehab Area", tx, 13);
+    doc.setTextColor(...red); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese", tx, 15);
+    doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
+    doc.text("Analisi Rehab Area", tx, 19);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 13, { align: "right" });
+    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
     doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
     doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
-    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    doc.text(text.toUpperCase(), M + 5, y + 0.8);
     return y + 11;
   };
 
@@ -508,17 +510,19 @@ async function esportaPDFReport(
     doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
     const tx = logoDataUrl ? 30 : M;
-    doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese – Report Mensile", tx, 13);
+    doc.setTextColor(...red); doc.setFontSize(14); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese", tx, 15);
+    doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
+    doc.text("Report Mensile", tx, 19);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 13, { align: "right" });
+    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
     doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
     doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
-    doc.text(text.toUpperCase(), M + 5, y + 1.5);
+    doc.text(text.toUpperCase(), M + 5, y + 0.8);
     return y + 11;
   };
 
