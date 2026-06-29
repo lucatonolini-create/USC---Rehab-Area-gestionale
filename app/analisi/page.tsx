@@ -749,13 +749,21 @@ export default function AnalisiPage() {
     TIPI_INFORTUNIO.forEach((t) => { map[t] = 0; });
     atleti.forEach((a) => {
       if (a.tipoInfortunio) map[a.tipoInfortunio] = (map[a.tipoInfortunio] ?? 0) + 1;
+      (a.storicoInfortuni ?? []).forEach((s) => {
+        if (s.tipo && s.tipo in map) map[s.tipo] = (map[s.tipo] ?? 0) + 1;
+      });
     });
     return Object.entries(map).filter(([, c]) => c > 0).sort((a, b) => b[1] - a[1]).map(([nome, count]) => ({ nome, count }));
   }, [atleti]);
 
   const perInfortunio = useMemo(() => {
     const map: Record<string, number> = {};
-    atleti.forEach((a) => { if (a.infortunio) map[a.infortunio.trim()] = (map[a.infortunio.trim()] ?? 0) + 1; });
+    atleti.forEach((a) => {
+      if (a.infortunio) map[a.infortunio.trim()] = (map[a.infortunio.trim()] ?? 0) + 1;
+      (a.storicoInfortuni ?? []).forEach((s) => {
+        if (s.diagnosi) map[s.diagnosi.trim()] = (map[s.diagnosi.trim()] ?? 0) + 1;
+      });
+    });
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([nome, count]) => ({ nome, count }));
   }, [atleti]);
 
@@ -778,7 +786,11 @@ export default function AnalisiPage() {
   const atletiMese = atleti.filter((a) => {
     if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
     if (filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
-    if (filtroTipoInf !== "Tutti" && a.tipoInfortunio !== filtroTipoInf) return false;
+    if (filtroTipoInf !== "Tutti") {
+      const tipoAttivo = a.tipoInfortunio === filtroTipoInf;
+      const tipoStorico = (a.storicoInfortuni ?? []).some((s) => s.tipo === filtroTipoInf);
+      if (!tipoAttivo && !tipoStorico) return false;
+    }
     return true;
   }).sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1);
 
