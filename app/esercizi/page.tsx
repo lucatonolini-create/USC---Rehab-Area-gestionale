@@ -82,7 +82,9 @@ type FormSection = "esercizi" | "campo" | "test" | "carico";
 
 export default function EserciziPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
-  const [programmi, setProgrammi] = useState<Programma[]>([]);
+  const [programmiPerAtleta, setProgrammiPerAtleta] = useState<Record<string, Programma[]>>({});
+  const [atletaAperto, setAtletaAperto] = useState<string | null>(null);
+  const [caricandoAtleta, setCaricandoAtleta] = useState(false);
   const [aperto, setAperto] = useState<string | null>(null);
   const [mostraForm, setMostraForm] = useState(false);
   const [form, setForm] = useState<Omit<Programma, "id">>(progVuoto);
@@ -93,8 +95,18 @@ export default function EserciziPage() {
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
-    loadProgrammi().then(setProgrammi);
   }, []);
+
+  const apriAtleta = async (atletaId: string) => {
+    if (atletaAperto === atletaId) { setAtletaAperto(null); return; }
+    setAtletaAperto(atletaId);
+    if (!(atletaId in programmiPerAtleta)) {
+      setCaricandoAtleta(true);
+      const progs = await loadProgrammi(atletaId);
+      setProgrammiPerAtleta((prev) => ({ ...prev, [atletaId]: progs }));
+      setCaricandoAtleta(false);
+    }
+  };
 
   const apriNuovo = () => {
     setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [{ ...esVuoto }], esercizicampo: [], tests: [], carico: { ...caricoVuoto } });
@@ -111,14 +123,23 @@ export default function EserciziPage() {
     if (!form.atletaId || !form.nome.trim()) return;
     const pulito = { ...form, esercizi: form.esercizi.filter((e) => e.nome.trim()), esercizicampo: (form.esercizicampo ?? []).filter((c) => c.tipo), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
     const prog: Programma = editId ? { ...pulito, id: editId } : { ...pulito, id: uid() };
-    setProgrammi((prev) => editId ? prev.map((p) => p.id === editId ? prog : p) : [...prev, prog]);
     await upsertProgramma(prog);
+    setProgrammiPerAtleta((prev) => {
+      const id = prog.atletaId;
+      if (!(id in prev)) return prev;
+      const lista = prev[id];
+      return { ...prev, [id]: editId ? lista.map((p) => p.id === editId ? prog : p) : [...lista, prog] };
+    });
     setMostraForm(false);
   };
 
   const eliminaProgramma = async (id: string) => {
-    setProgrammi((prev) => prev.filter((p) => p.id !== id));
     await deleteProgramma(id);
+    setProgrammiPerAtleta((prev) => {
+      const updated: Record<string, Programma[]> = {};
+      for (const [aid, lista] of Object.entries(prev)) updated[aid] = lista.filter((p) => p.id !== id);
+      return updated;
+    });
   };
 
   // Esercizi
@@ -157,14 +178,6 @@ export default function EserciziPage() {
     setGpsCaricando(false);
   };
 
-  const perAtleta: Record<string, { atleta: Atleta; programmi: Programma[] }> = {};
-  programmi.forEach((p) => {
-    const a = atleti.find((a) => a.id === p.atletaId);
-    if (!a) return;
-    if (!perAtleta[p.atletaId]) perAtleta[p.atletaId] = { atleta: a, programmi: [] };
-    perAtleta[p.atletaId].programmi.push(p);
-  });
-
   const tabClass = (s: FormSection) =>
     `flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${sezioneAttiva === s ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`;
 
@@ -173,7 +186,7 @@ export default function EserciziPage() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Programmi di Lavoro</h1>
-          <p className="text-gray-500 mt-1">{programmi.length} programmi attivi</p>
+          <p className="text-gray-500 mt-1">{atleti.length} atleti</p>
         </div>
         <button onClick={apriNuovo}
           className="flex items-center gap-2 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800">
@@ -181,26 +194,40 @@ export default function EserciziPage() {
         </button>
       </div>
 
-      {programmi.length === 0 ? (
+      {atleti.length === 0 ? (
         <div className="text-center py-20">
           <Dumbbell className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-          <p className="text-gray-400 text-lg font-medium">Nessun programma ancora</p>
-          <p className="text-gray-300 text-sm mt-1">Crea un programma di lavoro per i tuoi atleti</p>
+          <p className="text-gray-400 text-lg font-medium">Nessun atleta ancora</p>
+          <p className="text-gray-300 text-sm mt-1">Aggiungi prima un atleta per creare programmi</p>
         </div>
       ) : (
-        <div className="space-y-8">
-          {Object.values(perAtleta).map(({ atleta, programmi: lista }) => (
-            <div key={atleta.id}>
-              <div className="flex items-center gap-3 mb-3">
+        <div className="space-y-3">
+          {atleti.map((atleta) => {
+            const isOpen = atletaAperto === atleta.id;
+            const lista = programmiPerAtleta[atleta.id] ?? [];
+            return (
+            <div key={atleta.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+              <button onClick={() => apriAtleta(atleta.id)}
+                className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 text-left">
                 <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
-                <span className="font-bold text-gray-800">{atleta.nome}</span>
+                <span className="font-bold text-gray-800 flex-1">{atleta.nome}</span>
                 <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{atleta.categoria}</span>
-                <div className="flex-1 h-px bg-gray-100" />
-              </div>
+                {isOpen && atleta.id in programmiPerAtleta && (
+                  <span className="text-xs text-gray-400">{lista.length} programmi</span>
+                )}
+                <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+              </button>
 
-              <div className="space-y-3 ml-11">
+              {isOpen && (
+                <div className="border-t border-gray-100 px-5 pb-5 pt-4">
+                  {caricandoAtleta && !(atleta.id in programmiPerAtleta) ? (
+                    <p className="text-sm text-gray-400 text-center py-4">Caricamento…</p>
+                  ) : lista.length === 0 ? (
+                    <p className="text-sm text-gray-400 italic text-center py-4">Nessun programma per questo atleta</p>
+                  ) : (
+                  <div className="space-y-3">
                 {lista.map((prog) => (
                   <div key={prog.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
                     <button onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
@@ -388,9 +415,13 @@ export default function EserciziPage() {
                     )}
                   </div>
                 ))}
-              </div>
+                  </div>
+                  )}
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
