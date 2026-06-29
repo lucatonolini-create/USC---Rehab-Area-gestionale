@@ -114,8 +114,8 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
       addSectionTitle(ws, "ESERCIZI IN CAMPO", darkFill);
       const hCampo = ws.addRow(["#", "Tipo", "Serie", "Durata", "Descrizione"]);
       hCampo.height = 20;
-      const yellowFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFCC00" } };
-      hCampo.eachCell((cell: any) => { cell.fill = yellowFill; cell.font = { bold: true, size: 9, color: { argb: "FF2B2B2B" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
+      const goldFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFC4A05A" } };
+      hCampo.eachCell((cell: any) => { cell.fill = goldFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
       hCampo.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
       hCampo.getCell(5).alignment = { vertical: "middle", horizontal: "left" };
       prog.esercizicampo.forEach((c, i) => {
@@ -270,9 +270,9 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         startY: y,
         head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]],
         body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]),
-        headStyles: { fillColor: [255, 204, 0], textColor: [43, 43, 43], fontSize: 7.5 },
+        headStyles: { fillColor: [196, 160, 90], textColor: [255, 255, 255], fontSize: 7.5 },
         bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
-        alternateRowStyles: { fillColor: [255, 252, 220] },
+        alternateRowStyles: { fillColor: [248, 240, 218] },
         margin: { left: M, right: M },
         columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } },
       });
