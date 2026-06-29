@@ -605,7 +605,14 @@ export default function ProgressiPage() {
   const atletiMese = atleti.filter((a) => {
     if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
     if (filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
-    if (filtroInf && !(a.infortunio ?? "").toLowerCase().includes(filtroInf.toLowerCase())) return false;
+    if (filtroInf) {
+      const q = filtroInf.toLowerCase();
+      const inLive = (a.infortunio ?? "").toLowerCase().includes(q);
+      const inStorico = (a.storicoInfortuni ?? []).some(
+        (s) => s.diagnosi.toLowerCase().includes(q) || (s.tipo ?? "").toLowerCase().includes(q)
+      );
+      if (!inLive && !inStorico) return false;
+    }
     return true;
   });
 
@@ -793,29 +800,42 @@ export default function ProgressiPage() {
                         <span className="text-xs font-bold text-[#C8102E] uppercase tracking-widest">{cat}</span>
                         <span className="text-xs bg-white text-gray-500 px-2 py-0.5 rounded-full border border-gray-200">{lista.length}</span>
                       </div>
-                      {lista.map((a) => (
+                      {lista.map((a) => {
+                        const infortuni = infortunitNelMese(a, reportAnno, reportMese);
+                        const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
+                        return (
                         <div key={a.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50">
                           <div className="w-9 h-9 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
-                            <p className="text-xs text-gray-400 truncate">{a.infortunio || "—"}</p>
+                            {infortuni.length > 0 ? (
+                              <div className="space-y-0.5 mt-0.5">
+                                {infortuni.map((inf, i) => (
+                                  <p key={i} className="text-xs text-gray-400 truncate">
+                                    {inf.diagnosi}
+                                    <span className="text-gray-300 ml-1">
+                                      {fmtD(inf.inizio)}{inf.fine ? ` → ${fmtD(inf.fine)}` : ""}
+                                    </span>
+                                  </p>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-400">—</p>
+                            )}
                           </div>
                           <div className="text-right shrink-0">
                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>
                               {a.stato}
                             </span>
-                            <p className="text-xs text-gray-400 mt-1">
-                              {a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"}
-                              {a.fineRehab ? ` → ${new Date(a.fineRehab + "T12:00").toLocaleDateString("it-IT")}` : ""}
-                            </p>
                           </div>
                           <div className="w-16 text-right shrink-0">
                             <span className="text-lg font-bold text-[#C8102E]">{a.progresso}%</span>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   );
                 })}
