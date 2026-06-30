@@ -183,13 +183,13 @@ export default function EserciziPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Programmi di Lavoro</h1>
-          <p className="text-gray-500 mt-1">{atleti.length} atleti</p>
+          <h1 className="text-2xl font-bold text-gray-900">Programmi di Lavoro</h1>
+          <p className="text-gray-500 mt-0.5 text-sm">{atleti.length} atleti</p>
         </div>
         <button onClick={apriNuovo}
-          className="flex items-center gap-2 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800">
+          className="flex items-center gap-1.5 bg-[#C8102E] text-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-800 shrink-0 whitespace-nowrap">
           <Plus className="w-4 h-4" /> Nuovo programma
         </button>
       </div>
