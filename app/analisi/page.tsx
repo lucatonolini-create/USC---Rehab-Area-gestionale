@@ -260,12 +260,13 @@ async function esportaExcelPanoramica(params: {
   ws6.columns = [{ width: 20 }, { width: 18 }, { width: 18 }];
   xlAddSheetHeader(ws6, wb, logoId, "ANALISI REHAB AREA", "Progresso medio di recupero per categoria", oggi);
   ws6.addRow([]);
-  xlAddColHeaders(ws6, ["Categoria", "Atleti attivi", "Progresso medio"]);
+  xlAddColHeaders(ws6, ["Categoria", "Atleti (attivi / guariti)", "Progresso medio"]);
   CATEGORIE.forEach((cat, i) => {
-    const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Disponibile");
+    const lista = params.atleti.filter((a) => a.categoria === cat);
     if (!lista.length) return;
+    const nAttivi = lista.filter((a) => a.stato !== "Disponibile").length;
     const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
-    xlAddDataRow(ws6, [cat, lista.length, `${media}%`], i % 2 !== 0, [3]);
+    xlAddDataRow(ws6, [cat, `${nAttivi} attivi / ${lista.length - nAttivi} guariti`, `${media}%`], i % 2 !== 0, [3]);
   });
 
   await xlSave(wb, `USC_Analisi_${oggi.replace(/\//g, "-")}.xlsx`);
@@ -547,10 +548,11 @@ async function esportaPDFPanoramica(params: {
   y = Math.max(trendEndY, cY + cH) + 12;
 
   const progressiRows = CATEGORIE.map((cat) => {
-    const lista = params.atleti.filter((a) => a.categoria === cat && a.stato !== "Disponibile");
+    const lista = params.atleti.filter((a) => a.categoria === cat);
     if (!lista.length) return null;
     const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
-    return [cat, lista.length, `${media}%`];
+    const nAttivi = lista.filter((a) => a.stato !== "Disponibile").length;
+    return [cat, `${nAttivi} attivi / ${lista.length - nAttivi} guariti`, `${media}%`];
   }).filter(Boolean) as any[][];
 
   if (progressiRows.length > 0) {
@@ -558,7 +560,7 @@ async function esportaPDFPanoramica(params: {
     y = secTitle("Progresso medio di recupero per categoria", y);
     autoTable(doc, {
       startY: y,
-      head: [["Categoria", "Atleti attivi", "Progresso medio"]],
+      head: [["Categoria", "Atleti (attivi / guariti)", "Progresso medio"]],
       body: progressiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
@@ -572,7 +574,12 @@ async function esportaPDFPanoramica(params: {
   const fmtD = (d?: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
   const tuttiRows = [...params.atleti]
     .sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1)
-    .map(a => [a.nome, a.categoria, a.infortunio || "—", a.stato, fmtD(a.inizioRehab), fmtD(a.fineRehab), `${a.progresso}%`]);
+    .map(a => {
+      const diagnosi = a.infortunio || (a.storicoInfortuni ?? []).at(-1)?.diagnosi || "—";
+      const inizio = a.inizioRehab || (a.storicoInfortuni ?? []).at(-1)?.inizioRehab;
+      const fine = a.fineRehab || (a.storicoInfortuni ?? []).at(-1)?.fineRehab;
+      return [a.nome, a.categoria, diagnosi, a.stato, fmtD(inizio), fmtD(fine), `${a.progresso}%`];
+    });
 
   if (tuttiRows.length > 0) {
     doc.addPage(); addHeader(); y = HDR + 12;
@@ -995,20 +1002,24 @@ export default function AnalisiPage() {
           {/* Progressi medi */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
             <h2 className="font-bold text-gray-900 mb-1">Progresso medio di recupero per categoria</h2>
-            <p className="text-xs text-gray-400 mb-5">Calcolato sugli atleti attualmente in riabilitazione</p>
-            {attivi.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">Nessun atleta attivo</p>
+            <p className="text-xs text-gray-400 mb-5">Tutti gli atleti – inclusi guariti (100%)</p>
+            {atleti.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-6">Nessun atleta ancora</p>
             ) : (
               <div className="space-y-3">
                 {CATEGORIE.map((cat) => {
-                  const lista = attivi.filter((a) => a.categoria === cat);
+                  const lista = atleti.filter((a) => a.categoria === cat);
                   if (!lista.length) return null;
                   const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
+                  const nAttivi = lista.filter((a) => a.stato !== "Disponibile").length;
+                  const nGuariti = lista.length - nAttivi;
                   return (
                     <div key={cat}>
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
                         <span className="font-semibold">{cat}</span>
-                        <span className="font-bold text-[#C8102E]">{media}%</span>
+                        <span className="font-bold text-[#C8102E]">{media}%
+                          {nGuariti > 0 && <span className="text-gray-400 font-normal ml-1">({nAttivi} attivi · {nGuariti} guariti)</span>}
+                        </span>
                       </div>
                       <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full transition-all duration-500 ${
@@ -1058,7 +1069,9 @@ export default function AnalisiPage() {
                             <p className="text-xs text-gray-400">{a.categoria}{a.tipoInfortunio ? ` · ${a.tipoInfortunio}` : ""}</p>
                           </div>
                         </div>
-                        <p className="text-sm text-gray-600 truncate">{a.infortunio || "—"}</p>
+                        <p className="text-sm text-gray-600 truncate">
+                          {a.infortunio || (a.storicoInfortuni ?? []).at(-1)?.diagnosi || "—"}
+                        </p>
                         <div className="flex md:justify-center">
                           <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>{a.stato}</span>
                         </div>
