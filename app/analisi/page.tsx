@@ -570,16 +570,46 @@ async function esportaPDFPanoramica(params: {
     });
   }
 
-  // Lista completa atleti (tutti, inclusi guariti)
+  // Lista completa atleti (tutti, inclusi guariti) – una riga per infortunio
   const fmtD = (d?: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
-  const tuttiRows = [...params.atleti]
-    .sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1)
-    .map(a => {
-      const diagnosi = a.infortunio || (a.storicoInfortuni ?? []).at(-1)?.diagnosi || "—";
-      const inizio = a.inizioRehab || (a.storicoInfortuni ?? []).at(-1)?.inizioRehab;
-      const fine = a.fineRehab || (a.storicoInfortuni ?? []).at(-1)?.fineRehab;
-      return [a.nome, a.categoria, diagnosi, a.stato, fmtD(inizio), fmtD(fine), `${a.progresso}%`];
-    });
+
+  const atletiOrdinati = [...params.atleti].sort(
+    (a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1
+  );
+
+  const tuttiRows: any[] = [];
+  const athleteForRowT: number[] = [];
+
+  atletiOrdinati.forEach((a, athleteIdx) => {
+    const infortuni: Array<{ diagnosi: string; inizio?: string; fine?: string }> = [];
+    if (a.infortunio || a.inizioRehab)
+      infortuni.push({ diagnosi: a.infortunio || "—", inizio: a.inizioRehab, fine: a.fineRehab });
+    (a.storicoInfortuni ?? []).forEach((s) =>
+      infortuni.push({ diagnosi: s.diagnosi, inizio: s.inizioRehab, fine: s.fineRehab })
+    );
+
+    const n = infortuni.length;
+    if (n === 0) {
+      tuttiRows.push([{ content: a.nome, styles: { fontStyle: "bold" } }, a.categoria, "—", a.stato, "—", "—", `${a.progresso}%`]);
+      athleteForRowT.push(athleteIdx);
+    } else {
+      infortuni.forEach((inf, infIdx) => {
+        if (infIdx === 0) {
+          tuttiRows.push([
+            { content: a.nome, rowSpan: n, styles: { fontStyle: "bold", valign: "middle" } },
+            { content: a.categoria, rowSpan: n, styles: { valign: "middle" } },
+            inf.diagnosi,
+            { content: a.stato, rowSpan: n, styles: { valign: "middle" } },
+            fmtD(inf.inizio), fmtD(inf.fine),
+            { content: `${a.progresso}%`, rowSpan: n, styles: { valign: "middle" } },
+          ]);
+        } else {
+          tuttiRows.push([inf.diagnosi, fmtD(inf.inizio), fmtD(inf.fine)]);
+        }
+        athleteForRowT.push(athleteIdx);
+      });
+    }
+  });
 
   if (tuttiRows.length > 0) {
     doc.addPage(); addHeader(); y = HDR + 12;
@@ -590,21 +620,25 @@ async function esportaPDFPanoramica(params: {
       body: tuttiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 42, fontStyle: "bold", textColor: dark },
-        1: { cellWidth: 24 },
-        2: { cellWidth: 55 },
-        3: { cellWidth: 28 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 20 },
-        6: { cellWidth: 14 },
+        0: { cellWidth: 36 },
+        1: { cellWidth: 22 },
+        2: { cellWidth: 52 },
+        3: { cellWidth: 24 },
+        4: { cellWidth: 16 },
+        5: { cellWidth: 16 },
+        6: { cellWidth: 16 },
       },
       didParseCell: (data: any) => {
-        if (data.column.index === 3) {
-          data.cell.styles.textColor = data.cell.raw === "Disponibile" ? [34, 139, 34] : red;
-          data.cell.styles.fontStyle = "bold";
+        if (data.section === "body") {
+          const ai = athleteForRowT[data.row.index];
+          data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
+          if (data.column.index === 3) {
+            const content = typeof data.cell.raw === "object" ? (data.cell.raw as any)?.content : data.cell.raw;
+            data.cell.styles.textColor = content === "Disponibile" ? [34, 139, 34] : red;
+            data.cell.styles.fontStyle = "bold";
+          }
         }
       },
     });
