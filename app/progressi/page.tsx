@@ -918,7 +918,10 @@ export default function ProgressiPage() {
                         <span className="text-xs bg-white text-gray-500 px-2 py-0.5 rounded-full border border-gray-200">{lista.length}</span>
                       </div>
                       {lista.map((a) => {
-                        const infortuni = infortunitNelMese(a, reportAnno, reportMese);
+                        const tuttiInf = infortunitNelMese(a, reportAnno, reportMese);
+                        const infortuni = filtroTipoInf !== "Tutti"
+                          ? tuttiInf.filter((inf) => inf.tipo === filtroTipoInf)
+                          : tuttiInf;
                         const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
                         return (
                         <div key={a.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50">
