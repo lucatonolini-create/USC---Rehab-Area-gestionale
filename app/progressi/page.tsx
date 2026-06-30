@@ -236,7 +236,6 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     body: [
       ["Data di nascita", atleta.dataNascita ? fmtDCl(atleta.dataNascita) : "—"],
       ["Stato attuale", atleta.stato],
-      ["Progresso recupero", `${atleta.progresso}%`],
     ],
     theme: "striped",
     styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
