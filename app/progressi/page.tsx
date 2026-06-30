@@ -280,13 +280,14 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   programmi.forEach((prog) => {
     doc.addPage();
 
-    // Injury type for subtitle: prefer tipo from linked storico, fallback to live field
+    // Injury type + diagnosi for subtitle: prefer linked storico, fallback to live fields
     let tipoInf = atleta.tipoInfortunio || "";
+    let diagnosiInf = atleta.infortunio || "";
     if (prog.infortunioId) {
       const storico = (atleta.storicoInfortuni ?? []).find((s) => s.id === prog.infortunioId);
-      if (storico?.tipo) tipoInf = storico.tipo;
+      if (storico) { tipoInf = storico.tipo || tipoInf; diagnosiInf = storico.diagnosi || diagnosiInf; }
     }
-    addHeader([atleta.nome, tipoInf].filter(Boolean).join("  ·  "));
+    addHeader([atleta.nome, tipoInf, diagnosiInf].filter(Boolean).join("  ·  "));
 
     y = HDR + 8;
 
