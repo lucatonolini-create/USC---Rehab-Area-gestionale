@@ -427,14 +427,14 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
 async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: "landscape" });
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
   const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
   const nomeMese = MESI[mese];
   const logoDataUrl = await getLogoDataUrl();
-  const M = 14; const W = 210; const H = 297; const HDR = 30;
+  const M = 14; const W = 297; const H = 210; const HDR = 30;
 
   const addHeader = () => {
     doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
@@ -544,9 +544,9 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 26 }, 1: { cellWidth: 20 }, 2: { cellWidth: 44 },
-      3: { cellWidth: 16 }, 4: { cellWidth: 13 }, 5: { cellWidth: 13 },
-      6: { cellWidth: 12 }, 7: { cellWidth: 16 }, 8: { cellWidth: 9 },
+      0: { cellWidth: 34 }, 1: { cellWidth: 24 }, 2: { cellWidth: 72 },
+      3: { cellWidth: 26 }, 4: { cellWidth: 20 }, 5: { cellWidth: 20 },
+      6: { cellWidth: 16 }, 7: { cellWidth: 26 }, 8: { cellWidth: 13 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
