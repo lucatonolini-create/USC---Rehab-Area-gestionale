@@ -227,8 +227,34 @@ export default function EserciziPage() {
                   ) : lista.length === 0 ? (
                     <p className="text-sm text-gray-400 italic text-center py-4">Nessun programma per questo atleta</p>
                   ) : (
-                  <div className="space-y-3">
-                {lista.map((prog) => (
+                  <div className="space-y-4">
+                {(() => {
+                  const gruppi = new Map<string | null, Programma[]>();
+                  lista.forEach((p) => {
+                    const k = p.infortunioId ?? null;
+                    if (!gruppi.has(k)) gruppi.set(k, []);
+                    gruppi.get(k)!.push(p);
+                  });
+                  const multiGroups = lista.some((p) => p.infortunioId) && gruppi.size > 1;
+                  return Array.from(gruppi.entries()).map(([key, progs]) => {
+                    let lbl: { diagnosi: string; tipo?: string } | null = null;
+                    if (multiGroups && key) {
+                      if (key === "__corrente__") {
+                        lbl = { diagnosi: atleta.infortunio || "Infortunio corrente", tipo: atleta.tipoInfortunio };
+                      } else {
+                        const st = (atleta.storicoInfortuni ?? []).find((s) => s.id === key);
+                        if (st) lbl = { diagnosi: st.diagnosi, tipo: st.tipo };
+                      }
+                    }
+                    return (
+                      <div key={key ?? "__none__"} className="space-y-2">
+                        {lbl && (
+                          <div className="flex items-center gap-2 px-1 py-1.5 border-b border-gray-100 pb-2">
+                            {lbl.tipo && <span className="text-xs bg-red-50 text-[#C8102E] font-bold px-2 py-0.5 rounded-full">{lbl.tipo}</span>}
+                            <span className="text-sm font-semibold text-gray-700">{lbl.diagnosi}</span>
+                          </div>
+                        )}
+                        {progs.map((prog) => (
                   <div key={prog.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
                     <button onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
                       className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 text-left">
@@ -414,7 +440,11 @@ export default function EserciziPage() {
                       </div>
                     )}
                   </div>
-                ))}
+                        ))}
+                      </div>
+                    );
+                  });
+                })()}
                   </div>
                   )}
                 </div>
