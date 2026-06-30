@@ -741,7 +741,10 @@ async function esportaPDFReport(
   const analisiRows: any[][] = [];
   const athleteForRowA: number[] = [];
   atletiMese.forEach((a, athleteIdx) => {
-    const infortuni = infortunitNelMese(a, anno, mese);
+    const tuttiInf = infortunitNelMese(a, anno, mese);
+    const infortuni = filtroTipoInf
+      ? tuttiInf.filter((inf) => (inf.tipo ?? "") === filtroTipoInf)
+      : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
       analisiRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
