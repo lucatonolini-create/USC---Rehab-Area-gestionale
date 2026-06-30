@@ -346,7 +346,7 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
   const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
 
   const ws = wb.addWorksheet("Report Mensile");
-  ws.columns = [{ width: 30 }, { width: 16 }, { width: 10 }, { width: 40 }, { width: 20 }, { width: 18 }, { width: 18 }, { width: 12 }];
+  ws.columns = [{ width: 28 }, { width: 14 }, { width: 38 }, { width: 18 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 16 }, { width: 10 }];
 
   ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
   if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 0.92, row: 3.8 } as any, editAs: "oneCell" });
@@ -356,26 +356,43 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
   ws.getRow(3).getCell(4).value = `Generato il ${oggi}`; ws.getRow(3).getCell(4).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(4).alignment = { horizontal: "right" };
 
   ws.addRow([]);
-  const hRow = ws.addRow(["Nome", "Categoria", "N° Infort.", "Diagnosi / Infortuni nel mese", "Stato", "Inizio Rehab", "Fine Rehab", "Progresso"]);
+  const hRow = ws.addRow(["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "Progresso"]);
   hRow.height = 20;
   hRow.eachCell((cell: any) => { cell.fill = darkFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle" }; });
 
-  atletiMese.forEach((a, i) => {
+  const fmtDXl = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT");
+  const ggXl = (inizio: string, fine?: string) => fine
+    ? String(Math.round((new Date(fine + "T12:00").getTime() - new Date(inizio + "T12:00").getTime()) / 86400000))
+    : "—";
+
+  atletiMese.forEach((a, athleteIdx) => {
     const infortuni = infortunitNelMese(a, anno, mese);
-    const diagnosiTesto = infortuni.length > 0
-      ? infortuni.map((inf) => inf.tipo ? `${inf.diagnosi} (${inf.tipo})` : inf.diagnosi).join("\n")
-      : "—";
-    const row = ws.addRow([
-      a.nome, a.categoria, infortuni.length || "—", diagnosiTesto, a.stato,
-      a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—",
-      a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT") : "—",
-      `${a.progresso}%`,
-    ]);
-    row.height = infortuni.length > 1 ? 18 * infortuni.length : 18;
-    row.eachCell({ includeEmpty: true }, (cell: any) => {
-      cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 };
-      cell.alignment = { vertical: "middle", wrapText: true };
-    });
+    const bg = athleteIdx % 2 !== 0 ? lightFill : whiteFill;
+    const addXlRow = (values: any[]) => {
+      const row = ws.addRow(values);
+      row.height = 18;
+      row.eachCell({ includeEmpty: true }, (cell: any) => {
+        cell.fill = bg; cell.border = border; cell.font = { size: 9 };
+        cell.alignment = { vertical: "middle" };
+      });
+    };
+    if (infortuni.length === 0) {
+      addXlRow([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+    } else {
+      infortuni.forEach((inf, i) => {
+        addXlRow([
+          i === 0 ? a.nome : "",
+          i === 0 ? a.categoria : "",
+          inf.diagnosi,
+          inf.tipo ?? "—",
+          inf.inizio ? fmtDXl(inf.inizio) : "—",
+          inf.fine ? fmtDXl(inf.fine) : "—",
+          inf.inizio ? ggXl(inf.inizio, inf.fine) : "—",
+          i === 0 ? a.stato : "",
+          i === 0 ? `${a.progresso}%` : "",
+        ]);
+      });
+    }
   });
 
   ws.addRow([]);
@@ -471,26 +488,47 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
   }
 
   y = secTitle("Atleti del periodo", y);
+
+  const fmtDP = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  const ggP = (inizio: string, fine?: string) => fine
+    ? `${Math.round((new Date(fine + "T12:00").getTime() - new Date(inizio + "T12:00").getTime()) / 86400000)}gg`
+    : "—";
+
+  const pdfRows: any[][] = [];
+  atletiMese.forEach((a) => {
+    const infortuni = infortunitNelMese(a, anno, mese);
+    if (infortuni.length === 0) {
+      pdfRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+    } else {
+      infortuni.forEach((inf, i) => {
+        pdfRows.push([
+          i === 0 ? a.nome : "",
+          i === 0 ? a.categoria : "",
+          inf.diagnosi,
+          inf.tipo ?? "—",
+          inf.inizio ? fmtDP(inf.inizio) : "—",
+          inf.fine ? fmtDP(inf.fine) : "—",
+          inf.inizio ? ggP(inf.inizio, inf.fine) : "—",
+          i === 0 ? a.stato : "",
+          i === 0 ? `${a.progresso}%` : "",
+        ]);
+      });
+    }
+  });
+
   autoTable(doc, {
     startY: y,
-    head: [["Nome", "Categoria", "N°", "Diagnosi / Infortuni nel mese", "Stato", "Inizio", "Fine", "%"]],
-    body: atletiMese.map((a) => {
-      const infortuni = infortunitNelMese(a, anno, mese);
-      const diagnosiTesto = infortuni.length > 0
-        ? infortuni.map((inf) => inf.tipo ? `${inf.diagnosi} (${inf.tipo})` : inf.diagnosi).join("\n")
-        : "—";
-      return [
-        a.nome, a.categoria, infortuni.length || "—", diagnosiTesto, a.stato,
-        a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
-        a.fineRehab   ? new Date(a.fineRehab   + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—",
-        `${a.progresso}%`,
-      ];
-    }),
+    head: [["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "%"]],
+    body: pdfRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
+    bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
-    columnStyles: { 0: { cellWidth: 34 }, 1: { cellWidth: 20 }, 2: { cellWidth: 11 }, 3: { cellWidth: 50 }, 4: { cellWidth: 24 }, 5: { cellWidth: 16 }, 6: { cellWidth: 16 }, 7: { cellWidth: 10 } },
+    columnStyles: {
+      0: { cellWidth: 28 }, 1: { cellWidth: 14 }, 2: { cellWidth: 46 },
+      3: { cellWidth: 18 }, 4: { cellWidth: 14 }, 5: { cellWidth: 14 },
+      6: { cellWidth: 13 }, 7: { cellWidth: 17 }, 8: { cellWidth: 10 },
+    },
   });
 
   addFooter();
