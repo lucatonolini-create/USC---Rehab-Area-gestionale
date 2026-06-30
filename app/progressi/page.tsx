@@ -919,31 +919,36 @@ export default function ProgressiPage() {
                       </div>
                       {lista.map((a) => {
                         const tuttiInf = infortunitNelMese(a, reportAnno, reportMese);
-                        const infortuni = filtroInf !== "Tutti"
-                          ? tuttiInf.filter((inf) => inf.tipo === filtroInf)
+                        const infortuni = filtroInf
+                          ? tuttiInf.filter((inf) => {
+                              const q = filtroInf.toLowerCase();
+                              return inf.diagnosi.toLowerCase().includes(q) || (inf.tipo ?? "").toLowerCase().includes(q);
+                            })
                           : tuttiInf;
-                        const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
+                        const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT");
                         return (
-                        <div key={a.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50">
-                          <div className="w-9 h-9 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                        <div key={a.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50">
+                          <div className="w-9 h-9 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
                             {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
-                            {infortuni.length > 0 ? (
-                              <div className="space-y-0.5 mt-0.5">
-                                {infortuni.map((inf, i) => (
-                                  <p key={i} className="text-xs text-gray-400 truncate">
-                                    {inf.diagnosi}
-                                    <span className="text-gray-300 ml-1">
-                                      {fmtD(inf.inizio)}{inf.fine ? ` → ${fmtD(inf.fine)}` : ""}
-                                    </span>
-                                  </p>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-xs text-gray-400">—</p>
-                            )}
+                            <div className="space-y-1.5 mt-1">
+                              {infortuni.length === 0 ? (
+                                <p className="text-xs text-gray-400">—</p>
+                              ) : (
+                                infortuni.map((inf, i) => (
+                                  <div key={i}>
+                                    <p className="text-sm text-gray-700 font-medium leading-snug">{inf.diagnosi}</p>
+                                    <p className="text-xs text-gray-400">
+                                      {inf.tipo ? `${inf.tipo} · ` : ""}
+                                      {inf.inizio ? fmtD(inf.inizio) : ""}
+                                      {inf.fine ? ` → ${fmtD(inf.fine)}` : ""}
+                                    </p>
+                                  </div>
+                                ))
+                              )}
+                            </div>
                           </div>
                           <div className="text-right shrink-0">
                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>
