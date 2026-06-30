@@ -314,7 +314,7 @@ async function esportaExcelReport(
   atletiMese.forEach((a, i) => {
     const infortuni = infortunitNelMese(a, anno, mese);
     const tipiTesto = infortuni.length > 0
-      ? [...new Set(infortuni.map((inf) => inf.tipo).filter(Boolean))].join("\n") || "—"
+      ? Array.from(new Set(infortuni.map((inf) => inf.tipo).filter(Boolean))).join("\n") || "—"
       : "—";
     const diagnosiTesto = infortuni.length > 0
       ? infortuni.map((inf) => inf.diagnosi).join("\n")
@@ -682,7 +682,7 @@ async function esportaPDFReport(
     body: atletiMese.map((a) => {
       const infortuni = infortunitNelMese(a, anno, mese);
       const tipiTesto = infortuni.length > 0
-        ? [...new Set(infortuni.map((inf) => inf.tipo).filter(Boolean))].join("\n") || "—"
+        ? Array.from(new Set(infortuni.map((inf) => inf.tipo).filter(Boolean))).join("\n") || "—"
         : "—";
       const diagnosiTesto = infortuni.length > 0
         ? infortuni.map((inf) => inf.diagnosi).join("\n")
