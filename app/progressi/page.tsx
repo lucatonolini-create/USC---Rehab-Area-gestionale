@@ -217,16 +217,24 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   doc.text(atleta.stato, W - M - 18, HDR + 13.5, { align: "center" });
   doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, HDR + 27, W - M, HDR + 27);
 
+  const fmtDCl = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });
+  const ggCl = (inizio: string, fine?: string) => fine
+    ? `${Math.round((new Date(fine + "T12:00").getTime() - new Date(inizio + "T12:00").getTime()) / 86400000)}gg`
+    : "—";
+
+  const tuttiInfortuni: Array<{ tipo?: string; diagnosi: string; inizio: string; fine?: string }> = [];
+  if (atleta.infortunio || atleta.inizioRehab)
+    tuttiInfortuni.push({ tipo: atleta.tipoInfortunio, diagnosi: atleta.infortunio || "—", inizio: atleta.inizioRehab, fine: atleta.fineRehab });
+  (atleta.storicoInfortuni ?? []).forEach((s) =>
+    tuttiInfortuni.push({ tipo: s.tipo, diagnosi: s.diagnosi, inizio: s.inizioRehab, fine: s.fineRehab })
+  );
+
   let y = HDR + 34;
   y = secTitle("Dati clinici", y);
   autoTable(doc, {
     startY: y,
     body: [
-      ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"],
-      ["Tipo infortunio", atleta.tipoInfortunio || "—"],
-      ["Diagnosi / Infortunio", atleta.infortunio || "—"],
-      ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"],
-      ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"],
+      ["Data di nascita", atleta.dataNascita ? fmtDCl(atleta.dataNascita) : "—"],
       ["Stato attuale", atleta.stato],
       ["Progresso recupero", `${atleta.progresso}%`],
     ],
@@ -236,9 +244,34 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
   });
+  y = (doc as any).lastAutoTable.finalY + 8;
+
+  if (tuttiInfortuni.length > 0) {
+    y = secTitle("Storico infortuni", y);
+    autoTable(doc, {
+      startY: y,
+      head: [["#", "Tipo", "Diagnosi / Infortunio", "Inizio", "Fine", "Giorni"]],
+      body: tuttiInfortuni.map((inf, i) => [
+        i + 1,
+        inf.tipo || "—",
+        inf.diagnosi,
+        inf.inizio ? fmtDCl(inf.inizio) : "—",
+        inf.fine ? fmtDCl(inf.fine) : "—",
+        inf.inizio ? ggCl(inf.inizio, inf.fine) : "—",
+      ]),
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+      bodyStyles: { fontSize: 8.5, cellPadding: 3, halign: "left", valign: "middle" },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+      margin: { left: M, right: M },
+      columnStyles: {
+        0: { cellWidth: 8 }, 1: { cellWidth: 36 }, 2: { cellWidth: 72 },
+        3: { cellWidth: 22 }, 4: { cellWidth: 22 }, 5: { cellWidth: 16 },
+      },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
 
   if (atleta.note) {
-    y = (doc as any).lastAutoTable.finalY + 8;
     y = secTitle("Note", y);
     doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...dark);
     doc.text(doc.splitTextToSize(atleta.note, W - M * 2), M, y);
