@@ -318,25 +318,35 @@ async function esportaExcelReport(
 
   atletiMese.forEach((a, athleteIdx) => {
     const infortuni = infortunitNelMese(a, anno, mese);
+    const count = Math.max(infortuni.length, 1);
+    const startRowNum = ws.rowCount + 1;
+
     const addRow = (values: any[]) => {
       xlAddDataRow(ws, values, athleteIdx % 2 !== 0, [9]);
     };
     if (infortuni.length === 0) {
       addRow([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
     } else {
-      infortuni.forEach((inf, i) => {
+      infortuni.forEach((inf) => {
         addRow([
-          i === 0 ? a.nome : "",
-          i === 0 ? a.categoria : "",
+          a.nome,
+          a.categoria,
           inf.diagnosi,
           inf.tipo ?? "—",
           inf.inizio ? fmtDA(inf.inizio) : "—",
           inf.fine ? fmtDA(inf.fine) : "—",
           inf.inizio ? ggA(inf.inizio, inf.fine) : "—",
-          i === 0 ? a.stato : "",
-          i === 0 ? `${a.progresso}%` : "",
+          a.stato,
+          `${a.progresso}%`,
         ]);
       });
+    }
+    if (count > 1) {
+      const endRowNum = startRowNum + count - 1;
+      ws.mergeCells(startRowNum, 1, endRowNum, 1);
+      ws.mergeCells(startRowNum, 2, endRowNum, 2);
+      ws.getRow(startRowNum).getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+      ws.getRow(startRowNum).getCell(2).alignment = { vertical: "middle", horizontal: "left" };
     }
   });
 
@@ -688,23 +698,33 @@ async function esportaPDFReport(
     : "—";
 
   const analisiRows: any[][] = [];
-  atletiMese.forEach((a) => {
+  const athleteForRowA: number[] = [];
+  atletiMese.forEach((a, athleteIdx) => {
     const infortuni = infortunitNelMese(a, anno, mese);
+    const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
       analisiRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      athleteForRowA.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
-        analisiRows.push([
-          i === 0 ? a.nome : "",
-          i === 0 ? a.categoria : "",
+        const row: any[] = [];
+        if (i === 0) {
+          row.push(
+            { content: a.nome, rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
+            { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
+          );
+        }
+        row.push(
           inf.diagnosi,
           inf.tipo ?? "—",
           inf.inizio ? fmtDPdf(inf.inizio) : "—",
           inf.fine ? fmtDPdf(inf.fine) : "—",
           inf.inizio ? ggPdf(inf.inizio, inf.fine) : "—",
-          i === 0 ? a.stato : "",
-          i === 0 ? `${a.progresso}%` : "",
-        ]);
+          a.stato,
+          `${a.progresso}%`,
+        );
+        analisiRows.push(row);
+        athleteForRowA.push(athleteIdx);
       });
     }
   });
@@ -715,12 +735,17 @@ async function esportaPDFReport(
     body: analisiRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 38 }, 1: { cellWidth: 20 }, 2: { cellWidth: 68 },
-      3: { cellWidth: 26 }, 4: { cellWidth: 16 }, 5: { cellWidth: 16 },
-      6: { cellWidth: 14 }, 7: { cellWidth: 22 }, 8: { cellWidth: 12 },
+      0: { cellWidth: 36 }, 1: { cellWidth: 22 }, 2: { cellWidth: 68 },
+      3: { cellWidth: 26 }, 4: { cellWidth: 15 }, 5: { cellWidth: 15 },
+      6: { cellWidth: 13 }, 7: { cellWidth: 22 }, 8: { cellWidth: 11 },
+    },
+    didParseCell: (data: any) => {
+      if (data.section === "body") {
+        const ai = athleteForRowA[data.row.index];
+        data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
+      }
     },
   });
 

@@ -367,7 +367,10 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
 
   atletiMese.forEach((a, athleteIdx) => {
     const infortuni = infortunitNelMese(a, anno, mese);
+    const count = Math.max(infortuni.length, 1);
     const bg = athleteIdx % 2 !== 0 ? lightFill : whiteFill;
+    const startRowNum = ws.rowCount + 1;
+
     const addXlRow = (values: any[]) => {
       const row = ws.addRow(values);
       row.height = 18;
@@ -379,19 +382,26 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
     if (infortuni.length === 0) {
       addXlRow([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
     } else {
-      infortuni.forEach((inf, i) => {
+      infortuni.forEach((inf) => {
         addXlRow([
-          i === 0 ? a.nome : "",
-          i === 0 ? a.categoria : "",
+          a.nome,
+          a.categoria,
           inf.diagnosi,
           inf.tipo ?? "—",
           inf.inizio ? fmtDXl(inf.inizio) : "—",
           inf.fine ? fmtDXl(inf.fine) : "—",
           inf.inizio ? ggXl(inf.inizio, inf.fine) : "—",
-          i === 0 ? a.stato : "",
-          i === 0 ? `${a.progresso}%` : "",
+          a.stato,
+          `${a.progresso}%`,
         ]);
       });
+    }
+    if (count > 1) {
+      const endRowNum = startRowNum + count - 1;
+      ws.mergeCells(startRowNum, 1, endRowNum, 1);
+      ws.mergeCells(startRowNum, 2, endRowNum, 2);
+      ws.getRow(startRowNum).getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+      ws.getRow(startRowNum).getCell(2).alignment = { vertical: "middle", horizontal: "left" };
     }
   });
 
@@ -495,23 +505,33 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     : "—";
 
   const pdfRows: any[][] = [];
-  atletiMese.forEach((a) => {
+  const athleteForRowP: number[] = [];
+  atletiMese.forEach((a, athleteIdx) => {
     const infortuni = infortunitNelMese(a, anno, mese);
+    const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
       pdfRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      athleteForRowP.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
-        pdfRows.push([
-          i === 0 ? a.nome : "",
-          i === 0 ? a.categoria : "",
+        const row: any[] = [];
+        if (i === 0) {
+          row.push(
+            { content: a.nome, rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
+            { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
+          );
+        }
+        row.push(
           inf.diagnosi,
           inf.tipo ?? "—",
           inf.inizio ? fmtDP(inf.inizio) : "—",
           inf.fine ? fmtDP(inf.fine) : "—",
           inf.inizio ? ggP(inf.inizio, inf.fine) : "—",
-          i === 0 ? a.stato : "",
-          i === 0 ? `${a.progresso}%` : "",
-        ]);
+          a.stato,
+          `${a.progresso}%`,
+        );
+        pdfRows.push(row);
+        athleteForRowP.push(athleteIdx);
       });
     }
   });
@@ -522,12 +542,17 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
     body: pdfRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 28 }, 1: { cellWidth: 14 }, 2: { cellWidth: 46 },
-      3: { cellWidth: 18 }, 4: { cellWidth: 14 }, 5: { cellWidth: 14 },
-      6: { cellWidth: 13 }, 7: { cellWidth: 17 }, 8: { cellWidth: 10 },
+      0: { cellWidth: 26 }, 1: { cellWidth: 20 }, 2: { cellWidth: 44 },
+      3: { cellWidth: 16 }, 4: { cellWidth: 13 }, 5: { cellWidth: 13 },
+      6: { cellWidth: 12 }, 7: { cellWidth: 16 }, 8: { cellWidth: 9 },
+    },
+    didParseCell: (data: any) => {
+      if (data.section === "body") {
+        const ai = athleteForRowP[data.row.index];
+        data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
+      }
     },
   });
 
