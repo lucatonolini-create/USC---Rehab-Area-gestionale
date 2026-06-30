@@ -919,8 +919,8 @@ export default function ProgressiPage() {
                       </div>
                       {lista.map((a) => {
                         const tuttiInf = infortunitNelMese(a, reportAnno, reportMese);
-                        const infortuni = filtroTipoInf !== "Tutti"
-                          ? tuttiInf.filter((inf) => inf.tipo === filtroTipoInf)
+                        const infortuni = filtroInf !== "Tutti"
+                          ? tuttiInf.filter((inf) => inf.tipo === filtroInf)
                           : tuttiInf;
                         const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" });
                         return (
