@@ -1203,32 +1203,46 @@ export default function AnalisiPage() {
                   <span className="text-right">Progresso</span>
                 </div>
                 <div className="divide-y divide-gray-50">
-                  {atletiMese.map((a) => (
-                    <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-center px-5 py-4 hover:bg-gray-50 gap-2">
-                      <div className="col-span-2 flex items-center gap-3">
-                        <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                          {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  {atletiMese.map((a) => {
+                    const infortuni = infortunitNelMese(a, reportAnno, reportMese);
+                    return (
+                      <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-start px-5 py-4 hover:bg-gray-50 gap-2">
+                        <div className="col-span-2 flex items-center gap-3">
+                          <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
+                            {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
+                            <p className="text-xs text-gray-400">{a.categoria}</p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
-                          <p className="text-xs text-gray-400">{a.categoria}{a.tipoInfortunio ? ` · ${a.tipoInfortunio}` : ""}</p>
+                        <div className="space-y-1.5">
+                          {infortuni.length === 0 ? (
+                            <p className="text-sm text-gray-400">—</p>
+                          ) : (
+                            infortuni.map((inf, i) => (
+                              <div key={i}>
+                                <p className="text-sm text-gray-700 font-medium leading-snug">{inf.diagnosi}</p>
+                                <p className="text-xs text-gray-400">
+                                  {inf.tipo ? `${inf.tipo} · ` : ""}
+                                  {inf.inizio ? new Date(inf.inizio + "T12:00").toLocaleDateString("it-IT") : ""}
+                                  {inf.fine ? ` → ${new Date(inf.fine + "T12:00").toLocaleDateString("it-IT")}` : ""}
+                                </p>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                        <div className="flex md:justify-center">
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>
+                            {a.stato}
+                          </span>
+                        </div>
+                        <div className="md:text-right">
+                          <span className="text-lg font-bold text-[#C8102E]">{a.progresso}%</span>
                         </div>
                       </div>
-                      <p className="text-sm text-gray-600 truncate">{a.infortunio || "—"}</p>
-                      <div className="flex md:justify-center">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>
-                          {a.stato}
-                        </span>
-                      </div>
-                      <div className="md:text-right">
-                        <span className="text-lg font-bold text-[#C8102E]">{a.progresso}%</span>
-                        <p className="text-xs text-gray-400">
-                          {a.inizioRehab ? new Date(a.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"}
-                          {a.fineRehab ? ` → ${new Date(a.fineRehab + "T12:00").toLocaleDateString("it-IT")}` : ""}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             )}
