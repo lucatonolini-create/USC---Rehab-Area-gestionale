@@ -185,7 +185,7 @@ export default function EserciziPage() {
     <div className="p-6">
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Programmi di Lavoro</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Programmi <span className="whitespace-nowrap">di Lavoro</span></h1>
           <p className="text-gray-500 mt-0.5 text-sm">{atleti.length} atleti</p>
         </div>
         <button onClick={apriNuovo}
