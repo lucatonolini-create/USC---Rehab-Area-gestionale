@@ -778,9 +778,9 @@ async function esportaPDFReport(
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 36 }, 1: { cellWidth: 22 }, 2: { cellWidth: 68 },
-      3: { cellWidth: 26 }, 4: { cellWidth: 15 }, 5: { cellWidth: 15 },
-      6: { cellWidth: 13 }, 7: { cellWidth: 22 }, 8: { cellWidth: 11 },
+      0: { cellWidth: 38 }, 1: { cellWidth: 24 }, 2: { cellWidth: 74 },
+      3: { cellWidth: 26 }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
+      6: { cellWidth: 15 }, 7: { cellWidth: 28 }, 8: { cellWidth: 15 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
