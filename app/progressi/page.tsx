@@ -279,9 +279,30 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   // ── Pagine programmi ────────────────────────────────────────────────────────
   programmi.forEach((prog) => {
     doc.addPage();
-    const dataStr = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "";
-    addHeader(`${atleta.nome}  ·  ${prog.nome}${prog.fase ? ` – ${prog.fase}` : ""}${dataStr ? `  ·  ${dataStr}` : ""}`);
+
+    // Injury type for subtitle: prefer tipo from linked storico, fallback to live field
+    let tipoInf = atleta.tipoInfortunio || "";
+    if (prog.infortunioId) {
+      const storico = (atleta.storicoInfortuni ?? []).find((s) => s.id === prog.infortunioId);
+      if (storico?.tipo) tipoInf = storico.tipo;
+    }
+    addHeader([atleta.nome, tipoInf].filter(Boolean).join("  ·  "));
+
     y = HDR + 8;
+
+    // Date prominently at top of page
+    if (prog.data) {
+      const dataFmt = new Date(prog.data + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+      doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...dark);
+      doc.text(dataFmt.charAt(0).toUpperCase() + dataFmt.slice(1), M, y + 7);
+      const sessione = [prog.nome, prog.fase].filter(Boolean).join(" – ");
+      if (sessione) {
+        doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...gray);
+        doc.text(sessione, M, y + 14);
+      }
+      doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, y + 18, W - M, y + 18);
+      y += 24;
+    }
 
     if (prog.esercizi?.length) {
       y = secTitle("Palestra", y);
