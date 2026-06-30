@@ -478,7 +478,7 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
   URL.revokeObjectURL(url);
 }
 
-async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string) {
+async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string, filtroInf: string) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({ orientation: "landscape" });
@@ -561,7 +561,13 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
   const pdfRows: any[][] = [];
   const athleteForRowP: number[] = [];
   atletiMese.forEach((a, athleteIdx) => {
-    const infortuni = infortunitNelMese(a, anno, mese);
+    const tuttiInf = infortunitNelMese(a, anno, mese);
+    const infortuni = filtroInf
+      ? tuttiInf.filter((inf) => {
+          const q = filtroInf.toLowerCase();
+          return inf.diagnosi.toLowerCase().includes(q) || (inf.tipo ?? "").toLowerCase().includes(q);
+        })
+      : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
       pdfRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
@@ -891,7 +897,7 @@ export default function ProgressiPage() {
                   {esportandoReport === "excel" ? "..." : "Excel"}
                 </button>
                 <button
-                  onClick={async () => { setEsportandoReport("pdf"); try { await esportaPDFReportMensile(atletiMese, reportMese, reportAnno, filtroCat); } finally { setEsportandoReport(null); } }}
+                  onClick={async () => { setEsportandoReport("pdf"); try { await esportaPDFReportMensile(atletiMese, reportMese, reportAnno, filtroCat, filtroInf); } finally { setEsportandoReport(null); } }}
                   disabled={!!esportandoReport || atletiMese.length === 0}
                   className="flex items-center gap-1.5 border border-red-200 text-[#C8102E] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-50 disabled:opacity-50">
                   <FileText className="w-3.5 h-3.5" />
