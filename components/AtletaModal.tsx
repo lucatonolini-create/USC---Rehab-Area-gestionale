@@ -1,8 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Zap } from "lucide-react";
 import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, calcolaPHV, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+
+interface PerfAthlete {
+  id: string;
+  name: string;
+  position: string;
+  birth_date: string;
+  jersey_number: number;
+  vmax_kmh: number;
+}
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
@@ -62,9 +71,33 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
   const [form, setForm] = useState<Omit<Atleta, "id">>(
     atletaIniziale ? (({ id, ...rest }) => rest)(atletaIniziale) : atletaVuoto
   );
+  const [perfAthletes, setPerfAthletes] = useState<PerfAthlete[]>([]);
+  const [perfLoading, setPerfLoading] = useState(false);
+
+  useEffect(() => {
+    if (isModifica) return;
+    setPerfLoading(true);
+    fetch("/api/performance/athletes")
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => { if (d) setPerfAthletes(d.athletes ?? d ?? []); })
+      .catch(() => {})
+      .finally(() => setPerfLoading(false));
+  }, [isModifica]);
 
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
+
+  const importaDaPerf = (perfId: string) => {
+    const p = perfAthletes.find((a) => a.id === perfId);
+    if (!p) return;
+    setForm((prev) => ({
+      ...prev,
+      nome: p.name,
+      posizione: p.position ?? "",
+      dataNascita: p.birth_date ?? "",
+      categoria: "U17" as Categoria,
+    }));
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -77,6 +110,32 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
         </div>
 
         <div className="p-6 space-y-4">
+          {/* Importa da Performance */}
+          {!isModifica && (
+            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-2">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#C8102E]" />
+                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Importa da app Performance</span>
+              </div>
+              <select
+                defaultValue=""
+                onChange={(e) => importaDaPerf(e.target.value)}
+                disabled={perfLoading || perfAthletes.length === 0}
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E] disabled:opacity-50"
+              >
+                <option value="">{perfLoading ? "Caricamento giocatori..." : perfAthletes.length === 0 ? "Nessun giocatore disponibile" : "— Seleziona giocatore —"}</option>
+                {perfAthletes.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}{p.jersey_number ? ` · #${p.jersey_number}` : ""}{p.position ? ` · ${p.position}` : ""}
+                  </option>
+                ))}
+              </select>
+              {perfAthletes.length > 0 && (
+                <p className="text-xs text-gray-400">Seleziona un giocatore per compilare automaticamente nome, posizione e data di nascita.</p>
+              )}
+            </div>
+          )}
+
           <div>
             <Label>Nome e Cognome *</Label>
             <Input className="mt-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Marco Rossi" />
