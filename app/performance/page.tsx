@@ -606,7 +606,7 @@ export default function PerformancePage() {
       <div className="flex items-start justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Area Performance</h1>
-          <p className="text-gray-500 mt-1">Dati atletici U17 · integrazione con Cremonese Performance App</p>
+          <p className="text-gray-500 mt-1">Dati atletici · integrazione con Cremonese Performance App</p>
         </div>
         {!loadingPerf && !errPerf && (
           <span className="inline-flex items-center gap-1.5 bg-green-50 border border-green-100 text-green-700 px-3 py-1.5 rounded-xl text-xs font-medium">
