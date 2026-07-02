@@ -48,6 +48,15 @@ function Label({ children }: { children: string }) {
   return <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{children}</label>;
 }
 
+function generaSigla(nome: string, dataNascita: string, categoria: string): string {
+  const parts = nome.trim().split(/\s+/);
+  const fn = parts[0] ?? "";
+  const ln = parts[1] ?? "";
+  const cap = (s: string) => s.length > 0 ? s[0].toUpperCase() + (s[1]?.toLowerCase() ?? "") : "";
+  const anno = dataNascita ? dataNascita.slice(2, 4) : "??";
+  return `${cap(fn)}.${cap(ln)}${anno}${categoria ? "_" + categoria : ""}`;
+}
+
 export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props) {
   const isModifica = !!atletaIniziale;
   const [form, setForm] = useState<Omit<Atleta, "id">>(
@@ -219,7 +228,11 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">
             Annulla
           </button>
-          <button onClick={() => form.nome.trim() && onSalva(form)} disabled={!form.nome.trim()}
+          <button onClick={() => {
+              if (!form.nome.trim()) return;
+              const dati = isModifica ? form : { ...form, nome: generaSigla(form.nome, form.dataNascita, form.categoria) };
+              onSalva(dati);
+            }} disabled={!form.nome.trim()}
             className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
             {isModifica ? "Salva modifiche" : "Aggiungi atleta"}
           </button>
