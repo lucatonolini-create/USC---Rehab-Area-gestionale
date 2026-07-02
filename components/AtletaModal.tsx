@@ -54,7 +54,7 @@ function generaSigla(nome: string, dataNascita: string, categoria: string): stri
   const ln = parts[1] ?? "";
   const cap = (s: string) => s.length > 0 ? s[0].toUpperCase() + (s[1]?.toLowerCase() ?? "") : "";
   const anno = dataNascita ? dataNascita.slice(2, 4) : "??";
-  return `${cap(fn)}.${cap(ln)}${anno}${categoria ? "_" + categoria : ""}`;
+  return `${cap(fn)}.${cap(ln)}.${anno}${categoria ? "_" + categoria : ""}`;
 }
 
 export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props) {
