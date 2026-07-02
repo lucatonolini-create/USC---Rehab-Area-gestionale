@@ -7,8 +7,8 @@ import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, calcolaPHV, type Atleta, type Stato,
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
 const atletaVuoto: Omit<Atleta, "id"> = {
-  nome: "", dataNascita: "", categoria: "Primavera",
-  posizione: "", piedeDominante: "Destro",
+  nome: "", dataNascita: "", categoria: "" as Categoria,
+  posizione: "", piedeDominante: "" as Piede,
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   stato: "Infortunato", progresso: 0,
   fisioterapista: "", preparatoreAtletico: "",
@@ -77,12 +77,14 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             <div>
               <Label>Categoria</Label>
               <Sel className="mt-1" value={form.categoria} onChange={(e) => f("categoria", e.target.value as Categoria)}>
+                <option value="">—</option>
                 {CATEGORIE.map((c) => <option key={c}>{c}</option>)}
               </Sel>
             </div>
             <div>
               <Label>Piede dominante</Label>
               <Sel className="mt-1" value={form.piedeDominante} onChange={(e) => f("piedeDominante", e.target.value as Piede)}>
+                <option value="">—</option>
                 {PIEDI.map((p) => <option key={p}>{p}</option>)}
               </Sel>
             </div>
