@@ -11,6 +11,30 @@ import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
 import QuestionarioTSK from "@/components/QuestionarioTSK";
 
+const MAPPING_KEY = "perf_athlete_mapping";
+function getPerfId(rehabId: string): string | null {
+  try { return JSON.parse(localStorage.getItem(MAPPING_KEY) ?? "{}")[rehabId] ?? null; } catch { return null; }
+}
+
+async function syncInjury(atleta: Atleta) {
+  const perfId = getPerfId(atleta.id);
+  const statoMap: Record<string, string> = { Infortunato: "rehab", Disponibile: "disponibile" };
+  const body: Record<string, any> = {
+    external_id: atleta.id,
+    athlete_name: atleta.nome,
+    date: atleta.inizioRehab || new Date().toISOString().slice(0, 10),
+    type: (atleta.tipoInfortunio ?? "").toLowerCase() || "altro",
+    body_part: atleta.infortunio || "",
+    status: statoMap[atleta.stato] ?? "rehab",
+    notes: atleta.note || "",
+  };
+  if (perfId) body.athlete_id = perfId;
+  if (atleta.fineRehab) body.expected_return = atleta.fineRehab;
+  try {
+    await fetch("/api/performance/injuries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch { /* sync is best-effort */ }
+}
+
 async function getLogoDataUrl(): Promise<string | null> {
   try {
     const resp = await fetch("/logo.png");
@@ -436,10 +460,12 @@ export default function AtletiPage() {
         setAtleti((prev) => prev.map((a) => a.id === editAtleta.id ? aggiornato : a));
         setSelected(aggiornato);
         await upsertAtleta(aggiornato);
+        syncInjury(aggiornato);
       } else {
         const nuovo = { ...dati, id: uid() };
         setAtleti((prev) => [...prev, nuovo]);
         await upsertAtleta(nuovo);
+        syncInjury(nuovo);
       }
       setMostraForm(false);
     } catch (err: any) {

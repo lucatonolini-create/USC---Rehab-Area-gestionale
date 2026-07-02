@@ -5,16 +5,17 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2,
+  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, Gauge,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/",            label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/atleti",      label: "Atleti",      icon: Users },
-  { href: "/esercizi",    label: "Programmi",   icon: Dumbbell },
-  { href: "/progressi",   label: "Progressi",   icon: TrendingUp },
-  { href: "/analisi",     label: "Analisi",     icon: BarChart2 },
-  { href: "/impostazioni",label: "Impostazioni",icon: Settings },
+  { href: "/",             label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/atleti",       label: "Atleti",       icon: Users },
+  { href: "/esercizi",     label: "Programmi",    icon: Dumbbell },
+  { href: "/progressi",    label: "Progressi",    icon: TrendingUp },
+  { href: "/analisi",      label: "Analisi",      icon: BarChart2 },
+  { href: "/performance",  label: "Performance",  icon: Gauge },
+  { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
 const RED  = "#C8102E";
