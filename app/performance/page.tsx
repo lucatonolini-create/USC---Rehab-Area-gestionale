@@ -136,8 +136,6 @@ function TabCollegamento({
 }) {
   const [mapping, setMapping] = useState<Record<string, string>>(getMapping);
 
-  const u17 = rehab.filter((a) => a.categoria === "U17");
-
   const update = (rehabId: string, perfId: string) => {
     const next = { ...mapping };
     if (perfId) next[rehabId] = perfId;
@@ -146,54 +144,62 @@ function TabCollegamento({
     saveMapping(next);
   };
 
-  if (perf.length === 0)
-    return <EmptyState msg="Nessun atleta trovato nell'app Performance. Verifica la connessione." />;
+  const CATS = ["Primavera", "U17", "U16", "U15", "U14"] as const;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-sm text-blue-700">
-        Collega gli atleti U17 della tua app con i giocatori dell'app Performance. Il collegamento abilita la sincronizzazione automatica degli infortuni.
+        Collega gli atleti della tua app con i giocatori dell'app Performance. Attualmente i dati GPS/RPE/Wellness sono disponibili per gli atleti U17 collegati.
       </div>
 
-      {u17.length === 0 && (
-        <EmptyState msg="Nessun atleta U17 presente nella tua app." />
-      )}
-
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-        {u17.map((a, i) => {
-          const linked = mapping[a.id];
-          const perfAthlete = perf.find((p) => p.id === linked);
-          return (
-            <div key={a.id} className={`flex items-center gap-4 px-5 py-4 ${i > 0 ? "border-t border-gray-50" : ""}`}>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-gray-900 truncate">{a.nome}</p>
-                <p className="text-xs text-gray-400">{a.posizione || "—"}</p>
-              </div>
-              <Link2 className={`w-4 h-4 shrink-0 ${linked ? "text-green-500" : "text-gray-300"}`} />
-              <select
-                value={linked ?? ""}
-                onChange={(e) => update(a.id, e.target.value)}
-                className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E] min-w-[200px]"
-              >
-                <option value="">— non collegato —</option>
-                {perf.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} (#{p.jersey_number})
-                  </option>
-                ))}
-              </select>
-              {perfAthlete && (
-                <span className="text-xs text-green-600 font-medium shrink-0">✓ collegato</span>
-              )}
+      {CATS.map((cat) => {
+        const lista = rehab.filter((a) => a.categoria === cat);
+        if (lista.length === 0) return null;
+        return (
+          <div key={cat}>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">{cat}</p>
+            <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+              {lista.map((a, i) => {
+                const linked = mapping[a.id];
+                const perfAthlete = perf.find((p) => p.id === linked);
+                return (
+                  <div key={a.id} className={`flex items-center gap-4 px-5 py-4 ${i > 0 ? "border-t border-gray-50" : ""}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-gray-900 truncate">{a.nome}</p>
+                      <p className="text-xs text-gray-400">{a.posizione || "—"}</p>
+                    </div>
+                    <Link2 className={`w-4 h-4 shrink-0 ${linked ? "text-green-500" : "text-gray-300"}`} />
+                    <select
+                      value={linked ?? ""}
+                      onChange={(e) => update(a.id, e.target.value)}
+                      className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E] min-w-[200px]"
+                    >
+                      <option value="">— non collegato —</option>
+                      {perf.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} (#{p.jersey_number})
+                        </option>
+                      ))}
+                    </select>
+                    {perfAthlete && (
+                      <span className="text-xs text-green-600 font-medium shrink-0">✓ collegato</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
+
+      {rehab.length === 0 && <EmptyState msg="Nessun atleta presente nella tua app." />}
     </div>
   );
 }
 
 // ─── Tab: Panoramica ────────────────────────────────────────────────────────
+
+const CATS_ORDER = ["Primavera", "U17", "U16", "U15", "U14"] as const;
 
 function TabPanoramica({
   perf,
@@ -205,62 +211,70 @@ function TabPanoramica({
   loading: boolean;
 }) {
   const mapping = getMapping();
-  const reverseMap = Object.fromEntries(Object.entries(mapping).map(([rid, pid]) => [pid, rid]));
+  const infortunati = rehab.filter((a) => a.stato === "Infortunato");
 
   if (loading) return <div className="py-16 text-center text-gray-400 text-sm">Caricamento...</div>;
-  if (perf.length === 0) return <EmptyState msg="Nessun dato ricevuto dall'app Performance." />;
+  if (rehab.length === 0) return <EmptyState msg="Nessun atleta presente nella tua app." />;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Stat cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard label="Atleti Performance" value={String(perf.length)} />
-        <StatCard label="Collegati" value={String(Object.keys(mapping).length)} sub="di questo gestionale" />
-        <StatCard label="Vmax media" value={`${fmtN(perf.reduce((s, a) => s + (a.vmax_kmh ?? 0), 0) / perf.length, 1)} km/h`} />
-        <StatCard label="Squadra" value="U17" sub="Cremonese" />
+        <StatCard label="Atleti totali" value={String(rehab.length)} />
+        <StatCard label="Infortunati" value={String(infortunati.length)} />
+        <StatCard label="Disponibili" value={String(rehab.length - infortunati.length)} />
+        <StatCard label="Collegati Performance" value={String(Object.keys(mapping).length)} sub="dati GPS/RPE disponibili" />
       </div>
 
-      <TableWrap>
-        <thead>
-          <tr>
-            <Th>#</Th>
-            <Th>Atleta</Th>
-            <Th>Posizione</Th>
-            <Th>Nato</Th>
-            <Th>Vmax</Th>
-            <Th>Stato Rehab</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {perf.map((p) => {
-            const rehabId = reverseMap[p.id];
-            const rehabAtleta = rehab.find((a) => a.id === rehabId);
-            return (
-              <tr key={p.id} className="hover:bg-gray-50/50">
-                <Td>{p.jersey_number ?? "—"}</Td>
-                <Td bold>{p.name}</Td>
-                <Td>{p.position || "—"}</Td>
-                <Td>{fmtD(p.birth_date)}</Td>
-                <Td>{p.vmax_kmh ? `${p.vmax_kmh} km/h` : "—"}</Td>
-                <Td>
-                  {rehabAtleta ? (
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      rehabAtleta.stato === "Disponibile"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-orange-100 text-orange-700"
-                    }`}>
-                      {rehabAtleta.stato === "Infortunato"
-                        ? `Infort. – ${rehabAtleta.infortunio || "—"}`
-                        : "Disponibile"}
-                    </span>
-                  ) : (
-                    <span className="text-gray-300 text-xs">non collegato</span>
-                  )}
-                </Td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </TableWrap>
+      {/* Per categoria */}
+      {CATS_ORDER.map((cat) => {
+        const lista = rehab.filter((a) => a.categoria === cat);
+        if (lista.length === 0) return null;
+        return (
+          <div key={cat}>
+            <div className="flex items-center gap-3 mb-3">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">{cat}</p>
+              <span className="text-xs text-gray-300">{lista.length} atleti</span>
+            </div>
+            <TableWrap>
+              <thead>
+                <tr>
+                  <Th>Atleta</Th>
+                  <Th>Posizione</Th>
+                  <Th>Stato</Th>
+                  <Th>Infortunio</Th>
+                  <Th>Progresso</Th>
+                  <Th>Vmax (perf.)</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {lista.map((a) => {
+                  const perfId = mapping[a.id];
+                  const perfAtleta = perf.find((p) => p.id === perfId);
+                  return (
+                    <tr key={a.id} className="hover:bg-gray-50/50">
+                      <Td bold>{a.nome}</Td>
+                      <Td>{a.posizione || "—"}</Td>
+                      <Td>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                          a.stato === "Disponibile"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-orange-100 text-orange-700"
+                        }`}>
+                          {a.stato}
+                        </span>
+                      </Td>
+                      <Td>{a.infortunio || "—"}</Td>
+                      <Td>{a.progresso}%</Td>
+                      <Td>{perfAtleta?.vmax_kmh ? `${perfAtleta.vmax_kmh} km/h` : <span className="text-gray-300 text-xs">—</span>}</Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </TableWrap>
+          </div>
+        );
+      })}
     </div>
   );
 }
