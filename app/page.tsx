@@ -133,7 +133,7 @@ export default function Dashboard() {
               <button key={atleta.id} onClick={() => setAtletaSelezionato(atleta)}
                 className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors text-left">
                 <div className="w-10 h-10 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-                  {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  {atleta.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -170,7 +170,7 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto p-5">
             <div className="text-center mb-5">
               <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
-                {atletaSelezionato.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                {atletaSelezionato.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
               </div>
               <h2 className="font-bold text-gray-900 text-lg">{atletaSelezionato.nome}</h2>
               <p className="text-sm text-gray-500">{atletaSelezionato.categoria} · {atletaSelezionato.posizione || "—"}</p>
