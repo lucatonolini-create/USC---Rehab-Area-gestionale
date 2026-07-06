@@ -52,9 +52,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
-  const red: [number, number, number] = [200, 16, 46];
-  const dark: [number, number, number] = [43, 43, 43];
-  const gray: [number, number, number] = [130, 130, 130];
+  const red: [number, number, number] = [190, 46, 80];
+  const dark: [number, number, number] = [42, 54, 72];
+  const gray: [number, number, number] = [116, 128, 148];
   const logoDataUrl = await getLogoDataUrl();
   const oggi = new Date().toLocaleDateString("it-IT");
   const M = 14; const W = 210; const H = 297; const HDR = 30;
@@ -74,7 +74,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   };
 
   const secTitle = (text: string, y: number, fill?: [number, number, number]) => {
-    const bg = fill ?? [245, 245, 245] as [number, number, number];
+    const bg = fill ?? [237, 242, 250] as [number, number, number];
     const tc: [number, number, number] = fill ? [255, 255, 255] : dark;
     doc.setFillColor(...bg); doc.rect(M, y - 4, W - M * 2, 8, "F");
     if (!fill) { doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F"); }
@@ -99,7 +99,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
   let y = 0;
   const bS = { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize" as const, halign: "left" as const, valign: "middle" as const };
-  const aS = { fillColor: [250, 250, 250] as [number, number, number] };
+  const aS = { fillColor: [244, 247, 253] as [number, number, number] };
   const hS = (fill: [number, number, number]) => ({ fillColor: fill, textColor: [255, 255, 255] as [number, number, number], fontSize: 7.5, halign: "left" as const, valign: "middle" as const });
   const checkPage = (need: number, sub?: string) => { if (y + need > H - 18) { doc.addPage(); addHeader(sub); y = HDR + 8; } };
   const miniLabel = (text: string) => { doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); doc.setTextColor(...gray); doc.text(text, M, y); y += 3; };
@@ -112,7 +112,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     const yAxisW = 10; const cX = M + yAxisW; const cW = W - M - cX; const cH = 44; const cY = y + 7;
     doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...dark);
     doc.text("Andamento RTS Score nel tempo", M, y + 2);
-    doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3); doc.rect(cX, cY, cW, cH, "FD");
+    doc.setFillColor(240, 245, 252); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3); doc.rect(cX, cY, cW, cH, "FD");
     ([
       [100, [210, 210, 210] as [number, number, number], false], [75, [34, 139, 34] as [number, number, number], true],
       [56, [210, 100, 0] as [number, number, number], true], [0, [210, 210, 210] as [number, number, number], false],
@@ -251,13 +251,13 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
         if (weekRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [200, 16, 46];
+          data.cell.styles.fillColor = [190, 46, 80];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 7;
           data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [110, 110, 110];
+          data.cell.styles.fillColor = [88, 102, 126];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 6.5;
@@ -298,7 +298,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     theme: "striped",
     styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
     columnStyles: { 0: { cellWidth: 58, fontStyle: "bold", textColor: dark }, 1: { textColor: dark } },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
+    alternateRowStyles: { fillColor: [244, 247, 253] },
     margin: { left: M, right: M },
   });
 
@@ -330,7 +330,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       body: storicoBody,
       headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [250, 250, 250] },
+      alternateRowStyles: { fillColor: [244, 247, 253] },
       margin: { left: M, right: M },
       columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 } },
     });
