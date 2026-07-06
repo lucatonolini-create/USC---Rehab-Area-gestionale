@@ -42,10 +42,10 @@ export default function Dashboard() {
     : atleti.filter((a) => a.categoria === filtroCategoria);
 
   const stats = [
-    { label: "Atleti Totali",    value: atleti.length,    icon: Users,      iconBg: "bg-slate-100",   iconColor: "text-slate-500",   href: "/atleti" },
-    { label: "Infortunati",       value: inRecupero,       icon: Activity,   iconBg: "bg-rose-100",    iconColor: "text-rose-500",    href: "/atleti" },
-    { label: "Disponibili",      value: guariti,           icon: TrendingUp, iconBg: "bg-emerald-100", iconColor: "text-emerald-600", href: "/atleti" },
-    { label: "Programmi Attivi", value: programmi.length, icon: Dumbbell,   iconBg: "bg-violet-100",  iconColor: "text-violet-600",  href: "/esercizi" },
+    { label: "Atleti Totali",    value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
+    { label: "Infortunati",       value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
+    { label: "Disponibili",      value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
+    { label: "Programmi Attivi", value: programmi.length, icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
   ];
 
   return (
@@ -63,14 +63,14 @@ export default function Dashboard() {
           const Icon = stat.icon;
           return (
             <Link key={stat.label} href={stat.href}
-              className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 hover:shadow-md hover:border-slate-200 transition-all group">
+              className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md hover:border-[#C8102E]/30 transition-all group">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-xs text-slate-500 font-medium">{stat.label}</p>
-                  <p className="text-4xl font-bold text-slate-800 mt-1">{stat.value}</p>
+                  <p className="text-xs text-gray-500 font-medium">{stat.label}</p>
+                  <p className="text-4xl font-bold text-gray-900 mt-1">{stat.value}</p>
                 </div>
-                <div className={`${stat.iconBg} p-2.5 rounded-xl group-hover:scale-110 transition-transform`}>
-                  <Icon className={`w-5 h-5 ${stat.iconColor}`} />
+                <div className={`${stat.color} p-2.5 rounded-xl group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5 text-white" />
                 </div>
               </div>
             </Link>
@@ -89,8 +89,8 @@ export default function Dashboard() {
               <button key={cat} onClick={() => setFiltroCategoria(cat)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   filtroCategoria === cat
-                    ? "bg-[#BE2E50] text-white shadow-sm"
-                    : "bg-white text-gray-600 border border-gray-200 hover:border-rose-300 hover:text-[#BE2E50]"
+                    ? "bg-[#C8102E] text-white shadow-sm"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-[#C8102E] hover:text-[#C8102E]"
                 }`}>
                 {cat}
                 <span className={`text-xs px-1.5 py-0.5 rounded-full ${
@@ -109,7 +109,7 @@ export default function Dashboard() {
             {filtroCategoria === "Tutti" ? "Tutti gli atleti" : `Categoria ${filtroCategoria}`}
             <span className="ml-2 text-xs text-gray-400 font-normal">{atletiFiltrati.length} atleti</span>
           </h2>
-          <Link href="/atleti" className="text-xs text-[#BE2E50] font-medium hover:underline flex items-center gap-1">
+          <Link href="/atleti" className="text-xs text-[#C8102E] font-medium hover:underline flex items-center gap-1">
             Gestisci <ChevronRight className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -122,7 +122,7 @@ export default function Dashboard() {
                 : "Nessun atleta in questa categoria."}
             </p>
             {atleti.length === 0 && (
-              <Link href="/atleti" className="text-[#BE2E50] text-sm font-medium mt-2 inline-block hover:underline">
+              <Link href="/atleti" className="text-[#C8102E] text-sm font-medium mt-2 inline-block hover:underline">
                 + Aggiungi atleta
               </Link>
             )}
@@ -132,7 +132,7 @@ export default function Dashboard() {
             {atletiFiltrati.map((atleta) => (
               <button key={atleta.id} onClick={() => setAtletaSelezionato(atleta)}
                 className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors text-left">
-                <div className="w-10 h-10 bg-[#1A2744] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
+                <div className="w-10 h-10 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
                   {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -147,7 +147,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-lg font-bold text-[#BE2E50]">{atleta.progresso}%</p>
+                  <p className="text-lg font-bold text-[#C8102E]">{atleta.progresso}%</p>
                   <p className="text-xs text-gray-300">recupero</p>
                 </div>
                 <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
@@ -169,7 +169,7 @@ export default function Dashboard() {
 
           <div className="flex-1 overflow-y-auto p-5">
             <div className="text-center mb-5">
-              <div className="w-16 h-16 bg-[#1A2744] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
+              <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
                 {atletaSelezionato.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
               </div>
               <h2 className="font-bold text-gray-900 text-lg">{atletaSelezionato.nome}</h2>
@@ -195,10 +195,10 @@ export default function Dashboard() {
               <div className="bg-gray-50 rounded-xl p-3">
                 <div className="flex justify-between mb-1.5">
                   <p className="text-xs text-gray-400">Progresso</p>
-                  <p className="text-xs font-bold text-[#BE2E50]">{atletaSelezionato.progresso}%</p>
+                  <p className="text-xs font-bold text-[#C8102E]">{atletaSelezionato.progresso}%</p>
                 </div>
                 <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#BE2E50] rounded-full" style={{ width: `${atletaSelezionato.progresso}%` }} />
+                  <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${atletaSelezionato.progresso}%` }} />
                 </div>
               </div>
 
@@ -213,7 +213,7 @@ export default function Dashboard() {
 
           <div className="p-5 border-t border-gray-100 space-y-2">
             <button onClick={() => setMostraModifica(true)}
-              className="w-full bg-[#BE2E50] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800">
+              className="w-full bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800">
               Modifica dati
             </button>
             <Link href="/atleti"

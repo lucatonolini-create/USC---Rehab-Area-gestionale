@@ -7,11 +7,11 @@ import { loadAtleti, loadProgrammi, CATEGORIE, TIPI_INFORTUNIO, type Atleta, typ
 const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const MESI_LUNGHI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 
-const CAT_PALETTE = ["#D64F72","#5B8FC9","#38A87C","#C48940","#9170CC","#35A8C0","#CC5F9E","#627A90"];
-const TIPO_PALETTE = ["#627A90","#8A9BAB","#C48940","#5B8FC9","#9170CC","#35A8C0","#38A87C","#CC5F9E"];
+const CAT_PALETTE = ["#C8102E","#1E40AF","#047857","#B45309","#7C3AED","#0E7490","#BE185D","#374151"];
+const TIPO_PALETTE = ["#374151","#6B7280","#B45309","#1E40AF","#7C3AED","#0E7490","#047857","#BE185D"];
 const hexToRgb = (h: string): [number, number, number] => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
 
-function BarraOrizzontale({ label, value, max, color = "bg-[#D64F72]", sub }: {
+function BarraOrizzontale({ label, value, max, color = "bg-[#C8102E]", sub }: {
   label: string; value: number; max: number; color?: string; sub?: string;
 }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
@@ -379,9 +379,9 @@ async function esportaPDFPanoramica(params: {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
-  const red: [number, number, number] = [190, 46, 80];
-  const dark: [number, number, number] = [42, 54, 72];
-  const gray: [number, number, number] = [116, 128, 148];
+  const red: [number, number, number] = [200, 16, 46];
+  const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
   const attivi = params.atleti.filter((a) => a.stato !== "Disponibile").length;
   const guariti = params.atleti.filter((a) => a.stato === "Disponibile").length;
@@ -402,7 +402,7 @@ async function esportaPDFPanoramica(params: {
   };
 
   const secTitle = (text: string, y: number) => {
-    doc.setFillColor(237, 242, 250); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
     doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
     doc.text(text.toUpperCase(), M + 5, y + 0.8);
@@ -442,7 +442,7 @@ async function esportaPDFPanoramica(params: {
     theme: "striped",
     styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
     columnStyles: { 0: { cellWidth: 80, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 30, textColor: dark } },
-    alternateRowStyles: { fillColor: [244, 247, 253] },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: W / 2 },
   });
   y = (doc as any).lastAutoTable.finalY + 8;
@@ -454,7 +454,7 @@ async function esportaPDFPanoramica(params: {
     body: params.perCategoria.map(({ cat, totale, attivi: a }) => [cat, totale, a, totale - a]),
     headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
-    alternateRowStyles: { fillColor: [244, 247, 253] },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {}, 3: {} },
   });
@@ -471,7 +471,7 @@ async function esportaPDFPanoramica(params: {
       ]),
       headStyles: { fillColor: [160, 160, 160], textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [244, 247, 253] },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {} },
     });
@@ -491,7 +491,7 @@ async function esportaPDFPanoramica(params: {
       body: params.perInfortunio.map(({ nome, count }) => [nome, count]),
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [244, 247, 253] },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {} },
     });
@@ -512,7 +512,7 @@ async function esportaPDFPanoramica(params: {
     body: trendRows.map(({ label, count }) => [label, count]),
     headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8, cellPadding: 2, overflow: "ellipsize" },
-    alternateRowStyles: { fillColor: [244, 247, 253] },
+    alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: W / 2 },
     columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {} },
   });
@@ -527,7 +527,7 @@ async function esportaPDFPanoramica(params: {
 
   doc.setFontSize(6.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
   doc.text("Andamento mensile atleti attivi", cX + cW / 2, cY - 2, { align: "center" });
-  doc.setFillColor(240, 245, 252); doc.setDrawColor(210, 218, 232); doc.setLineWidth(0.3);
+  doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
   doc.rect(cX, cY, cW, cH, "FD");
 
   ([0.25, 0.5, 0.75, 1] as number[]).forEach(pct => {
@@ -660,7 +660,7 @@ async function esportaPDFPanoramica(params: {
         if (data.section === "body" && data.row.index === crossPan.length) {
           data.cell.styles.fillColor = dark; data.cell.styles.textColor = [255, 255, 255];
         } else if (data.section === "body" && data.row.index % 2 === 1) {
-          data.cell.styles.fillColor = [241, 246, 253];
+          data.cell.styles.fillColor = [248, 248, 248];
         }
       },
       margin: { left: M, right: M },
@@ -685,7 +685,7 @@ async function esportaPDFPanoramica(params: {
       body: progressiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [244, 247, 253] },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {} },
     });
@@ -754,7 +754,7 @@ async function esportaPDFPanoramica(params: {
       didParseCell: (data: any) => {
         if (data.section === "body") {
           const ai = athleteForRowT[data.row.index];
-          data.cell.styles.fillColor = ai % 2 !== 0 ? [241, 246, 253] : [255, 255, 255];
+          data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
           if (data.column.index === 3) {
             const content = typeof data.cell.raw === "object" ? (data.cell.raw as any)?.content : data.cell.raw;
             data.cell.styles.textColor = content === "Disponibile" ? [34, 139, 34] : red;
@@ -781,9 +781,9 @@ async function esportaPDFReport(
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({ orientation: "landscape" });
-  const red: [number, number, number] = [190, 46, 80];
-  const dark: [number, number, number] = [42, 54, 72];
-  const gray: [number, number, number] = [116, 128, 148];
+  const red: [number, number, number] = [200, 16, 46];
+  const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
   const oggi = new Date().toLocaleDateString("it-IT");
   const logoDataUrl = await getLogoDataUrl();
   const M = 14; const W = 297; const H = 210; const HDR = 30;
@@ -802,7 +802,7 @@ async function esportaPDFReport(
   };
 
   const secTitle = (text: string, y: number) => {
-    doc.setFillColor(237, 242, 250); doc.rect(M, y - 4, W - M * 2, 8, "F");
+    doc.setFillColor(245, 245, 245); doc.rect(M, y - 4, W - M * 2, 8, "F");
     doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F");
     doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...dark);
     doc.text(text.toUpperCase(), M + 5, y + 0.8);
@@ -847,7 +847,7 @@ async function esportaPDFReport(
       startY: y, body: catRows, theme: "striped",
       styles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, textColor: dark } },
-      alternateRowStyles: { fillColor: [244, 247, 253] },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: W / 2 },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
@@ -987,7 +987,7 @@ async function esportaPDFReport(
           data.cell.styles.fillColor = dark;
           data.cell.styles.textColor = [255, 255, 255];
         } else if (data.section === "body" && data.row.index % 2 === 1) {
-          data.cell.styles.fillColor = [241, 246, 253];
+          data.cell.styles.fillColor = [248, 248, 248];
         }
       },
       margin: { left: M, right: M },
@@ -1026,7 +1026,7 @@ async function esportaPDFReport(
       const cHr = 38; const cWr = W - M * 2; const slot = cWr / 12;
       doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
       doc.text(title, M + cWr / 2, sy, { align: "center" }); sy += 2;
-      doc.setFillColor(240, 245, 252); doc.setDrawColor(210, 218, 232); doc.setLineWidth(0.3);
+      doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
       doc.rect(M, sy, cWr, cHr, "FD");
       [0.5, 1].forEach((pct) => {
         const ly = sy + cHr - pct * cHr;
@@ -1134,7 +1134,7 @@ async function esportaPDFReport(
     didParseCell: (data: any) => {
       if (data.section === "body") {
         const ai = athleteForRowA[data.row.index];
-        data.cell.styles.fillColor = ai % 2 !== 0 ? [241, 246, 253] : [255, 255, 255];
+        data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
       }
     },
   });

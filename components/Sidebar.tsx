@@ -18,8 +18,8 @@ const navItems = [
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
-const RED  = "#BE2E50";
-const DARK = "#1A2744";
+const RED  = "#C8102E";
+const DARK = "#2B2B2B";
 
 export default function Sidebar() {
   const pathname = usePathname();

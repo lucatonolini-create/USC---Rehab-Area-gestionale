@@ -6,11 +6,8 @@
   --usc-blue: #003087;
   --usc-gold: #FFCC00;
   --usc-red: #C8102E;
-  --primary: #BE2E50;
-  --primary-light: #FFF0F3;
-  --sidebar-bg: #1A2744;
 }
 
 body {
-  @apply bg-slate-50 text-gray-900;
+  @apply bg-gray-50 text-gray-900;
 }
