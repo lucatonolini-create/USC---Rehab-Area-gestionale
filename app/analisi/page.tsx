@@ -7,6 +7,10 @@ import { loadAtleti, loadProgrammi, CATEGORIE, TIPI_INFORTUNIO, type Atleta, typ
 const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const MESI_LUNGHI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 
+const CAT_PALETTE = ["#C8102E","#1E40AF","#047857","#B45309","#7C3AED","#0E7490","#BE185D","#374151"];
+const TIPO_PALETTE = ["#374151","#6B7280","#B45309","#1E40AF","#7C3AED","#0E7490","#047857","#BE185D"];
+const hexToRgb = (h: string): [number, number, number] => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+
 function BarraOrizzontale({ label, value, max, color = "bg-[#C8102E]", sub }: {
   label: string; value: number; max: number; color?: string; sub?: string;
 }) {
@@ -547,6 +551,123 @@ async function esportaPDFPanoramica(params: {
 
   y = Math.max(trendEndY, cY + cH) + 12;
 
+  // ── Grafici impilati mensili (panoramica PDF) ─────────────────────────────
+  const oggi_d = new Date();
+  const trendStacked = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(oggi_d.getFullYear(), oggi_d.getMonth() - 11 + i, 1);
+    const a2 = d.getFullYear(); const m2 = d.getMonth();
+    const attv = params.atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
+    const perCat: Record<string, number> = {};
+    const perTipo: Record<string, number> = {};
+    attv.forEach((a) => {
+      if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
+      const tipo = a.tipoInfortunio ?? "Non specificato";
+      perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+    });
+    return { label: MESI[m2], total: attv.length, perCat, perTipo };
+  });
+  const maxStackVal = Math.max(...trendStacked.map((t) => t.total), 1);
+  const catStacked = CATEGORIE.filter((cat) => trendStacked.some((t) => (t.perCat[cat] ?? 0) > 0));
+  const tipiStacked = Array.from(new Set(trendStacked.flatMap((t) => Object.keys(t.perTipo)))).sort();
+  const catColPdf: Record<string, [number,number,number]> = {};
+  catStacked.forEach((cat, i) => { catColPdf[cat] = hexToRgb(CAT_PALETTE[i % CAT_PALETTE.length]); });
+  const tipoColPdf: Record<string, [number,number,number]> = {};
+  tipiStacked.forEach((tipo, i) => { tipoColPdf[tipo] = hexToRgb(TIPO_PALETTE[i % TIPO_PALETTE.length]); });
+
+  const drawStackedBar = (
+    title: string, sy: number,
+    keys: string[], getC: (t: typeof trendStacked[0], k: string) => number,
+    colorMap: Record<string, [number,number,number]>
+  ): number => {
+    const cHh = 38; const cWw = W - M * 2; const slot = cWw / 12;
+    doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
+    doc.text(title, M + cWw / 2, sy, { align: "center" }); sy += 2;
+    doc.setFillColor(248,248,248); doc.setDrawColor(220,220,220); doc.setLineWidth(0.3);
+    doc.rect(M, sy, cWw, cHh, "FD");
+    [0.5, 1].forEach((pct) => {
+      const ly = sy + cHh - pct * cHh;
+      doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.line(M, ly, M + cWw, ly);
+      doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      doc.text(`${Math.round(maxStackVal * pct)}`, M - 1, ly + 1, { align: "right" });
+    });
+    trendStacked.forEach((t, i) => {
+      const bx = M + i * slot + 0.5; const bw = slot - 1;
+      let bot = sy + cHh;
+      keys.forEach((k) => {
+        const cnt = getC(t, k);
+        if (!cnt) return;
+        const segH = (cnt / maxStackVal) * cHh;
+        bot -= segH;
+        doc.setFillColor(...(colorMap[k] ?? [180,180,180] as [number,number,number]));
+        doc.rect(bx, bot, bw, segH, "F");
+      });
+      doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      doc.text(t.label, bx + bw / 2, sy + cHh + 3, { align: "center" });
+    });
+    return sy + cHh + 5;
+  };
+
+  const drawLegend = (items: string[], colorMap: Record<string, [number,number,number]>, sy: number): number => {
+    let lx = M; let ly = sy;
+    items.forEach((k) => {
+      if (lx + 36 > W - M) { lx = M; ly += 5; }
+      doc.setFillColor(...(colorMap[k] ?? [180,180,180] as [number,number,number]));
+      doc.rect(lx, ly - 2.5, 3, 3, "F");
+      doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
+      const lbl = k.length > 20 ? k.slice(0, 19) + "…" : k;
+      doc.text(lbl, lx + 4.5, ly + 0.3);
+      lx += Math.min(lbl.length * 1.7 + 9, 44);
+    });
+    return ly + 7;
+  };
+
+  if (catStacked.length > 0 || tipiStacked.length > 0) {
+    const needH2 = 120;
+    if (y + needH2 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Distribuzione mensile per categoria e tipologia", y);
+    y = drawStackedBar("Per categoria squadra", y, catStacked, (t, k) => t.perCat[k] ?? 0, catColPdf);
+    y = drawLegend(catStacked, catColPdf, y);
+    if (y + 60 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = drawStackedBar("Per tipo di infortunio", y, tipiStacked, (t, k) => t.perTipo[k] ?? 0, tipoColPdf);
+    y = drawLegend(tipiStacked, tipoColPdf, y);
+  }
+
+  // ── Infortuni per squadra e tipo (panoramica) ─────────────────────────────
+  const attiviPan = params.atleti.filter((a) => a.stato !== "Disponibile");
+  const tipiPan = Array.from(new Set(attiviPan.map((a) => a.tipoInfortunio ?? "Non specificato"))).sort();
+  if (tipiPan.length > 0) {
+    const catPanList = CATEGORIE.filter((cat) => attiviPan.some((a) => a.categoria === cat));
+    const crossPan: any[][] = catPanList.map((cat) => {
+      const ca = attiviPan.filter((a) => a.categoria === cat);
+      const tm: Record<string, number> = {};
+      ca.forEach((a) => { const t = a.tipoInfortunio ?? "Non specificato"; tm[t] = (tm[t] ?? 0) + 1; });
+      return [cat, ca.length, ...tipiPan.map((t) => tm[t] ?? 0)];
+    });
+    const gtPan = crossPan.reduce((s, r) => s + (r[1] as number), 0);
+    const ttPan = tipiPan.map((_, ti) => crossPan.reduce((s, r) => s + (r[ti + 2] as number), 0));
+    const totRowPan: any[] = [{ content: "TOTALE", styles: { fontStyle: "bold" } }, gtPan, ...ttPan];
+    const needHPan = (crossPan.length + 2) * 8 + 20;
+    if (y + needHPan > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Infortuni per squadra e tipo", y);
+    autoTable(doc, {
+      startY: y,
+      head: [["Squadra", "Totale", ...tipiPan]],
+      body: [...crossPan, totRowPan],
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center" },
+      bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "center", valign: "middle" },
+      columnStyles: { 0: { halign: "left", cellWidth: 35 }, 1: { cellWidth: 18, fontStyle: "bold" } },
+      didParseCell: (data: any) => {
+        if (data.section === "body" && data.row.index === crossPan.length) {
+          data.cell.styles.fillColor = dark; data.cell.styles.textColor = [255, 255, 255];
+        } else if (data.section === "body" && data.row.index % 2 === 1) {
+          data.cell.styles.fillColor = [248, 248, 248];
+        }
+      },
+      margin: { left: M, right: M },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
   const progressiRows = CATEGORIE.map((cat) => {
     const lista = params.atleti.filter((a) => a.categoria === cat);
     if (!lista.length) return null;
@@ -1029,6 +1150,31 @@ export default function AnalisiPage() {
     }).filter((x) => x.total > 0);
   }, [attivi]);
 
+  const trendCombinato = useMemo(() => {
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(oggi.getFullYear(), oggi.getMonth() - 11 + i, 1);
+      const anno = d.getFullYear(); const mese = d.getMonth();
+      const label = MESI[mese] + (anno !== oggi.getFullYear() ? ` ${anno}` : "");
+      const attv = atleti.filter((a) => atletaAttivoInMese(a, anno, mese));
+      const perCat: Record<string, number> = {};
+      const perTipo: Record<string, number> = {};
+      attv.forEach((a) => {
+        if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
+        const tipo = a.tipoInfortunio ?? "Non specificato";
+        perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+      });
+      return { label, nomeMese: MESI[mese], total: attv.length, perCat, perTipo };
+    });
+    const catPresenti = CATEGORIE.filter((cat) => months.some((t) => (t.perCat[cat] ?? 0) > 0));
+    const tipiPresenti = Array.from(new Set(months.flatMap((t) => Object.keys(t.perTipo)))).sort();
+    const catColorMap: Record<string, string> = {};
+    catPresenti.forEach((cat, i) => { catColorMap[cat] = CAT_PALETTE[i % CAT_PALETTE.length]; });
+    const tipoColorMap: Record<string, string> = {};
+    tipiPresenti.forEach((tipo, i) => { tipoColorMap[tipo] = TIPO_PALETTE[i % TIPO_PALETTE.length]; });
+    const maxVal = Math.max(...months.map((t) => t.total), 1);
+    return { months, catPresenti, tipiPresenti, catColorMap, tipoColorMap, maxVal };
+  }, [atleti]);
+
   const anni = Array.from({ length: 5 }, (_, i) => oggi.getFullYear() - 2 + i);
   const atletiMese = atleti.filter((a) => {
     if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
@@ -1257,6 +1403,87 @@ export default function AnalisiPage() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Distribuzione mensile per categoria e tipologia */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+            <h2 className="font-bold text-gray-900 mb-1">Distribuzione mensile – squadra e tipologia</h2>
+            <p className="text-xs text-gray-400 mb-5">Atleti attivi ogni mese, suddivisi per categoria e per tipo di infortunio</p>
+            {atleti.length === 0 ? (
+              <p className="text-gray-400 text-sm text-center py-8">Nessun dato disponibile</p>
+            ) : (
+              <div className="overflow-x-auto -mx-2 px-2 pb-1">
+                <div style={{ minWidth: "420px" }}>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Per squadra</p>
+                  <div className="flex gap-1 items-end" style={{ height: "72px" }}>
+                    {trendCombinato.months.map(({ label, total, perCat }) => {
+                      const barH = Math.max((total / trendCombinato.maxVal) * 56, total > 0 ? 3 : 0);
+                      return (
+                        <div key={label} className="flex-1 flex flex-col items-center justify-end gap-0.5" style={{ minWidth: "22px" }}>
+                          {total > 0 && <span className="text-[8px] font-bold text-gray-500">{total}</span>}
+                          <div className="w-full flex flex-col-reverse overflow-hidden rounded-t"
+                            style={{ height: `${barH}px`, backgroundColor: "#F3F4F6" }}>
+                            {trendCombinato.catPresenti.map((cat) => {
+                              const cnt = perCat[cat] ?? 0;
+                              if (!cnt) return null;
+                              return <div key={cat} style={{ height: `${(cnt / trendCombinato.maxVal) * 56}px`, backgroundColor: trendCombinato.catColorMap[cat], flexShrink: 0 }} />;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mt-4 mb-1.5">Per tipo di infortunio</p>
+                  <div className="flex gap-1 items-end" style={{ height: "72px" }}>
+                    {trendCombinato.months.map(({ label, total, perTipo }) => {
+                      const barH = Math.max((total / trendCombinato.maxVal) * 56, total > 0 ? 3 : 0);
+                      return (
+                        <div key={label} className="flex-1 flex flex-col items-center justify-end gap-0.5" style={{ minWidth: "22px" }}>
+                          {total > 0 && <span className="text-[8px] font-bold text-gray-500">{total}</span>}
+                          <div className="w-full flex flex-col-reverse overflow-hidden rounded-t"
+                            style={{ height: `${barH}px`, backgroundColor: "#F3F4F6" }}>
+                            {trendCombinato.tipiPresenti.map((tipo) => {
+                              const cnt = perTipo[tipo] ?? 0;
+                              if (!cnt) return null;
+                              return <div key={tipo} style={{ height: `${(cnt / trendCombinato.maxVal) * 56}px`, backgroundColor: trendCombinato.tipoColorMap[tipo], flexShrink: 0 }} />;
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-1 mt-1">
+                    {trendCombinato.months.map(({ nomeMese, label }) => (
+                      <div key={label} className="flex-1 text-center" style={{ minWidth: "22px" }}>
+                        <span className="text-[8px] text-gray-400">{nomeMese}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="mt-4 space-y-2 border-t border-gray-100 pt-4">
+              {trendCombinato.catPresenti.length > 0 && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {trendCombinato.catPresenti.map((cat) => (
+                    <span key={cat} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span className="w-3 h-3 rounded-sm inline-block flex-shrink-0" style={{ backgroundColor: trendCombinato.catColorMap[cat] }} />
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {trendCombinato.tipiPresenti.length > 0 && (
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
+                  {trendCombinato.tipiPresenti.map((tipo) => (
+                    <span key={tipo} className="flex items-center gap-1.5 text-xs text-gray-600">
+                      <span className="w-3 h-3 rounded-sm inline-block flex-shrink-0" style={{ backgroundColor: trendCombinato.tipoColorMap[tipo] }} />
+                      {tipo}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Progressi medi */}
