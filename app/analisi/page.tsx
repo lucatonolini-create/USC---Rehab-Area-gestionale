@@ -827,6 +827,52 @@ async function esportaPDFReport(
     y += 4 + Math.max(catChart.length, rightRows) * rowH + 10;
   }
 
+  // ── Tabella incrociata squadra × tipo infortunio ───────────────────────────
+  const tipiPresenti = Array.from(
+    new Set(atletiMese.flatMap((a) => infortunitNelMese(a, anno, mese).map((i) => i.tipo ?? "Non specificato")))
+  ).sort();
+
+  if (tipiPresenti.length > 0) {
+    const catPresenti = CATEGORIE.filter((cat) => atletiMese.some((a) => a.categoria === cat));
+    const crossBody: any[][] = catPresenti.map((cat) => {
+      const catAtleti = atletiMese.filter((a) => a.categoria === cat);
+      const tipoMap: Record<string, number> = {};
+      catAtleti.forEach((a) => {
+        infortunitNelMese(a, anno, mese).forEach((inf) => {
+          const t = inf.tipo ?? "Non specificato";
+          tipoMap[t] = (tipoMap[t] ?? 0) + 1;
+        });
+      });
+      const tot = Object.values(tipoMap).reduce((s, v) => s + v, 0);
+      return [cat, tot, ...tipiPresenti.map((t) => tipoMap[t] ?? 0)];
+    });
+    const grandTotal = crossBody.reduce((s, r) => s + (r[1] as number), 0);
+    const tipeTotals = tipiPresenti.map((_, ti) => crossBody.reduce((s, r) => s + (r[ti + 2] as number), 0));
+    const totRow: any[] = [{ content: "TOTALE", styles: { fontStyle: "bold" } }, grandTotal, ...tipeTotals];
+
+    const needHCross = (crossBody.length + 2) * 8 + 20;
+    if (y + needHCross > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Infortuni per squadra e tipo", y);
+    autoTable(doc, {
+      startY: y,
+      head: [["Squadra", "Totale", ...tipiPresenti]],
+      body: [...crossBody, totRow],
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center" },
+      bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "center", valign: "middle" },
+      columnStyles: { 0: { halign: "left", cellWidth: 35 }, 1: { cellWidth: 18, fontStyle: "bold" } },
+      didParseCell: (data: any) => {
+        if (data.section === "body" && data.row.index === crossBody.length) {
+          data.cell.styles.fillColor = dark;
+          data.cell.styles.textColor = [255, 255, 255];
+        } else if (data.section === "body" && data.row.index % 2 === 1) {
+          data.cell.styles.fillColor = [248, 248, 248];
+        }
+      },
+      margin: { left: M, right: M },
+    });
+    y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
   y = secTitle("Dettaglio atleti", y);
 
   const fmtDPdf = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });
@@ -959,6 +1005,24 @@ export default function AnalisiPage() {
   const maxCat = Math.max(...perCategoria.map((x) => x.totale), 1);
   const maxTipo = Math.max(...perTipoInfortunio.map((x) => x.count), 1);
   const maxInf = Math.max(...perInfortunio.map((x) => x.count), 1);
+
+  const infPerSquadra = useMemo(() => {
+    const totalAttivi = attivi.length;
+    return CATEGORIE.map((cat) => {
+      const catAttivi = attivi.filter((a) => a.categoria === cat);
+      const tipoMap: Record<string, number> = {};
+      catAttivi.forEach((a) => {
+        const tipo = a.tipoInfortunio ?? "Non specificato";
+        tipoMap[tipo] = (tipoMap[tipo] ?? 0) + 1;
+      });
+      return {
+        cat,
+        total: catAttivi.length,
+        pct: totalAttivi > 0 ? Math.round((catAttivi.length / totalAttivi) * 100) : 0,
+        tipi: Object.entries(tipoMap).sort((a, b) => b[1] - a[1]).map(([nome, count]) => ({ nome, count })),
+      };
+    }).filter((x) => x.total > 0);
+  }, [attivi]);
 
   const anni = Array.from({ length: 5 }, (_, i) => oggi.getFullYear() - 2 + i);
   const atletiMese = atleti.filter((a) => {
@@ -1117,6 +1181,32 @@ export default function AnalisiPage() {
               )}
             </div>
           </div>
+
+          {/* Infortuni per squadra */}
+          {infPerSquadra.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+              <h2 className="font-bold text-gray-900 mb-1">Infortuni per squadra</h2>
+              <p className="text-xs text-gray-400 mb-5">Distribuzione degli infortuni attivi per categoria e tipo</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {infPerSquadra.map(({ cat, total, pct, tipi }) => (
+                  <div key={cat} className="bg-gray-50 rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-gray-800 text-sm truncate">{cat}</span>
+                      <span className="ml-2 shrink-0 text-[10px] bg-[#C8102E] text-white font-bold px-1.5 py-0.5 rounded-full">{pct}%</span>
+                    </div>
+                    <p className="text-2xl font-bold text-gray-900 mb-3">{total}<span className="text-xs font-normal text-gray-500 ml-1">infort.</span></p>
+                    <div className="flex flex-wrap gap-1">
+                      {tipi.map(({ nome, count }) => (
+                        <span key={nome} className="text-[10px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">
+                          {nome}: <span className="font-bold">{count}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Trend mensile */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
