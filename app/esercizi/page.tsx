@@ -210,7 +210,7 @@ export default function EserciziPage() {
               <button onClick={() => apriAtleta(atleta.id)}
                 className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 text-left">
                 <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                  {atleta.nome.trim().split(/\s+/).filter(Boolean).reduce((s:string,w:string,i:number,arr:string[])=>i===0?(w[0]??"").toUpperCase():i===arr.length-1?s+(w[0]??"").toUpperCase():s,"")}
                 </div>
                 <span className="font-bold text-gray-800 flex-1">{atleta.nome}</span>
                 <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{atleta.categoria}</span>

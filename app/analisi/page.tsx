@@ -1632,7 +1632,7 @@ export default function AnalisiPage() {
                       <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-center px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                            {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                            {a.nome.trim().split(/\s+/).filter(Boolean).reduce((s:string,w:string,i:number,arr:string[])=>i===0?(w[0]??"").toUpperCase():i===arr.length-1?s+(w[0]??"").toUpperCase():s,"")}
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
@@ -1745,7 +1745,7 @@ export default function AnalisiPage() {
                       <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-start px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                            {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                            {a.nome.trim().split(/\s+/).filter(Boolean).reduce((s:string,w:string,i:number,arr:string[])=>i===0?(w[0]??"").toUpperCase():i===arr.length-1?s+(w[0]??"").toUpperCase():s,"")}
                           </div>
                           <div>
                             <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>

@@ -891,7 +891,7 @@ export default function ProgressiPage() {
                   <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-12 h-12 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
-                        {atleta.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                        {atleta.nome.trim().split(/\s+/).filter(Boolean).reduce((s:string,w:string,i:number,arr:string[])=>i===0?(w[0]??"").toUpperCase():i===arr.length-1?s+(w[0]??"").toUpperCase():s,"")}
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-bold text-gray-900 truncate">{atleta.nome}</h3>
@@ -1051,7 +1051,7 @@ export default function ProgressiPage() {
                         return (
                         <div key={a.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50">
                           <div className="w-9 h-9 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
-                            {a.nome.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+                            {a.nome.trim().split(/\s+/).filter(Boolean).reduce((s:string,w:string,i:number,arr:string[])=>i===0?(w[0]??"").toUpperCase():i===arr.length-1?s+(w[0]??"").toUpperCase():s,"")}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
