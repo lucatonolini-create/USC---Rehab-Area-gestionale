@@ -181,27 +181,20 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 7 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma / Fase", "Palestra", "Campo", "VAS", "Test", "RPE"]);
+      body.push(["Data", "Programma / Fase", "Palestra", "VAS", "Campo", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
+        const isAlt = dataRowCount % 2 === 1;
         const dataStr = prog.data ? fmtD(prog.data) : "—";
         const progLabel = [prog.nome, prog.fase].filter(Boolean).join("\n");
-
-        const palestraLines = (prog.esercizi ?? []).map((e) => {
-          const sx = [e.serie, e.reps].filter(Boolean).join("×");
-          return sx ? `${e.nome} ${sx}` : e.nome;
-        });
-        const palestra = palestraLines.join("\n") || "—";
+        const esercizi = prog.esercizi ?? [];
 
         const campoLines = (prog.esercizicampo ?? []).map((c) => {
           const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
           return parts.join(" ");
         });
         const campo = campoLines.join("\n") || "—";
-
-        const vasValues = (prog.esercizi ?? []).map((e) => e.vas).filter(Boolean);
-        const vas = vasValues.join(", ") || "—";
 
         const testLines = (prog.tests ?? []).map((t) => {
           const val = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean).join(" / ");
@@ -212,8 +205,30 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         const ca = prog.carico;
         const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
 
-        if (dataRowCount % 2 === 1) altRowIndices.add(body.length);
-        body.push([dataStr, progLabel, palestra, campo, vas, tests, rpe]);
+        if (esercizi.length <= 1) {
+          const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
+          const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
+          if (isAlt) altRowIndices.add(body.length);
+          body.push([dataStr, progLabel, esLine, vas, campo, tests, rpe]);
+        } else {
+          esercizi.forEach((e, i) => {
+            const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
+            const vas = e.vas || "—";
+            if (isAlt) altRowIndices.add(body.length);
+            if (i === 0) {
+              body.push([
+                { content: dataStr, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: progLabel, rowSpan: esercizi.length, styles: { valign: "top" } },
+                esLine, vas,
+                { content: campo, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" } },
+              ]);
+            } else {
+              body.push([esLine, vas]);
+            }
+          });
+        }
         dataRowCount++;
       }
     });
@@ -227,9 +242,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       columnStyles: {
         0: { cellWidth: 20 },
         1: { cellWidth: 30 },
-        2: { cellWidth: 48 },
-        3: { cellWidth: 28 },
-        4: { cellWidth: 14, halign: "center" as const },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 12, halign: "center" as const },
+        4: { cellWidth: 28 },
         5: { cellWidth: 27 },
         6: { cellWidth: 15, halign: "center" as const },
       },
