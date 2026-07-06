@@ -738,22 +738,34 @@ async function esportaPDFReport(
     return { label: cat, count: n, pct: totMese > 0 ? Math.round((n / totMese) * 100) : 0 };
   }).filter((x) => x.count > 0);
 
-  const tipoMapM: Record<string, number> = {};
-  atletiMese.forEach((a) => {
-    const infMese = infortunitNelMese(a, anno, mese);
-    if (infMese.length === 0) return;
-    Array.from(new Set(infMese.map((i) => i.tipo ?? "Non specificato"))).forEach((t) => {
-      tipoMapM[t] = (tipoMapM[t] ?? 0) + 1;
+  // Per-category injury type breakdown: % relative to each category's own total
+  const catTipoCharts: { cat: string; items: { label: string; count: number; pct: number }[] }[] = [];
+  CATEGORIE.forEach((cat) => {
+    const catAtleti = atletiMese.filter((a) => a.categoria === cat);
+    if (catAtleti.length === 0) return;
+    const tipoMap: Record<string, number> = {};
+    catAtleti.forEach((a) => {
+      const infMese = infortunitNelMese(a, anno, mese);
+      if (infMese.length === 0) return;
+      Array.from(new Set(infMese.map((i) => i.tipo ?? "Non specificato"))).forEach((t) => {
+        tipoMap[t] = (tipoMap[t] ?? 0) + 1;
+      });
+    });
+    const totalCat = Object.values(tipoMap).reduce((s, v) => s + v, 0);
+    if (totalCat === 0) return;
+    catTipoCharts.push({
+      cat,
+      items: Object.entries(tipoMap)
+        .sort((a, b) => b[1] - a[1])
+        .map(([label, count]) => ({ label, count, pct: Math.round((count / totalCat) * 100) })),
     });
   });
-  const tipoChart = Object.entries(tipoMapM)
-    .sort((a, b) => b[1] - a[1])
-    .map(([label, count]) => ({ label, count, pct: totMese > 0 ? Math.round((count / totMese) * 100) : 0 }));
 
-  if (catChart.length > 0 || tipoChart.length > 0) {
-    const chartRows = Math.max(catChart.length, tipoChart.length);
+  const rightRows = catTipoCharts.reduce((s, c) => s + c.items.length + 1, 0);
+
+  if (catChart.length > 0 || catTipoCharts.length > 0) {
     const rowH = 9;
-    const needH = chartRows * rowH + 26;
+    const needH = Math.max(catChart.length, rightRows) * rowH + 26;
     if (y + needH > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
     y = secTitle("Distribuzione infortuni nel mese", y);
 
@@ -783,9 +795,36 @@ async function esportaPDFReport(
     };
 
     drawHorizChart(catChart, M, "Atleti per categoria squadra");
-    if (tipoChart.length > 0) drawHorizChart(tipoChart, M + halfW + 10, "Per tipo di infortunio");
 
-    y += 4 + Math.max(catChart.length, tipoChart.length) * rowH + 10;
+    if (catTipoCharts.length > 0) {
+      const rx = M + halfW + 10;
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...dark);
+      doc.text("Per tipo di infortunio", rx, y - 2);
+      let rightY = y + 2;
+      catTipoCharts.forEach(({ cat, items }) => {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(6); doc.setTextColor(...gray);
+        doc.text(cat, rx, rightY + 4.5);
+        rightY += rowH;
+        items.forEach((item) => {
+          const barLen = item.pct > 0 ? (item.pct / 100) * barMaxW : 0;
+          doc.setFont("helvetica", "normal"); doc.setFontSize(6.5); doc.setTextColor(...gray);
+          const lbl = item.label.length > 16 ? item.label.slice(0, 15) + "…" : item.label;
+          doc.text(lbl, rx, rightY + 5.5);
+          doc.setFillColor(235, 235, 235);
+          doc.roundedRect(rx + labelW, rightY + 1, barMaxW, rowH - 3, 1, 1, "F");
+          if (barLen > 0) {
+            doc.setFillColor(...red);
+            doc.roundedRect(rx + labelW, rightY + 1, barLen, rowH - 3, 1, 1, "F");
+          }
+          doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); doc.setTextColor(...dark);
+          doc.text(`${item.count}  ${item.pct}%`, rx + labelW + barMaxW + 3, rightY + 5.5);
+          rightY += rowH;
+        });
+        rightY += 3;
+      });
+    }
+
+    y += 4 + Math.max(catChart.length, rightRows) * rowH + 10;
   }
 
   y = secTitle("Dettaglio atleti", y);
