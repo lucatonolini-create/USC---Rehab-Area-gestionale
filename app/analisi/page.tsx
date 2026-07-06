@@ -1015,11 +1015,16 @@ export default function AnalisiPage() {
         const tipo = a.tipoInfortunio ?? "Non specificato";
         tipoMap[tipo] = (tipoMap[tipo] ?? 0) + 1;
       });
+      const catTotal = catAttivi.length;
       return {
         cat,
-        total: catAttivi.length,
-        pct: totalAttivi > 0 ? Math.round((catAttivi.length / totalAttivi) * 100) : 0,
-        tipi: Object.entries(tipoMap).sort((a, b) => b[1] - a[1]).map(([nome, count]) => ({ nome, count })),
+        total: catTotal,
+        pct: totalAttivi > 0 ? Math.round((catTotal / totalAttivi) * 100) : 0,
+        tipi: Object.entries(tipoMap).sort((a, b) => b[1] - a[1]).map(([nome, count]) => ({
+          nome,
+          count,
+          pct: catTotal > 0 ? Math.round((count / catTotal) * 100) : 0,
+        })),
       };
     }).filter((x) => x.total > 0);
   }, [attivi]);
@@ -1185,20 +1190,34 @@ export default function AnalisiPage() {
           {/* Infortuni per squadra */}
           {infPerSquadra.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-              <h2 className="font-bold text-gray-900 mb-1">Infortuni per squadra</h2>
-              <p className="text-xs text-gray-400 mb-5">Distribuzione degli infortuni attivi per categoria e tipo</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="font-bold text-gray-900">Infortuni attivi per squadra</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Per categoria e tipologia, con percentuali</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-gray-900">{attivi.length}</p>
+                  <p className="text-xs text-gray-400">totale infortuni</p>
+                </div>
+              </div>
+              <div className="space-y-5">
                 {infPerSquadra.map(({ cat, total, pct, tipi }) => (
-                  <div key={cat} className="bg-gray-50 rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold text-gray-800 text-sm truncate">{cat}</span>
-                      <span className="ml-2 shrink-0 text-[10px] bg-[#C8102E] text-white font-bold px-1.5 py-0.5 rounded-full">{pct}%</span>
+                  <div key={cat}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold text-gray-800 text-sm">{cat}</span>
+                      <span className="text-xs text-gray-500">
+                        {total} infort. · <span className="font-bold text-[#C8102E]">{pct}% del totale</span>
+                      </span>
                     </div>
-                    <p className="text-2xl font-bold text-gray-900 mb-3">{total}<span className="text-xs font-normal text-gray-500 ml-1">infort.</span></p>
-                    <div className="flex flex-wrap gap-1">
-                      {tipi.map(({ nome, count }) => (
-                        <span key={nome} className="text-[10px] bg-white border border-gray-200 text-gray-600 px-1.5 py-0.5 rounded-full">
-                          {nome}: <span className="font-bold">{count}</span>
+                    <div className="h-1.5 bg-gray-100 rounded-full mb-2.5 overflow-hidden">
+                      <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {tipi.map(({ nome, count, pct: tipoPct }) => (
+                        <span key={nome} className="inline-flex items-center gap-1 text-[11px] bg-gray-50 border border-gray-200 text-gray-700 px-2 py-1 rounded-lg">
+                          {nome}
+                          <span className="font-bold text-gray-900">{count}</span>
+                          <span className="text-gray-400">({tipoPct}%)</span>
                         </span>
                       ))}
                     </div>
