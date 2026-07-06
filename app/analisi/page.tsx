@@ -742,7 +742,7 @@ async function esportaPDFReport(
   atletiMese.forEach((a) => {
     const infMese = infortunitNelMese(a, anno, mese);
     if (infMese.length === 0) return;
-    [...new Set(infMese.map((i) => i.tipo ?? "Non specificato"))].forEach((t) => {
+    Array.from(new Set(infMese.map((i) => i.tipo ?? "Non specificato"))).forEach((t) => {
       tipoMapM[t] = (tipoMapM[t] ?? 0) + 1;
     });
   });
