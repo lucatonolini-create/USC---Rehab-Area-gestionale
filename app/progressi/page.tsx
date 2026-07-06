@@ -377,7 +377,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           data.cell.styles.fontSize = 7;
           data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = dark;
+          data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 6.5;
