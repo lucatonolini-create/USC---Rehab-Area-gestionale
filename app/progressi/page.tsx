@@ -276,106 +276,108 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     doc.text(doc.splitTextToSize(atleta.note, W - M * 2), M, y);
   }
 
-  // ── Pagine programmi ────────────────────────────────────────────────────────
-  programmi.forEach((prog) => {
+  // ── Sessioni: tabella settimanale compatta ──────────────────────────────────
+  if (programmi.length > 0) {
     doc.addPage();
-
-    // Injury type + diagnosi for subtitle: prefer linked storico, fallback to live fields
-    let tipoInf = atleta.tipoInfortunio || "";
-    let diagnosiInf = atleta.infortunio || "";
-    if (prog.infortunioId) {
-      const storico = (atleta.storicoInfortuni ?? []).find((s) => s.id === prog.infortunioId);
-      if (storico) { tipoInf = storico.tipo || tipoInf; diagnosiInf = storico.diagnosi || diagnosiInf; }
-    }
-    addHeader([atleta.nome, tipoInf, diagnosiInf].filter(Boolean).join("  ·  "));
-
+    addHeader(`${atleta.nome}  ·  Sessioni di lavoro`);
     y = HDR + 8;
+    y = secTitle(`Sessioni di lavoro — ${programmi.length} sessioni`, y);
 
-    // Date prominently at top of page
-    if (prog.data) {
-      const dataFmt = new Date(prog.data + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
-      doc.setFont("helvetica", "bold"); doc.setFontSize(13); doc.setTextColor(...dark);
-      doc.text(dataFmt.charAt(0).toUpperCase() + dataFmt.slice(1), M, y + 7);
-      const sessione = [prog.nome, prog.fase].filter(Boolean).join(" – ");
-      if (sessione) {
-        doc.setFont("helvetica", "normal"); doc.setFontSize(8.5); doc.setTextColor(...gray);
-        doc.text(sessione, M, y + 14);
+    const sorted = [...programmi].sort((a, b) => (a.data ?? "").localeCompare(b.data ?? ""));
+
+    const getMonday = (dateStr: string): string => {
+      const d = new Date(dateStr + "T12:00");
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const mon = new Date(d); mon.setDate(diff);
+      return mon.toISOString().slice(0, 10);
+    };
+
+    const weekMap: Map<string, Programma[]> = new Map();
+    for (const prog of sorted) {
+      const wk = prog.data ? getMonday(prog.data) : "__nodata__";
+      if (!weekMap.has(wk)) weekMap.set(wk, []);
+      weekMap.get(wk)!.push(prog);
+    }
+
+    const body: any[] = [];
+    const weekRowIndices = new Set<number>();
+
+    Array.from(weekMap.entries()).forEach(([wk, wkProgs]) => {
+      let weekLabel: string;
+      if (wk === "__nodata__") {
+        weekLabel = "SESSIONI SENZA DATA";
+      } else {
+        const mon = new Date(wk + "T12:00");
+        const sun = new Date(mon.getTime() + 6 * 864e5);
+        weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
       }
-      doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, y + 18, W - M, y + 18);
-      y += 24;
-    }
+      weekRowIndices.add(body.length);
+      body.push([{ content: weekLabel, colSpan: 5 }]);
 
-    if (prog.esercizi?.length) {
-      y = secTitle("Palestra", y);
-      autoTable(doc, {
-        startY: y,
-        head: [["#", "Esercizio", "Serie", "Reps", "Carico", "RIR", "VAS", "Note"]],
-        body: prog.esercizi.map((e, i) => [i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]),
-        headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
-        bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-        alternateRowStyles: { fillColor: [250, 250, 250] },
-        margin: { left: M, right: M },
-        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 50 }, 2: { cellWidth: 12 }, 3: { cellWidth: 18 }, 4: { cellWidth: 20 }, 5: { cellWidth: 10 }, 6: { cellWidth: 14 } },
-      });
-      y = (doc as any).lastAutoTable.finalY + 6;
-    }
+      for (const prog of wkProgs) {
+        const dataStr = prog.data ? fmtDCl(prog.data) : "—";
+        const progLabel = [prog.nome, prog.fase].filter(Boolean).join("\n");
 
-    if (prog.esercizicampo?.length) {
-      y = secTitle("Esercizi in campo", y);
-      autoTable(doc, {
-        startY: y,
-        head: [["#", "Tipo", "Serie", "Durata", "Descrizione"]],
-        body: prog.esercizicampo.map((c, i) => [i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]),
-        headStyles: { fillColor: [100, 100, 100], textColor: [255, 255, 255], fontSize: 7.5 },
-        bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
-        alternateRowStyles: { fillColor: [245, 245, 245] },
-        margin: { left: M, right: M },
-        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 38 }, 2: { cellWidth: 14 }, 3: { cellWidth: 22 } },
-      });
-      y = (doc as any).lastAutoTable.finalY + 6;
-    }
+        const palestraLines = (prog.esercizi ?? []).map((e) => {
+          const sx = [e.serie, e.reps].filter(Boolean).join("×");
+          return sx ? `${e.nome} ${sx}` : e.nome;
+        });
+        const palestra = palestraLines.join("\n") || "—";
 
-    if (prog.carico?.rpe) {
-      doc.setFillColor(255, 247, 237); doc.roundedRect(M, y, 50, 16, 2, 2, "F");
-      doc.setFillColor(234, 88, 12); doc.rect(M, y, 2.5, 16, "F");
-      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(154, 52, 18);
-      doc.text("RPE SESSIONE", M + 5, y + 6);
-      doc.setFontSize(13); doc.text(`${prog.carico.rpe} / 10`, M + 5, y + 13);
-      y += 22;
-    }
+        const campoLines = (prog.esercizicampo ?? []).map((c) => {
+          const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
+          return parts.join(" ");
+        });
+        const campo = campoLines.join("\n") || "—";
 
-    const hasCarico = prog.carico && Object.entries(prog.carico).some(([k, v]) => k !== "rpe" && v);
-    if (hasCarico) {
-      y = secTitle("Carico GPS", y);
-      const c = prog.carico!;
-      const rows: any[] = [];
-      if (c.durata) rows.push(["Durata", `${c.durata} min`]);
-      if (c.interno) rows.push(["Carico interno", c.interno]);
-      if (c.esterno) rows.push(["Carico esterno", c.esterno]);
-      if (c.distanzaTotale) rows.push(["Distanza totale", `${c.distanzaTotale} km`]);
-      if (c.velocitaMax) rows.push(["Vel. max", `${c.velocitaMax} km/h`]);
-      if (c.hsr) rows.push(["HSR (>19 km/h)", `${c.hsr} m`]);
-      if (c.accelerazioni) rows.push(["Accelerazioni", c.accelerazioni]);
-      if (rows.length) {
-        autoTable(doc, { startY: y, body: rows, theme: "striped", styles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" }, columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark } }, alternateRowStyles: { fillColor: [250, 250, 250] }, margin: { left: M, right: W / 2 } });
-        y = (doc as any).lastAutoTable.finalY + 6;
+        const gpsExtra: string[] = [];
+        const ca = prog.carico;
+        if (ca?.distanzaTotale) gpsExtra.push(`Dist ${ca.distanzaTotale} km`);
+        if (ca?.velocitaMax) gpsExtra.push(`Vmax ${ca.velocitaMax} km/h`);
+        if (ca?.hsr) gpsExtra.push(`HSR ${ca.hsr} m`);
+        if (gpsExtra.length) gpsExtra.unshift("— GPS:");
+
+        const campoFull = [campo, ...gpsExtra].join("\n");
+
+        const testLines = (prog.tests ?? []).map((t) => {
+          const val = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean).join(" / ");
+          return `${t.nome}${val ? `: ${val}` : ""}`;
+        });
+        const testsStr = testLines.length ? `\n— Test: ${testLines.join(", ")}` : "";
+
+        const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
+
+        body.push([dataStr, progLabel, palestra, campoFull + testsStr, rpe]);
       }
-    }
+    });
 
-    if (prog.tests?.length) {
-      y = secTitle("Test fisioterapici e di performance", y);
-      autoTable(doc, {
-        startY: y,
-        head: [["#", "Test", "Sx", "Dx", "Risultato", "Unità", "Note"]],
-        body: prog.tests.map((t, i) => [i + 1, t.nome, t.risultatoSx || "—", t.risultatoDx || "—", t.risultato || "—", t.unita || "—", t.note || ""]),
-        headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-        bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-        alternateRowStyles: { fillColor: [250, 250, 250] },
-        margin: { left: M, right: M },
-        columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 52 }, 2: { cellWidth: 16 }, 3: { cellWidth: 16 }, 4: { cellWidth: 20 } },
-      });
-    }
-  });
+    autoTable(doc, {
+      startY: y,
+      head: [["Data", "Programma / Fase", "Palestra", "Campo / GPS / Test", "RPE"]],
+      body,
+      headStyles: { fillColor: dark, textColor: [255, 255, 255] as [number, number, number], fontSize: 7.5, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      alternateRowStyles: { fillColor: [250, 250, 250] as [number, number, number] },
+      margin: { left: M, right: M },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 38 },
+        2: { cellWidth: 62 },
+        3: { cellWidth: 45 },
+        4: { cellWidth: 15, halign: "center" as const },
+      },
+      didParseCell: (data: any) => {
+        if (data.section === "body" && weekRowIndices.has(data.row.index)) {
+          data.cell.styles.fillColor = dark;
+          data.cell.styles.textColor = [255, 255, 255];
+          data.cell.styles.fontStyle = "bold";
+          data.cell.styles.fontSize = 6.5;
+          data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
+        }
+      },
+    });
+  }
 
   addFooter();
   doc.save(`${atleta.nome.replace(/ /g, "_")}_rehab.pdf`);
