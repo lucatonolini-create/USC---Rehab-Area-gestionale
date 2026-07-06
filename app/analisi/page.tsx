@@ -731,6 +731,63 @@ async function esportaPDFReport(
     y = (doc as any).lastAutoTable.finalY + 8;
   }
 
+  // ── Grafici distribuzione ──────────────────────────────────────────────────
+  const totMese = atletiMese.length;
+  const catChart = CATEGORIE.map((cat) => {
+    const n = atletiMese.filter((a) => a.categoria === cat).length;
+    return { label: cat, count: n, pct: totMese > 0 ? Math.round((n / totMese) * 100) : 0 };
+  }).filter((x) => x.count > 0);
+
+  const tipoMapM: Record<string, number> = {};
+  atletiMese.forEach((a) => {
+    const infMese = infortunitNelMese(a, anno, mese);
+    if (infMese.length === 0) return;
+    [...new Set(infMese.map((i) => i.tipo ?? "Non specificato"))].forEach((t) => {
+      tipoMapM[t] = (tipoMapM[t] ?? 0) + 1;
+    });
+  });
+  const tipoChart = Object.entries(tipoMapM)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, count]) => ({ label, count, pct: totMese > 0 ? Math.round((count / totMese) * 100) : 0 }));
+
+  if (catChart.length > 0 || tipoChart.length > 0) {
+    const chartRows = Math.max(catChart.length, tipoChart.length);
+    const rowH = 9;
+    const needH = chartRows * rowH + 26;
+    if (y + needH > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Distribuzione infortuni nel mese", y);
+
+    const halfW = (W - M * 2 - 10) / 2;
+    const labelW = 32;
+    const pctW = 20;
+    const barMaxW = halfW - labelW - pctW - 4;
+
+    const drawHorizChart = (data: { label: string; count: number; pct: number }[], startX: number, title: string) => {
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...dark);
+      doc.text(title, startX, y - 2);
+      data.forEach((item, i) => {
+        const rowY = y + 2 + i * rowH;
+        const barLen = item.pct > 0 ? (item.pct / 100) * barMaxW : 0;
+        doc.setFont("helvetica", "normal"); doc.setFontSize(6.5); doc.setTextColor(...gray);
+        const lbl = item.label.length > 16 ? item.label.slice(0, 15) + "…" : item.label;
+        doc.text(lbl, startX, rowY + 5.5);
+        doc.setFillColor(235, 235, 235);
+        doc.roundedRect(startX + labelW, rowY + 1, barMaxW, rowH - 3, 1, 1, "F");
+        if (barLen > 0) {
+          doc.setFillColor(...red);
+          doc.roundedRect(startX + labelW, rowY + 1, barLen, rowH - 3, 1, 1, "F");
+        }
+        doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); doc.setTextColor(...dark);
+        doc.text(`${item.count}  ${item.pct}%`, startX + labelW + barMaxW + 3, rowY + 5.5);
+      });
+    };
+
+    drawHorizChart(catChart, M, "Atleti per categoria squadra");
+    if (tipoChart.length > 0) drawHorizChart(tipoChart, M + halfW + 10, "Per tipo di infortunio");
+
+    y += 4 + Math.max(catChart.length, tipoChart.length) * rowH + 10;
+  }
+
   y = secTitle("Dettaglio atleti", y);
 
   const fmtDPdf = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });
@@ -951,20 +1008,32 @@ export default function AnalisiPage() {
                 <p className="text-gray-400 text-sm text-center py-6">Nessun atleta ancora</p>
               ) : (
                 <div className="space-y-3">
-                  {perCategoria.map(({ cat, totale, attivi: a }) => (
-                    <div key={cat}>
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span className="font-semibold">{cat}</span>
-                        <span>{a} attivi / {totale} totali</span>
+                  {perCategoria.map(({ cat, totale, attivi: a }) => {
+                    const totalAttivi = attivi.length;
+                    const pctInf = totalAttivi > 0 ? Math.round((a / totalAttivi) * 100) : 0;
+                    const pctTot = atleti.length > 0 ? Math.round((totale / atleti.length) * 100) : 0;
+                    return (
+                      <div key={cat}>
+                        <div className="flex justify-between text-xs text-gray-500 mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold">{cat}</span>
+                            {a > 0 && (
+                              <span className="bg-red-50 text-[#C8102E] font-bold px-1.5 py-0.5 rounded-md text-[10px]">
+                                {pctInf}% infortuni
+                              </span>
+                            )}
+                          </div>
+                          <span>{a} attivi / {totale} totali · <span className="font-semibold">{pctTot}%</span></span>
+                        </div>
+                        <div className="h-5 bg-gray-100 rounded-full overflow-hidden flex">
+                          <div className="h-full bg-[#C8102E] rounded-full transition-all duration-500"
+                            style={{ width: `${(a / maxCat) * 100}%` }} />
+                          <div className="h-full bg-gray-200 rounded-full transition-all duration-500"
+                            style={{ width: `${((totale - a) / maxCat) * 100}%` }} />
+                        </div>
                       </div>
-                      <div className="h-5 bg-gray-100 rounded-full overflow-hidden flex">
-                        <div className="h-full bg-[#C8102E] rounded-full transition-all duration-500"
-                          style={{ width: `${(a / maxCat) * 100}%` }} />
-                        <div className="h-full bg-gray-200 rounded-full transition-all duration-500"
-                          style={{ width: `${((totale - a) / maxCat) * 100}%` }} />
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   <div className="flex items-center gap-4 pt-1 text-xs text-gray-400">
                     <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-[#C8102E] inline-block" />In riabilitazione</span>
                     <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-gray-200 inline-block" />Guariti</span>
@@ -982,14 +1051,20 @@ export default function AnalisiPage() {
                   <p className="text-gray-400 text-sm">Nessun dato ancora</p>
                   <p className="text-gray-300 text-xs mt-1">Compila il "Tipo infortunio" nella scheda atleta</p>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {perTipoInfortunio.map(({ nome, count }) => (
-                    <BarraOrizzontale key={nome} label={nome} value={count} max={maxTipo}
-                      color="bg-gray-300" sub={count === 1 ? "1 atleta" : `${count} atleti`} />
-                  ))}
-                </div>
-              )}
+              ) : (() => {
+                const totalTipo = perTipoInfortunio.reduce((s, x) => s + x.count, 0);
+                return (
+                  <div className="space-y-3">
+                    {perTipoInfortunio.map(({ nome, count }) => {
+                      const pct = totalTipo > 0 ? Math.round((count / totalTipo) * 100) : 0;
+                      return (
+                        <BarraOrizzontale key={nome} label={nome} value={count} max={maxTipo}
+                          color="bg-gray-300" sub={`${pct}%`} />
+                      );
+                    })}
+                  </div>
+                );
+              })()}
               {perInfortunio.length > 0 && (
                 <div className="border-t border-gray-100 mt-5 pt-5">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Diagnosi specifiche più frequenti</p>
