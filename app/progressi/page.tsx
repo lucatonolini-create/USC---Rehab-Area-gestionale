@@ -7,6 +7,11 @@ import {
   CATEGORIE, type Atleta, type Stato, type Programma, type InfortunioStorico,
 } from "@/lib/store";
 
+const MESI_BREVI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+const CAT_PALETTE = ["#C8102E","#1E40AF","#047857","#B45309","#7C3AED","#0E7490","#BE185D","#374151"];
+const TIPO_PALETTE = ["#374151","#6B7280","#B45309","#1E40AF","#7C3AED","#0E7490","#047857","#BE185D"];
+const hexToRgb = (h: string): [number, number, number] => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 const statoColor: Record<Stato, string> = {
   "Infortunato": "bg-orange-100 text-orange-700",
@@ -507,7 +512,7 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
   URL.revokeObjectURL(url);
 }
 
-async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string, filtroInf: string) {
+async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string, filtroInf: string, atleti?: Atleta[]) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF({ orientation: "landscape" });
@@ -578,6 +583,88 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
       margin: { left: M, right: W / 2 },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
+  }
+
+  // ── Trend mensile 12 mesi impilato ────────────────────────────────────────
+  if (atleti && atleti.length > 0) {
+    const trendR = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(anno, mese - 11 + i, 1);
+      const a2 = d.getFullYear(); const m2 = d.getMonth();
+      const attv = atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
+      const perCat: Record<string, number> = {};
+      const perTipo: Record<string, number> = {};
+      attv.forEach((a) => {
+        if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
+        const tipo = a.tipoInfortunio ?? "Non specificato";
+        perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+      });
+      return { label: MESI_BREVI[m2], total: attv.length, perCat, perTipo };
+    });
+    const maxRVal = Math.max(...trendR.map((t) => t.total), 1);
+    const catR = CATEGORIE.filter((cat) => trendR.some((t) => (t.perCat[cat] ?? 0) > 0));
+    const tipiR = Array.from(new Set(trendR.flatMap((t) => Object.keys(t.perTipo)))).sort();
+    const catColR: Record<string, [number, number, number]> = {};
+    catR.forEach((cat, i) => { catColR[cat] = hexToRgb(CAT_PALETTE[i % CAT_PALETTE.length]); });
+    const tipoColR: Record<string, [number, number, number]> = {};
+    tipiR.forEach((tipo, i) => { tipoColR[tipo] = hexToRgb(TIPO_PALETTE[i % TIPO_PALETTE.length]); });
+
+    const drawBarR = (
+      title: string, sy: number,
+      keys: string[], getC: (t: typeof trendR[0], k: string) => number,
+      colorMap: Record<string, [number, number, number]>
+    ): number => {
+      const cHr = 38; const cWr = W - M * 2; const slot = cWr / 12;
+      doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
+      doc.text(title, M + cWr / 2, sy, { align: "center" }); sy += 2;
+      doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
+      doc.rect(M, sy, cWr, cHr, "FD");
+      [0.5, 1].forEach((pct) => {
+        const ly = sy + cHr - pct * cHr;
+        doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2); doc.line(M, ly, M + cWr, ly);
+        doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+        doc.text(`${Math.round(maxRVal * pct)}`, M - 1, ly + 1, { align: "right" });
+      });
+      trendR.forEach((t, i) => {
+        const bx = M + i * slot + 0.5; const bw = slot - 1;
+        let bot = sy + cHr;
+        keys.forEach((k) => {
+          const cnt = getC(t, k);
+          if (!cnt) return;
+          const segH = (cnt / maxRVal) * cHr;
+          bot -= segH;
+          doc.setFillColor(...(colorMap[k] ?? [180, 180, 180] as [number, number, number]));
+          doc.rect(bx, bot, bw, segH, "F");
+        });
+        doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+        doc.text(t.label, bx + bw / 2, sy + cHr + 3, { align: "center" });
+      });
+      return sy + cHr + 5;
+    };
+
+    const drawLegR = (items: string[], colorMap: Record<string, [number, number, number]>, sy: number): number => {
+      let lx = M; let ly = sy;
+      items.forEach((k) => {
+        if (lx + 36 > W - M) { lx = M; ly += 5; }
+        doc.setFillColor(...(colorMap[k] ?? [180, 180, 180] as [number, number, number]));
+        doc.rect(lx, ly - 2.5, 3, 3, "F");
+        doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
+        const lbl = k.length > 20 ? k.slice(0, 19) + "…" : k;
+        doc.text(lbl, lx + 4.5, ly + 0.3);
+        lx += Math.min(lbl.length * 1.7 + 9, 44);
+      });
+      return ly + 7;
+    };
+
+    if (catR.length > 0 || tipiR.length > 0) {
+      const needHR = 120;
+      if (y + needHR > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+      y = secTitle("Trend mensile – ultimi 12 mesi", y);
+      y = drawBarR("Per categoria squadra", y, catR, (t, k) => t.perCat[k] ?? 0, catColR);
+      y = drawLegR(catR, catColR, y);
+      if (y + 60 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+      y = drawBarR("Per tipo di infortunio", y, tipiR, (t, k) => t.perTipo[k] ?? 0, tipoColR);
+      y = drawLegR(tipiR, tipoColR, y);
+    }
   }
 
   y = secTitle("Atleti del periodo", y);
@@ -926,7 +1013,7 @@ export default function ProgressiPage() {
                   {esportandoReport === "excel" ? "..." : "Excel"}
                 </button>
                 <button
-                  onClick={async () => { setEsportandoReport("pdf"); try { await esportaPDFReportMensile(atletiMese, reportMese, reportAnno, filtroCat, filtroInf); } finally { setEsportandoReport(null); } }}
+                  onClick={async () => { setEsportandoReport("pdf"); try { await esportaPDFReportMensile(atletiMese, reportMese, reportAnno, filtroCat, filtroInf, atleti); } finally { setEsportandoReport(null); } }}
                   disabled={!!esportandoReport || atletiMese.length === 0}
                   className="flex items-center gap-1.5 border border-red-200 text-[#C8102E] px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-50 disabled:opacity-50">
                   <FileText className="w-3.5 h-3.5" />
