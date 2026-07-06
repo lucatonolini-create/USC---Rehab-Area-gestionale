@@ -242,7 +242,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           data.cell.styles.fontSize = 7;
           data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = dark;
+          data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 6.5;
@@ -409,7 +409,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     // Programs for this injury
     if (injProgs.length > 0) {
       checkPage(20, sub);
-      y = secTitle(`Sessioni di lavoro — ${injProgs.length} sessioni`, y, red);
+      y = secTitle(`Sessioni di lavoro — ${injProgs.length} sessioni`, y);
       renderWeeklyTable(injProgs, sub);
     } else {
       checkPage(12, sub);
@@ -427,7 +427,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.addPage();
     addHeader(`${atleta.nome}  ·  Sessioni non associate`);
     y = HDR + 8;
-    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.length} sessioni`, y, red);
+    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.length} sessioni`, y);
     renderWeeklyTable(unassigned, `${atleta.nome}  ·  Sessioni non associate`);
   }
 
