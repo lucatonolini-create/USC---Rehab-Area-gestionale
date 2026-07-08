@@ -1,6 +1,6 @@
 import { supabase } from "./supabase";
 import { getDB } from "./db";
-import { syncInfortunioAPI } from "./performance-sync";
+import { syncInfortunioAPI, pullPerformanceAthletesMap } from "./performance-sync";
 
 export type Stato = "Infortunato" | "Disponibile";
 
@@ -352,13 +352,26 @@ export async function loadAtleti(): Promise<Atleta[]> {
   const db = getDB();
   if (isOnline()) {
     try {
-      const { data, error } = await supabase
-        .from("atleti")
-        .select("*")
-        .order("created_at", { ascending: true });
-      if (!error && data) {
-        const atleti = data.map(rowToAtleta);
+      const [sbResult, perfMap] = await Promise.all([
+        supabase.from("atleti").select("*").order("created_at", { ascending: true }),
+        pullPerformanceAthletesMap().catch(() => new Map()),
+      ]);
+      if (!sbResult.error && sbResult.data) {
+        const atleti = sbResult.data.map(rowToAtleta).map(a => {
+          if (!a.dataNascita) {
+            const perf = perfMap.get(a.nome);
+            if (perf?.birth_date) return { ...a, dataNascita: perf.birth_date };
+          }
+          return a;
+        });
         await db.atleti.bulkPut(atleti);
+        // Persisti data di nascita importata su Supabase (fire-and-forget)
+        for (const a of atleti) {
+          const orig = sbResult.data.find(r => r.id === a.id);
+          if (!orig?.data_nascita && a.dataNascita) {
+            supabase.from("atleti").update({ data_nascita: a.dataNascita }).eq("id", a.id).then(() => {});
+          }
+        }
         return atleti;
       }
     } catch {}
