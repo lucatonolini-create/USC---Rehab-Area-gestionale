@@ -12,6 +12,7 @@ interface PerfAthlete {
   birth_date: string;
   jersey_number: number;
   vmax_kmh: number;
+  preferred_foot?: string;
 }
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
@@ -91,12 +92,15 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
   const importaDaPerf = (perfId: string) => {
     const p = perfAthletes.find((a) => a.id === perfId);
     if (!p) return;
+    const footMap: Record<string, Piede> = { destro: "Destro", sinistro: "Sinistro", ambidestro: "Ambidestro" };
+    const piede = p.preferred_foot ? (footMap[p.preferred_foot.toLowerCase()] ?? "") : "";
     setForm((prev) => ({
       ...prev,
       nome: p.name,
       posizione: p.position ?? "",
       dataNascita: p.birth_date ?? "",
       categoria: "U17" as Categoria,
+      ...(piede ? { piedeDominante: piede as Piede } : {}),
     }));
   };
 

@@ -240,6 +240,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     startY: y,
     body: [
       ["Data di nascita", atleta.dataNascita ? fmtDCl(atleta.dataNascita) : "—"],
+      ["Piede dominante", atleta.piedeDominante || "—"],
       ["Stato attuale", atleta.stato],
     ],
     theme: "striped",
