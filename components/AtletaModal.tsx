@@ -17,7 +17,7 @@ interface PerfAthlete {
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
 const atletaVuoto: Omit<Atleta, "id"> = {
-  nome: "", nomeCompleto: "", dataNascita: "", categoria: "" as Categoria,
+  nome: "", dataNascita: "", categoria: "" as Categoria,
   posizione: "", piedeDominante: "" as Piede,
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   stato: "Infortunato", progresso: 0,
@@ -93,8 +93,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
     if (!p) return;
     setForm((prev) => ({
       ...prev,
-      nome: p.code || generaSigla(p.name, p.birth_date ?? "", "U17"),
-      nomeCompleto: p.name,
+      nome: p.name,
       posizione: p.position ?? "",
       dataNascita: p.birth_date ?? "",
       categoria: "U17" as Categoria,
@@ -139,8 +138,8 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
           )}
 
           <div>
-            <Label>Nome e Cognome *</Label>
-            <Input className="mt-1" value={form.nomeCompleto ?? ""} onChange={(e) => f("nomeCompleto", e.target.value)} placeholder="Es. Marco Rossi" />
+            <Label>Cognome e Nome *</Label>
+            <Input className="mt-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Rossi Marco" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -290,13 +289,9 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             Annulla
           </button>
           <button onClick={() => {
-              const nc = (form.nomeCompleto ?? "").trim();
-              if (!isModifica && !nc) return;
-              const dati = isModifica
-                ? form
-                : { ...form, nome: generaSigla(nc, form.dataNascita, form.categoria), nomeCompleto: nc };
-              onSalva(dati);
-            }} disabled={!isModifica && !(form.nomeCompleto ?? "").trim()}
+              if (!isModifica && !form.nome.trim()) return;
+              onSalva(form);
+            }} disabled={!isModifica && !form.nome.trim()}
             className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
             {isModifica ? "Salva modifiche" : "Aggiungi atleta"}
           </button>

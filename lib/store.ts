@@ -41,8 +41,8 @@ export interface QuestionarioKinesiofobia {
 
 export interface Atleta {
   id: string;
-  nome: string;          // codice univoco es. "Lu.To.98_Primavera" — usato come athlete_code
-  nomeCompleto?: string; // nome visualizzato es. "Luca Tonolini" — salvato su Supabase in nome_completo
+  nome: string;          // nome completo "Cognome Nome" es. "Tonolini Luca" — usato come athlete_name
+  nomeCompleto?: string; // legacy: se presente sovrascrive nome nella visualizzazione (rimosso gradualmente)
   dataNascita: string;
   categoria: Categoria;
   posizione: string;

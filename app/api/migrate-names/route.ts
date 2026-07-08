@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { perfGetAthletes } from "@/lib/performance-api";
 import { createClient } from "@supabase/supabase-js";
 
+/**
+ * GET /api/migrate-names
+ * Migrazione one-shot: sostituisce le sigle con il nome completo nel campo `nome`.
+ * Per atleti con sigla → match by code da Performance → nome = athlete.name
+ * Per atleti con nome già proprio (no punti) → lascia nome invariato, sincronizza nome_completo
+ * Sicuro da richiamare più volte (non sovrascrive chi ha già il nome completo).
+ */
 export async function GET() {
   try {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,18 +18,17 @@ export async function GET() {
     }
     const sb = createClient(url, key);
 
-    // 1. Aggiorna atleti con sigla → match by code from Performance
+    // 1. Sostituisce la sigla (nome con punti) con il nome completo da Performance
     const data = await perfGetAthletes();
-    const athletes: { id: string; name: string; code?: string }[] = data.athletes ?? [];
+    const perfAthletes: { name: string; code?: string }[] = data.athletes ?? [];
 
     const fromPerformance: { code: string; name: string; updated: number; error?: string }[] = [];
-    for (const a of athletes) {
+    for (const a of perfAthletes) {
       if (!a.code || !a.name) continue;
       const { data: rows, error } = await sb
         .from("atleti")
-        .update({ nome_completo: a.name })
-        .eq("nome", a.code)
-        .is("nome_completo", null)
+        .update({ nome: a.name, nome_completo: null })
+        .eq("nome", a.code)          // match by sigla
         .select("id");
       fromPerformance.push({
         code: a.code,
@@ -32,30 +38,25 @@ export async function GET() {
       });
     }
 
-    // 2. Atleti il cui nome non ha punti (già un nome proprio, non una sigla)
-    //    → copia nome → nome_completo
-    const { data: nonSlug } = await sb
+    // 2. Atleti il cui nome_completo è valorizzato ma nome è ancora una sigla (con punti)
+    //    → porta nome_completo in nome e svuota nome_completo
+    const { data: withNomeCompleto } = await sb
       .from("atleti")
-      .select("id, nome")
-      .is("nome_completo", null)
-      .not("nome", "like", "%.%");
+      .select("id, nome, nome_completo")
+      .not("nome_completo", "is", null)
+      .like("nome", "%.%");           // ancora una sigla
 
-    const selfNamed: string[] = [];
-    for (const row of nonSlug ?? []) {
+    const fromNomeCompleto: string[] = [];
+    for (const row of withNomeCompleto ?? []) {
       const { error } = await sb
         .from("atleti")
-        .update({ nome_completo: row.nome })
+        .update({ nome: row.nome_completo, nome_completo: null })
         .eq("id", row.id);
-      if (!error) selfNamed.push(row.nome);
+      if (!error) fromNomeCompleto.push(row.nome_completo);
     }
 
-    return NextResponse.json({
-      ok: true,
-      fromPerformance,
-      selfNamed,
-      totaleAggiornati:
-        fromPerformance.reduce((s, r) => s + r.updated, 0) + selfNamed.length,
-    });
+    const totale = fromPerformance.reduce((s, r) => s + r.updated, 0) + fromNomeCompleto.length;
+    return NextResponse.json({ ok: true, fromPerformance, fromNomeCompleto, totaleAggiornati: totale });
   } catch (e: unknown) {
     const err = e as { message?: string; status?: number };
     return NextResponse.json({ error: err.message }, { status: err.status ?? 500 });

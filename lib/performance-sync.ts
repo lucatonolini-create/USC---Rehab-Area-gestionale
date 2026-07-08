@@ -7,7 +7,7 @@ export type PerfAthleteInfo = {
   // piede_dominante non disponibile nell'API v1
 };
 
-/** Restituisce una mappa code → info per tutti gli atleti della rosa */
+/** Restituisce una mappa nome → info per tutti gli atleti della rosa */
 export async function pullPerformanceAthletesMap(): Promise<Map<string, PerfAthleteInfo>> {
   try {
     const res = await fetch("/api/performance/athletes");
@@ -15,7 +15,7 @@ export async function pullPerformanceAthletesMap(): Promise<Map<string, PerfAthl
     const data = await res.json();
     const map = new Map<string, PerfAthleteInfo>();
     for (const a of (data.athletes ?? [])) {
-      if (a.code) map.set(a.code, { birth_date: a.birth_date ?? undefined, full_name: a.name ?? undefined });
+      if (a.name) map.set(a.name, { birth_date: a.birth_date ?? undefined, full_name: a.name ?? undefined });
     }
     return map;
   } catch {
@@ -55,7 +55,7 @@ export async function syncInfortunioAPI(a: Atleta): Promise<void> {
 
   const body: Record<string, unknown> = {
     external_id:     a.id,
-    athlete_code:    a.nome,                                           // es. "Lu.To.98_Primavera"
+    athlete_name:    a.nome,                                           // "Cognome Nome"
     date:            a.inizioRehab || new Date().toISOString().slice(0, 10),
     type:            a.tipoInfortunio ? (TIPO_MAP[a.tipoInfortunio] ?? "altro") : "altro",
     body_part:       a.infortunio || "",
@@ -80,7 +80,7 @@ export async function syncInfortunioAPI(a: Atleta): Promise<void> {
 
     const data = await res.json();
     if (data.resolved_athlete_id === null) {
-      console.warn("[perfSync] atleta non trovato nella rosa:", a.nome);
+      console.warn("[perfSync] atleta non trovato nella rosa:", a.nome, "— verifica che il nome corrisponda in Performance");
     }
   } catch (e) {
     // Non bloccare il salvataggio locale se il sync fallisce
