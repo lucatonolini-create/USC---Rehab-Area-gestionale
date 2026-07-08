@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { getDB } from "./db";
 
 export type Stato = "Infortunato" | "Disponibile";
 
@@ -216,36 +217,42 @@ const defaultCarico: Carico = {
   velocitaMax: "", hsr: "", accelerazioni: "", note: "",
 };
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function isOnline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine;
+}
+
 // ─── Mapping helpers ────────────────────────────────────────────────────────
 
-function rowToAtleta(r: Record<string, any>): Atleta {
+function rowToAtleta(r: Record<string, unknown>): Atleta {
   return {
-    id: r.id,
-    nome: r.nome,
-    dataNascita: r.data_nascita ?? "",
-    categoria: r.categoria,
-    posizione: r.posizione ?? "",
-    piedeDominante: r.piede_dominante ?? "Destro",
-    tipoInfortunio: r.tipo_infortunio ?? undefined,
-    infortunio: r.infortunio ?? "",
-    inizioRehab: r.inizio_rehab ?? "",
-    fineRehab: r.fine_rehab ?? undefined,
-    stato: r.stato,
-    progresso: r.progresso ?? 0,
-    fisioterapista: r.fisioterapista ?? "",
-    preparatoreAtletico: r.preparatore_atletico ?? "",
-    telefono: r.telefono ?? "",
-    email: r.email ?? "",
-    note: r.note ?? "",
-    storicoInfortuni: r.storico_infortuni ?? [],
-    questionariKinesiofobia: r.questionari_kinesiofobia ?? [],
-    peso: r.peso ?? "",
-    altezza: r.altezza ?? "",
-    altezzaDaSeduto: r.altezza_da_seduto ?? "",
+    id: r.id as string,
+    nome: r.nome as string,
+    dataNascita: (r.data_nascita as string) ?? "",
+    categoria: r.categoria as Categoria,
+    posizione: (r.posizione as string) ?? "",
+    piedeDominante: (r.piede_dominante as Piede) ?? "Destro",
+    tipoInfortunio: (r.tipo_infortunio as TipoInfortunio) ?? undefined,
+    infortunio: (r.infortunio as string) ?? "",
+    inizioRehab: (r.inizio_rehab as string) ?? "",
+    fineRehab: (r.fine_rehab as string) ?? undefined,
+    stato: r.stato as Stato,
+    progresso: (r.progresso as number) ?? 0,
+    fisioterapista: (r.fisioterapista as string) ?? "",
+    preparatoreAtletico: (r.preparatore_atletico as string) ?? "",
+    telefono: (r.telefono as string) ?? "",
+    email: (r.email as string) ?? "",
+    note: (r.note as string) ?? "",
+    storicoInfortuni: (r.storico_infortuni as InfortunioStorico[]) ?? [],
+    questionariKinesiofobia: (r.questionari_kinesiofobia as QuestionarioKinesiofobia[]) ?? [],
+    peso: (r.peso as string) ?? "",
+    altezza: (r.altezza as string) ?? "",
+    altezzaDaSeduto: (r.altezza_da_seduto as string) ?? "",
   };
 }
 
-function atletaToRow(a: Atleta): Record<string, any> {
+function atletaToRow(a: Atleta): Record<string, unknown> {
   return {
     id: a.id,
     nome: a.nome,
@@ -272,23 +279,23 @@ function atletaToRow(a: Atleta): Record<string, any> {
   };
 }
 
-function rowToProgramma(r: Record<string, any>): Programma {
+function rowToProgramma(r: Record<string, unknown>): Programma {
   return {
-    id: r.id,
-    atletaId: r.atleta_id,
-    nome: r.nome,
-    fase: r.fase ?? "",
-    data: r.data,
-    infortunioId: r.infortunio_id ?? undefined,
-    infortunioLabel: r.infortunio_label ?? undefined,
-    esercizi: r.esercizi ?? [],
-    esercizicampo: r.esercizicampo ?? [],
-    tests: r.tests ?? [],
-    carico: r.carico ?? { ...defaultCarico },
+    id: r.id as string,
+    atletaId: r.atleta_id as string,
+    nome: r.nome as string,
+    fase: (r.fase as string) ?? "",
+    data: r.data as string,
+    infortunioId: (r.infortunio_id as string) ?? undefined,
+    infortunioLabel: (r.infortunio_label as string) ?? undefined,
+    esercizi: (r.esercizi as Esercizio[]) ?? [],
+    esercizicampo: (r.esercizicampo as EsercizioCampo[]) ?? [],
+    tests: (r.tests as TestFisiometrico[]) ?? [],
+    carico: (r.carico as Carico) ?? { ...defaultCarico },
   };
 }
 
-function programmaToRow(p: Programma): Record<string, any> {
+function programmaToRow(p: Programma): Record<string, unknown> {
   return {
     id: p.id,
     atleta_id: p.atletaId,
@@ -304,45 +311,131 @@ function programmaToRow(p: Programma): Record<string, any> {
   };
 }
 
+// ─── Sync flush ──────────────────────────────────────────────────────────────
+
+export async function syncFlush(): Promise<void> {
+  if (!isOnline()) return;
+  const db = getDB();
+  const ops = await db.pendingOps.orderBy("createdAt").toArray();
+  for (const op of ops) {
+    let ok = false;
+    try {
+      if (op.table === "atleti") {
+        if (op.op === "upsert") {
+          const { error } = await supabase.from("atleti").upsert(op.payload as Record<string, unknown>);
+          ok = !error;
+        } else {
+          await supabase.from("atleti").delete().eq("id", (op.payload as { id: string }).id);
+          ok = true;
+        }
+      } else if (op.table === "programmi") {
+        if (op.op === "upsert") {
+          await supabase.from("programmi").upsert(op.payload as Record<string, unknown>);
+          ok = true;
+        } else {
+          await supabase.from("programmi").delete().eq("id", (op.payload as { id: string }).id);
+          ok = true;
+        }
+      } else if (op.table === "impostazioni") {
+        await supabase.from("impostazioni").upsert(op.payload as Record<string, unknown>);
+        ok = true;
+      }
+    } catch {}
+    if (ok && op.id != null) await db.pendingOps.delete(op.id);
+  }
+}
+
 // ─── Atleti ─────────────────────────────────────────────────────────────────
 
 export async function loadAtleti(): Promise<Atleta[]> {
-  const { data, error } = await supabase
-    .from("atleti")
-    .select("*")
-    .order("created_at", { ascending: true });
-  if (error || !data) return [];
-  return data.map(rowToAtleta);
+  const db = getDB();
+  if (isOnline()) {
+    try {
+      const { data, error } = await supabase
+        .from("atleti")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (!error && data) {
+        const atleti = data.map(rowToAtleta);
+        await db.atleti.bulkPut(atleti);
+        return atleti;
+      }
+    } catch {}
+  }
+  return db.atleti.toArray();
 }
 
 export async function upsertAtleta(a: Atleta): Promise<void> {
-  const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
-  if (error) throw new Error(error.message);
+  const db = getDB();
+  await db.atleti.put(a);
+  if (isOnline()) {
+    try {
+      const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
+      if (!error) return;
+    } catch {}
+  }
+  await db.pendingOps.add({ table: "atleti", op: "upsert", payload: atletaToRow(a), createdAt: Date.now() });
 }
 
 export async function deleteAtleta(id: string): Promise<void> {
-  await supabase.from("atleti").delete().eq("id", id);
+  const db = getDB();
+  await db.atleti.delete(id);
+  if (isOnline()) {
+    try {
+      await supabase.from("atleti").delete().eq("id", id);
+      return;
+    } catch {}
+  }
+  await db.pendingOps.add({ table: "atleti", op: "delete", payload: { id }, createdAt: Date.now() });
 }
 
 // ─── Programmi ──────────────────────────────────────────────────────────────
 
 export async function loadProgrammi(atletaId?: string): Promise<Programma[]> {
-  let q = supabase
-    .from("programmi")
-    .select("*")
-    .order("created_at", { ascending: true });
-  if (atletaId) q = q.eq("atleta_id", atletaId);
-  const { data, error } = await q;
-  if (error || !data) return [];
-  return data.map(rowToProgramma);
+  const db = getDB();
+  if (isOnline()) {
+    try {
+      let q = supabase
+        .from("programmi")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (atletaId) q = q.eq("atleta_id", atletaId);
+      const { data, error } = await q;
+      if (!error && data) {
+        const programmi = data.map(rowToProgramma);
+        await db.programmi.bulkPut(programmi);
+        return programmi;
+      }
+    } catch {}
+  }
+  if (atletaId) {
+    return db.programmi.where("atletaId").equals(atletaId).toArray();
+  }
+  return db.programmi.toArray();
 }
 
 export async function upsertProgramma(p: Programma): Promise<void> {
-  await supabase.from("programmi").upsert(programmaToRow(p));
+  const db = getDB();
+  await db.programmi.put(p);
+  if (isOnline()) {
+    try {
+      await supabase.from("programmi").upsert(programmaToRow(p));
+      return;
+    } catch {}
+  }
+  await db.pendingOps.add({ table: "programmi", op: "upsert", payload: programmaToRow(p), createdAt: Date.now() });
 }
 
 export async function deleteProgramma(id: string): Promise<void> {
-  await supabase.from("programmi").delete().eq("id", id);
+  const db = getDB();
+  await db.programmi.delete(id);
+  if (isOnline()) {
+    try {
+      await supabase.from("programmi").delete().eq("id", id);
+      return;
+    } catch {}
+  }
+  await db.pendingOps.add({ table: "programmi", op: "delete", payload: { id }, createdAt: Date.now() });
 }
 
 // ─── Impostazioni ────────────────────────────────────────────────────────────
@@ -356,30 +449,53 @@ const defaultImpostazioni: Impostazioni = {
 };
 
 export async function loadImpostazioni(): Promise<Impostazioni> {
-  const { data } = await supabase
-    .from("impostazioni")
-    .select("*")
-    .eq("id", 1)
-    .single();
-  if (!data) return { ...defaultImpostazioni };
-  return {
-    nomeClub: data.nome_club ?? "U.S. Cremonese",
-    nomeStruttura: data.nome_struttura ?? "Rehab Area",
-    indirizzo: data.indirizzo ?? "",
-    fisioterapisti: data.fisioterapisti ?? [],
-    preparatori: data.preparatori ?? [],
-  };
+  const db = getDB();
+  if (isOnline()) {
+    try {
+      const { data } = await supabase
+        .from("impostazioni")
+        .select("*")
+        .eq("id", 1)
+        .single();
+      if (data) {
+        const imp: Impostazioni = {
+          nomeClub: (data.nome_club as string) ?? "U.S. Cremonese",
+          nomeStruttura: (data.nome_struttura as string) ?? "Rehab Area",
+          indirizzo: (data.indirizzo as string) ?? "",
+          fisioterapisti: (data.fisioterapisti as string[]) ?? [],
+          preparatori: (data.preparatori as string[]) ?? [],
+        };
+        await db.impostazioni.put({ ...imp, id: 1 });
+        return imp;
+      }
+    } catch {}
+  }
+  const local = await db.impostazioni.get(1);
+  if (local) {
+    const { id: _id, ...imp } = local;
+    return imp;
+  }
+  return { ...defaultImpostazioni };
 }
 
 export async function saveImpostazioni(s: Impostazioni): Promise<void> {
-  await supabase.from("impostazioni").upsert({
+  const db = getDB();
+  await db.impostazioni.put({ ...s, id: 1 });
+  const row = {
     id: 1,
     nome_club: s.nomeClub,
     nome_struttura: s.nomeStruttura,
     indirizzo: s.indirizzo,
     fisioterapisti: s.fisioterapisti,
     preparatori: s.preparatori,
-  });
+  };
+  if (isOnline()) {
+    try {
+      await supabase.from("impostazioni").upsert(row);
+      return;
+    } catch {}
+  }
+  await db.pendingOps.add({ table: "impostazioni", op: "upsert", payload: row, createdAt: Date.now() });
 }
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
