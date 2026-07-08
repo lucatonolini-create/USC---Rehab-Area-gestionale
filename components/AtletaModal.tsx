@@ -7,6 +7,7 @@ import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, calcolaPHV, type Atleta, type Stato,
 interface PerfAthlete {
   id: string;
   name: string;
+  code?: string;
   position: string;
   birth_date: string;
   jersey_number: number;
@@ -16,7 +17,7 @@ interface PerfAthlete {
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
 const atletaVuoto: Omit<Atleta, "id"> = {
-  nome: "", dataNascita: "", categoria: "" as Categoria,
+  nome: "", nomeCompleto: "", dataNascita: "", categoria: "" as Categoria,
   posizione: "", piedeDominante: "" as Piede,
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   stato: "Infortunato", progresso: 0,
@@ -92,7 +93,8 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
     if (!p) return;
     setForm((prev) => ({
       ...prev,
-      nome: p.name,
+      nome: p.code || generaSigla(p.name, p.birth_date ?? "", "U17"),
+      nomeCompleto: p.name,
       posizione: p.position ?? "",
       dataNascita: p.birth_date ?? "",
       categoria: "U17" as Categoria,
@@ -138,7 +140,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
 
           <div>
             <Label>Nome e Cognome *</Label>
-            <Input className="mt-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Marco Rossi" />
+            <Input className="mt-1" value={form.nomeCompleto ?? ""} onChange={(e) => f("nomeCompleto", e.target.value)} placeholder="Es. Marco Rossi" />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -288,10 +290,13 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             Annulla
           </button>
           <button onClick={() => {
-              if (!form.nome.trim()) return;
-              const dati = isModifica ? form : { ...form, nome: generaSigla(form.nome, form.dataNascita, form.categoria) };
+              const nc = (form.nomeCompleto ?? "").trim();
+              if (!isModifica && !nc) return;
+              const dati = isModifica
+                ? form
+                : { ...form, nome: generaSigla(nc, form.dataNascita, form.categoria), nomeCompleto: nc };
               onSalva(dati);
-            }} disabled={!form.nome.trim()}
+            }} disabled={!isModifica && !(form.nomeCompleto ?? "").trim()}
             className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
             {isModifica ? "Salva modifiche" : "Aggiungi atleta"}
           </button>

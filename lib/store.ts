@@ -42,7 +42,7 @@ export interface QuestionarioKinesiofobia {
 export interface Atleta {
   id: string;
   nome: string;          // codice univoco es. "Lu.To.98_Primavera" — usato come athlete_code
-  nomeCompleto?: string; // nome visualizzato es. "Luca Tonolini" — da API Performance, non su Supabase
+  nomeCompleto?: string; // nome visualizzato es. "Luca Tonolini" — salvato su Supabase in nome_completo
   dataNascita: string;
   categoria: Categoria;
   posizione: string;
@@ -231,6 +231,7 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
   return {
     id: r.id as string,
     nome: r.nome as string,
+    nomeCompleto: (r.nome_completo as string) || undefined,
     dataNascita: (r.data_nascita as string) ?? "",
     categoria: r.categoria as Categoria,
     posizione: (r.posizione as string) ?? "",
@@ -278,6 +279,7 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
     peso: a.peso ?? null,
     altezza: a.altezza ?? null,
     altezza_da_seduto: a.altezzaDaSeduto ?? null,
+    nome_completo: a.nomeCompleto ?? null,
   };
 }
 
