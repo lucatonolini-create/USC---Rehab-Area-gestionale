@@ -48,7 +48,7 @@ Ogni riga include `athlete_id` e `athlete_name`.
 
 | Endpoint | Contenuto |
 |---|---|
-| `GET /athletes` | Anagrafica: `id, name, position, role_detail, birth_date, jersey_number, vmax_kmh, preferred_foot, weight_kg, height_cm` |
+| `GET /athletes` | Anagrafica: `id, name, position, role_detail, birth_date, jersey_number, device_number, vmax_kmh, preferred_foot, weight_kg, height_cm, notes`. **Piede dominante = `preferred_foot`** (destro/sinistro/ambidestro) |
 | `GET /gps` | `date, session_type, total_distance_m, distance_hsr_m, distance_vhsr_m, distance_sprint_m, accelerations, decelerations, metabolic_energy` |
 | `GET /rpe` | `session, rpe, duration_min, srpe` |
 | `GET /wellness` | `cmj_height_cm, body_weight_kg, energy, fatigue, sleep_hours, sleep_quality` |
@@ -96,6 +96,18 @@ Chiama a ogni seduta. Upsert per `external_id`. `srpe` calcolato come `rpe × du
 ```
 Risposta OK dei POST: `201 { "ok": true, "id": "uuid", "resolved_athlete_id": "uuid" }`.
 Per rileggere: `GET /injuries?status=&athlete_id=` · `GET /rehab-sessions?from=&to=&athlete_id=`.
+
+### `DELETE /injuries` e `DELETE /rehab-sessions` — cancellazioni
+Chiama **ogni volta che elimini** un infortunio o una seduta nel tuo sistema, altrimenti il record resta visibile nell'app della squadra.
+
+```
+DELETE https://cremonese-app.vercel.app/api/v1/injuries?external_id=<tuo_id>
+DELETE https://cremonese-app.vercel.app/api/v1/rehab-sessions?external_id=<tuo_id>
+```
+
+Puoi anche usare `?id=<uuid>` se hai l'uuid del server. Risposta: `200 { "ok": true }`.
+
+> Per un semplice **rientro** non serve DELETE: manda `POST /injuries` con `status: "disponibile"`.
 
 ---
 
