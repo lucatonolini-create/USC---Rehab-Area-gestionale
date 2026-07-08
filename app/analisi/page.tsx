@@ -710,16 +710,15 @@ async function esportaPDFPanoramica(params: {
     );
 
     const n = infortuni.length;
-    const nomeData = (at: Atleta) => nd(at) + (at.dataNascita ? "\n" + new Date(at.dataNascita + "T12:00").toLocaleDateString("it-IT") : "");
-    const nomeDataStyle = { fontStyle: "bold" as const, overflow: "linebreak" as const };
+    const nomeDataStyle = { fontStyle: "bold" as const };
     if (n === 0) {
-      tuttiRows.push([{ content: nomeData(a), styles: nomeDataStyle }, a.categoria, "—", a.stato, "—", "—", `${a.progresso}%`]);
+      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", a.stato, "—", "—", `${a.progresso}%`]);
       athleteForRowT.push(athleteIdx);
     } else {
       infortuni.forEach((inf, infIdx) => {
         if (infIdx === 0) {
           tuttiRows.push([
-            { content: nomeData(a), rowSpan: n, styles: { ...nomeDataStyle, valign: "middle" as const } },
+            { content: nd(a), rowSpan: n, styles: { ...nomeDataStyle, valign: "middle" as const } },
             { content: a.categoria, rowSpan: n, styles: { valign: "middle" } },
             inf.diagnosi,
             { content: a.stato, rowSpan: n, styles: { valign: "middle" } },
@@ -1094,16 +1093,15 @@ async function esportaPDFReport(
       ? tuttiInf.filter((inf) => (inf.tipo ?? "") === filtroTipoInf)
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
-    const nomeDataR = nd(a) + (a.dataNascita ? "\n" + new Date(a.dataNascita + "T12:00").toLocaleDateString("it-IT") : "");
     if (infortuni.length === 0) {
-      analisiRows.push([{ content: nomeDataR, styles: { fontStyle: "bold", overflow: "linebreak" as const } }, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
       athleteForRowA.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
         const row: any[] = [];
         if (i === 0) {
           row.push(
-            { content: nomeDataR, rowSpan: count, styles: { valign: "middle", fontStyle: "bold", overflow: "linebreak" as const } },
+            { content: nd(a), rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
