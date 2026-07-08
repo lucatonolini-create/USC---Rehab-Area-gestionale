@@ -41,7 +41,8 @@ export interface QuestionarioKinesiofobia {
 
 export interface Atleta {
   id: string;
-  nome: string;
+  nome: string;          // codice univoco es. "Lu.To.98_Primavera" — usato come athlete_code
+  nomeCompleto?: string; // nome visualizzato es. "Luca Tonolini" — da API Performance, non su Supabase
   dataNascita: string;
   categoria: Categoria;
   posizione: string;
@@ -358,11 +359,13 @@ export async function loadAtleti(): Promise<Atleta[]> {
       ]);
       if (!sbResult.error && sbResult.data) {
         const atleti = sbResult.data.map(rowToAtleta).map(a => {
-          if (!a.dataNascita) {
-            const perf = perfMap.get(a.nome);
-            if (perf?.birth_date) return { ...a, dataNascita: perf.birth_date };
-          }
-          return a;
+          const perf = perfMap.get(a.nome);
+          if (!perf) return a;
+          return {
+            ...a,
+            dataNascita: a.dataNascita || perf.birth_date || a.dataNascita,
+            nomeCompleto: perf.full_name || a.nomeCompleto,
+          };
         });
         await db.atleti.bulkPut(atleti);
         // Persisti data di nascita importata su Supabase (fire-and-forget)
@@ -516,6 +519,11 @@ export async function saveImpostazioni(s: Impostazioni): Promise<void> {
 }
 
 // ─── Utility ─────────────────────────────────────────────────────────────────
+
+/** Nome visualizzabile: usa nomeCompleto se disponibile, altrimenti il codice */
+export function nd(a: Pick<Atleta, "nome" | "nomeCompleto">): string {
+  return a.nomeCompleto || a.nome;
+}
 
 export function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);

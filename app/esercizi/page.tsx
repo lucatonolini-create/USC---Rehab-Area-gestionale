@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid,
+  loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
   TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO,
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo,
 } from "@/lib/store";
@@ -210,9 +210,9 @@ export default function EserciziPage() {
               <button onClick={() => apriAtleta(atleta.id)}
                 className="w-full flex items-center gap-3 px-5 py-4 hover:bg-gray-50 text-left">
                 <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {atleta.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                  {nd(atleta).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                 </div>
-                <span className="font-bold text-gray-800 flex-1">{atleta.nome}</span>
+                <span className="font-bold text-gray-800 flex-1">{nd(atleta)}</span>
                 <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{atleta.categoria}</span>
                 {isOpen && atleta.id in programmiPerAtleta && (
                   <span className="text-xs text-gray-400">{lista.length} programmi</span>
@@ -472,7 +472,7 @@ export default function EserciziPage() {
                   <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value, infortunioId: undefined, infortunioLabel: undefined })}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
                     <option value="">Seleziona atleta...</option>
-                    {atleti.map((a) => <option key={a.id} value={a.id}>{a.nome} ({a.categoria})</option>)}
+                    {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
                   </select>
                 </div>
                 <div>

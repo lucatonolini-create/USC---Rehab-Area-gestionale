@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Activity, Link2, Zap, Heart, FlaskConical, Gauge, RefreshCw, AlertCircle } from "lucide-react";
-import { loadAtleti, type Atleta } from "@/lib/store";
+import { loadAtleti, nd, type Atleta } from "@/lib/store";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -165,7 +165,7 @@ function TabCollegamento({
                 return (
                   <div key={a.id} className={`flex items-center gap-4 px-5 py-4 ${i > 0 ? "border-t border-gray-50" : ""}`}>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-gray-900 truncate">{a.nome}</p>
+                      <p className="font-semibold text-gray-900 truncate">{nd(a)}</p>
                       <p className="text-xs text-gray-400">{a.posizione || "—"}</p>
                     </div>
                     <Link2 className={`w-4 h-4 shrink-0 ${linked ? "text-green-500" : "text-gray-300"}`} />
@@ -253,7 +253,7 @@ function TabPanoramica({
                   const perfAtleta = perf.find((p) => p.id === perfId);
                   return (
                     <tr key={a.id} className="hover:bg-gray-50/50">
-                      <Td bold>{a.nome}</Td>
+                      <Td bold>{nd(a)}</Td>
                       <Td>{a.posizione || "—"}</Td>
                       <Td>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${

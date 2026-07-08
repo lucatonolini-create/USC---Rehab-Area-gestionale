@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { TrendingUp, Download, FileText, Calendar, Filter } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, upsertAtleta, uid,
+  loadAtleti, loadProgrammi, upsertAtleta, uid, nd,
   CATEGORIE, type Atleta, type Stato, type Programma, type InfortunioStorico,
 } from "@/lib/store";
 
@@ -77,11 +77,11 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
   // ── Foglio Atleta ────────────────────────────────────────────────────────────
   const ws1 = wb.addWorksheet("Atleta");
   ws1.columns = [{ width: 28 }, { width: 40 }, { width: 20 }];
-  addHeader(ws1, atleta.nome);
+  addHeader(ws1, nd(atleta));
   ws1.addRow([]);
   addSectionTitle(ws1, "DATI PERSONALI", redFill);
   [
-    ["Nome", atleta.nome],
+    ["Nome", nd(atleta)],
     ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
     ["Categoria", atleta.categoria],
     ["Ruolo", atleta.posizione],
@@ -160,7 +160,7 @@ async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a"); a.href = url; a.download = `${atleta.nome.replace(/ /g, "_")}_rehab.xlsx`; a.click();
+  const a = document.createElement("a"); a.href = url; a.download = `${nd(atleta).replace(/ /g, "_")}_rehab.xlsx`; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -212,7 +212,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   // ── Pagina 1: dati atleta ──────────────────────────────────────────────────
   addHeader();
   doc.setTextColor(...dark); doc.setFontSize(17); doc.setFont("helvetica", "bold");
-  doc.text(atleta.nome, M, HDR + 13);
+  doc.text(nd(atleta), M, HDR + 13);
   const info = [atleta.categoria, atleta.posizione, atleta.piedeDominante ? `Piede ${atleta.piedeDominante}` : ""].filter(Boolean).join("  ·  ");
   doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
   doc.text(info, M, HDR + 21);
@@ -284,7 +284,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   // ── Sessioni: tabella settimanale compatta ──────────────────────────────────
   if (programmi.length > 0) {
     doc.addPage();
-    addHeader(`${atleta.nome}  ·  Sessioni di lavoro`);
+    addHeader(`${nd(atleta)}  ·  Sessioni di lavoro`);
     y = HDR + 8;
     y = secTitle(`Sessioni di lavoro — ${programmi.length} sessioni`, y);
 
@@ -412,7 +412,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   }
 
   addFooter();
-  doc.save(`${atleta.nome.replace(/ /g, "_")}_rehab.pdf`);
+  doc.save(`${nd(atleta).replace(/ /g, "_")}_rehab.pdf`);
 }
 
 async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, anno: number, filtroCat: string) {
@@ -468,11 +468,11 @@ async function esportaExcelReportMensile(atletiMese: Atleta[], mese: number, ann
       });
     };
     if (infortuni.length === 0) {
-      addXlRow([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      addXlRow([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
     } else {
       infortuni.forEach((inf) => {
         addXlRow([
-          a.nome,
+          nd(a),
           a.categoria,
           inf.diagnosi,
           inf.tipo ?? "—",
@@ -686,14 +686,14 @@ async function esportaPDFReportMensile(atletiMese: Atleta[], mese: number, anno:
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      pdfRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      pdfRows.push([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
       athleteForRowP.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
         const row: any[] = [];
         if (i === 0) {
           row.push(
-            { content: a.nome, rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
+            { content: nd(a), rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
@@ -891,10 +891,10 @@ export default function ProgressiPage() {
                   <div className="flex items-start justify-between gap-4 mb-5 flex-wrap">
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-12 h-12 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0">
-                        {atleta.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                        {nd(atleta).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-bold text-gray-900 truncate">{atleta.nome}</h3>
+                        <h3 className="font-bold text-gray-900 truncate">{nd(atleta)}</h3>
                         <p className="text-sm text-gray-500 truncate">
                           {atleta.categoria}{atleta.posizione ? ` · ${atleta.posizione}` : ""}
                           {nProg > 0 ? ` · ${nProg} programm${nProg === 1 ? "a" : "i"}` : ""}
@@ -1051,10 +1051,10 @@ export default function ProgressiPage() {
                         return (
                         <div key={a.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50">
                           <div className="w-9 h-9 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0 mt-0.5">
-                            {a.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                            {nd(a).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
+                            <p className="font-semibold text-gray-900 text-sm">{nd(a)}</p>
                             <div className="space-y-1.5 mt-1">
                               {infortuni.length === 0 ? (
                                 <p className="text-xs text-gray-400">—</p>

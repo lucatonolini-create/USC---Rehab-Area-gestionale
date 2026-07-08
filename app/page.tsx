@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Activity, TrendingUp, Dumbbell, ChevronRight, X } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, upsertAtleta,
+  loadAtleti, loadProgrammi, upsertAtleta, nd,
   CATEGORIE, type Atleta, type Programma, type Stato,
 } from "@/lib/store";
 import Link from "next/link";
@@ -133,11 +133,11 @@ export default function Dashboard() {
               <button key={atleta.id} onClick={() => setAtletaSelezionato(atleta)}
                 className="w-full flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors text-left">
                 <div className="w-10 h-10 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0">
-                  {atleta.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                  {nd(atleta).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-semibold text-gray-900">{atleta.nome}</p>
+                    <p className="text-sm font-semibold text-gray-900">{nd(atleta)}</p>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statoColor[atleta.stato]}`}>
                       {atleta.stato}
                     </span>
@@ -170,9 +170,9 @@ export default function Dashboard() {
           <div className="flex-1 overflow-y-auto p-5">
             <div className="text-center mb-5">
               <div className="w-16 h-16 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-2">
-                {atletaSelezionato.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                {nd(atletaSelezionato).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
               </div>
-              <h2 className="font-bold text-gray-900 text-lg">{atletaSelezionato.nome}</h2>
+              <h2 className="font-bold text-gray-900 text-lg">{nd(atletaSelezionato)}</h2>
               <p className="text-sm text-gray-500">{atletaSelezionato.categoria} · {atletaSelezionato.posizione || "—"}</p>
               <span className={`text-xs px-3 py-1 rounded-full font-medium mt-1 inline-block ${statoColor[atletaSelezionato.stato]}`}>
                 {atletaSelezionato.stato}

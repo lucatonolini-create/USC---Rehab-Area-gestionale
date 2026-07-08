@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { BarChart2, Users, Activity, TrendingUp, Calendar, Download, FileText } from "lucide-react";
-import { loadAtleti, loadProgrammi, CATEGORIE, TIPI_INFORTUNIO, type Atleta, type Programma } from "@/lib/store";
+import { loadAtleti, loadProgrammi, nd, CATEGORIE, TIPI_INFORTUNIO, type Atleta, type Programma } from "@/lib/store";
 
 const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 const MESI_LUNGHI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
@@ -330,11 +330,11 @@ async function esportaExcelReport(
       xlAddDataRow(ws, values, athleteIdx % 2 !== 0, [9]);
     };
     if (infortuni.length === 0) {
-      addRow([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      addRow([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
     } else {
       infortuni.forEach((inf) => {
         addRow([
-          a.nome,
+          nd(a),
           a.categoria,
           inf.diagnosi,
           inf.tipo ?? "—",
@@ -695,7 +695,7 @@ async function esportaPDFPanoramica(params: {
   const fmtD = (d?: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
 
   const atletiOrdinati = [...params.atleti].sort(
-    (a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1
+    (a, b) => a.stato === b.stato ? nd(a).localeCompare(nd(b)) : a.stato === "Infortunato" ? -1 : 1
   );
 
   const tuttiRows: any[] = [];
@@ -711,13 +711,13 @@ async function esportaPDFPanoramica(params: {
 
     const n = infortuni.length;
     if (n === 0) {
-      tuttiRows.push([{ content: a.nome, styles: { fontStyle: "bold" } }, a.categoria, "—", a.stato, "—", "—", `${a.progresso}%`]);
+      tuttiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", a.stato, "—", "—", `${a.progresso}%`]);
       athleteForRowT.push(athleteIdx);
     } else {
       infortuni.forEach((inf, infIdx) => {
         if (infIdx === 0) {
           tuttiRows.push([
-            { content: a.nome, rowSpan: n, styles: { fontStyle: "bold", valign: "middle" } },
+            { content: nd(a), rowSpan: n, styles: { fontStyle: "bold", valign: "middle" } },
             { content: a.categoria, rowSpan: n, styles: { valign: "middle" } },
             inf.diagnosi,
             { content: a.stato, rowSpan: n, styles: { valign: "middle" } },
@@ -1093,14 +1093,14 @@ async function esportaPDFReport(
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      analisiRows.push([a.nome, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      analisiRows.push([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
       athleteForRowA.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
         const row: any[] = [];
         if (i === 0) {
           row.push(
-            { content: a.nome, rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
+            { content: nd(a), rowSpan: count, styles: { valign: "middle", fontStyle: "bold" } },
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
@@ -1268,7 +1268,7 @@ export default function AnalisiPage() {
       if (!tipoAttivo && !tipoStorico) return false;
     }
     return true;
-  }).sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1);
+  }).sort((a, b) => a.stato === b.stato ? nd(a).localeCompare(nd(b)) : a.stato === "Infortunato" ? -1 : 1);
 
   const statoColor: Record<string, string> = {
     "Infortunato": "bg-orange-100 text-orange-700",
@@ -1627,15 +1627,15 @@ export default function AnalisiPage() {
                 </div>
                 <div className="divide-y divide-gray-50">
                   {[...atleti]
-                    .sort((a, b) => a.stato === b.stato ? a.nome.localeCompare(b.nome) : a.stato === "Infortunato" ? -1 : 1)
+                    .sort((a, b) => a.stato === b.stato ? nd(a).localeCompare(nd(b)) : a.stato === "Infortunato" ? -1 : 1)
                     .map((a) => (
                       <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-center px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                            {a.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                            {nd(a).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
+                            <p className="font-semibold text-gray-900 text-sm">{nd(a)}</p>
                             <p className="text-xs text-gray-400">{a.categoria}{a.tipoInfortunio ? ` · ${a.tipoInfortunio}` : ""}</p>
                           </div>
                         </div>
@@ -1745,10 +1745,10 @@ export default function AnalisiPage() {
                       <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-start px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
-                            {a.nome.trim().split(/[.\s]+/).filter((p:string)=>p&&!/^\d/.test(p)&&!p.includes('_')).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
+                            {nd(a).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                           </div>
                           <div>
-                            <p className="font-semibold text-gray-900 text-sm">{a.nome}</p>
+                            <p className="font-semibold text-gray-900 text-sm">{nd(a)}</p>
                             <p className="text-xs text-gray-400">{a.categoria}</p>
                           </div>
                         </div>

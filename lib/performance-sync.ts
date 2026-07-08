@@ -3,6 +3,7 @@ import type { Atleta } from "./store";
 
 export type PerfAthleteInfo = {
   birth_date?: string;   // YYYY-MM-DD
+  full_name?: string;    // nome completo es. "Luca Tonolini"
   // piede_dominante non disponibile nell'API v1
 };
 
@@ -14,7 +15,7 @@ export async function pullPerformanceAthletesMap(): Promise<Map<string, PerfAthl
     const data = await res.json();
     const map = new Map<string, PerfAthleteInfo>();
     for (const a of (data.athletes ?? [])) {
-      if (a.code) map.set(a.code, { birth_date: a.birth_date ?? undefined });
+      if (a.code) map.set(a.code, { birth_date: a.birth_date ?? undefined, full_name: a.name ?? undefined });
     }
     return map;
   } catch {
