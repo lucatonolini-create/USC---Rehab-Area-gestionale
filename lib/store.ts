@@ -1,5 +1,6 @@
 import { supabase } from "./supabase";
 import { getDB } from "./db";
+import { syncInfortunioAPI } from "./performance-sync";
 
 export type Stato = "Infortunato" | "Disponibile";
 
@@ -371,7 +372,10 @@ export async function upsertAtleta(a: Atleta): Promise<void> {
   if (isOnline()) {
     try {
       const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
-      if (!error) return;
+      if (!error) {
+        syncInfortunioAPI(a).catch(() => {});
+        return;
+      }
     } catch {}
   }
   await db.pendingOps.add({ table: "atleti", op: "upsert", payload: atletaToRow(a), createdAt: Date.now() });
