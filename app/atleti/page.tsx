@@ -290,6 +290,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   autoTable(doc, {
     startY: y,
     body: [
+      ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
       ["Categoria / Ruolo", `${atleta.categoria}  ·  ${atleta.posizione || "—"}`],
       ["Piede dominante", atleta.piedeDominante || "—"],
       ["Stato attuale", atleta.stato],
