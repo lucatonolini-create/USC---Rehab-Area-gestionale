@@ -1,5 +1,26 @@
-// Client-side — chiama il proxy /api/performance/injuries (mai l'API esterna direttamente)
+// Client-side — chiama i proxy /api/performance/* (mai l'API esterna direttamente)
 import type { Atleta } from "./store";
+
+export type PerfAthleteInfo = {
+  birth_date?: string;   // YYYY-MM-DD
+  // piede_dominante non disponibile nell'API v1
+};
+
+/** Restituisce una mappa code → info per tutti gli atleti della rosa */
+export async function pullPerformanceAthletesMap(): Promise<Map<string, PerfAthleteInfo>> {
+  try {
+    const res = await fetch("/api/performance/athletes");
+    if (!res.ok) return new Map();
+    const data = await res.json();
+    const map = new Map<string, PerfAthleteInfo>();
+    for (const a of (data.athletes ?? [])) {
+      if (a.code) map.set(a.code, { birth_date: a.birth_date ?? undefined });
+    }
+    return map;
+  } catch {
+    return new Map();
+  }
+}
 
 const TIPO_MAP: Record<string, string> = {
   "Muscolare":           "muscolare",
