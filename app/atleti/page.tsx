@@ -717,40 +717,38 @@ export default function AtletiPage() {
                       className={`w-full bg-white rounded-xl p-4 border text-left transition-all hover:shadow-md ${
                         selected?.id === atleta.id ? "border-[#C8102E] shadow-md" : "border-gray-100"
                       }`}>
-                      <div className="flex items-center gap-4">
-                        <div className={`w-11 h-11 rounded-full flex items-center justify-center text-white font-bold shrink-0 ${
-                          atleta.stato === "Disponibile" ? "bg-gray-400" : "bg-[#2B2B2B]"
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 ${
+                          atleta.stato === "Disponibile" ? "bg-gray-300" : "bg-[#2B2B2B]"
                         }`}>
                           {nd(atleta).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                            <p className={`font-semibold ${atleta.stato === "Disponibile" ? "text-gray-500" : "text-gray-900"}`}>{nd(atleta)}</p>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statoColor[atleta.stato]}`}>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <p className={`font-semibold truncate ${atleta.stato === "Disponibile" ? "text-gray-500" : "text-gray-900"}`}>{nd(atleta)}</p>
+                            <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium ${statoColor[atleta.stato]}`}>
                               {atleta.stato}
                             </span>
-                            {atleta.tipoInfortunio && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
-                                {atleta.tipoInfortunio}
-                              </span>
-                            )}
                           </div>
-                          <p className="text-sm text-gray-400 truncate">
-                            {atleta.posizione}{atleta.infortunio ? ` · ${atleta.infortunio}` : ""}
+                          {atleta.infortunio && (
+                            <p className="text-xs text-gray-500 truncate font-medium">{atleta.infortunio}</p>
+                          )}
+                          <p className="text-xs text-gray-300 truncate mt-0.5">
+                            {[atleta.posizione, atleta.tipoInfortunio].filter(Boolean).join(" · ")}
                           </p>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className={`text-xl font-bold ${atleta.stato === "Disponibile" ? "text-green-500" : "text-[#C8102E]"}`}>
+                        <div className="shrink-0 flex flex-col items-end gap-1">
+                          <p className={`text-lg font-bold leading-none ${atleta.stato === "Disponibile" ? "text-green-500" : "text-[#C8102E]"}`}>
                             {atleta.progresso}%
                           </p>
+                          <ChevronRight className="w-4 h-4 text-gray-200" />
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300" />
                       </div>
-                      {atleta.infortunio && atleta.stato !== "Disponibile" && (
+                      {atleta.stato !== "Disponibile" && (
                         <div className="mt-3">
-                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
                             <div className={`h-full rounded-full ${
-                              atleta.progresso >= 80 ? "bg-green-500" : atleta.progresso >= 50 ? "bg-yellow-400" : "bg-orange-500"
+                              atleta.progresso >= 80 ? "bg-green-400" : atleta.progresso >= 50 ? "bg-yellow-400" : "bg-orange-400"
                             }`} style={{ width: `${atleta.progresso}%` }} />
                           </div>
                         </div>
