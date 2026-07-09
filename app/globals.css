@@ -8,6 +8,6 @@
   --usc-red: #C8102E;
 }
 
-body {
+html, body {
   @apply bg-gray-50 text-gray-900;
 }
