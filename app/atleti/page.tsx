@@ -313,27 +313,29 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
   // ── Storico infortuni ──────────────────────────────────────────────────────
   const storico = atleta.storicoInfortuni ?? [];
-  const giorniArchivio = storico.map((inf) => ggPersi(inf.inizioRehab, inf.fineRehab));
+  // Giorni persi = numero di sessioni inserite per quell'infortunio (non giorni di calendario)
+  const sessStoricoMap = new Map(storico.map((inf) => [inf.id, programmi.filter((p) => p.infortunioId === inf.id).length]));
+  const giorniArchivio = storico.map((inf) => sessStoricoMap.get(inf.id) ?? 0);
   const giorniCorrente = atleta.stato === "Infortunato" && atleta.inizioRehab
-    ? ggPersi(atleta.inizioRehab, new Date().toISOString().slice(0, 10)) : 0;
+    ? programmi.filter((p) => !p.infortunioId && p.data >= atleta.inizioRehab).length : 0;
   const totaleGiorni = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
-  y = secTitle(`Storico infortuni — ${totaleGiorni} giorni persi totali`, y);
+  y = secTitle(`Storico infortuni — ${totaleGiorni} sessioni totali`, y);
 
   const storicoBody: any[] = [];
   // Infortunio corrente se in corso
   if (atleta.stato === "Infortunato" && (atleta.infortunio || atleta.inizioRehab)) {
-    storicoBody.push([`${atleta.infortunio || "—"}${atleta.tipoInfortunio ? ` (${atleta.tipoInfortunio})` : ""}`, fmtD(atleta.inizioRehab), "In corso", `${giorniCorrente} gg`]);
+    storicoBody.push([`${atleta.infortunio || "—"}${atleta.tipoInfortunio ? ` (${atleta.tipoInfortunio})` : ""}`, fmtD(atleta.inizioRehab), "In corso", `${giorniCorrente} sess.`]);
   }
   // Infortuni archiviati (più recente prima)
   [...storico].reverse().forEach((inf, i) => {
-    storicoBody.push([`${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""}`, fmtD(inf.inizioRehab), fmtD(inf.fineRehab), `${giorniArchivio[storico.length - 1 - i]} gg`]);
+    storicoBody.push([`${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""}`, fmtD(inf.inizioRehab), fmtD(inf.fineRehab), `${giorniArchivio[storico.length - 1 - i]} sess.`]);
   });
 
   if (storicoBody.length) {
     autoTable(doc, {
       startY: y,
-      head: [["Diagnosi / Infortunio", "Inizio", "Fine", "Giorni persi"]],
+      head: [["Diagnosi / Infortunio", "Inizio", "Fine", "Sessioni"]],
       body: storicoBody,
       headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
@@ -486,8 +488,13 @@ export default function AtletiPage() {
   const [editAtleta, setEditAtleta] = useState<Atleta | undefined>(undefined);
   const [editStorico, setEditStorico] = useState<{ inf: InfortunioStorico; idx: number } | null>(null);
   const [editStoricoForm, setEditStoricoForm] = useState<InfortunioStorico | null>(null);
+  const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
 
   useEffect(() => { loadAtleti().then(setAtleti); }, []);
+  useEffect(() => {
+    if (selected) loadProgrammi(selected.id).then(setProgrammiAtleta);
+    else setProgrammiAtleta([]);
+  }, [selected?.id]);
 
   const apriNuovo = () => { setEditAtleta(undefined); setMostraForm(true); setSelected(null); };
   const apriModifica = (a: Atleta) => { setEditAtleta(a); setMostraForm(true); };
@@ -943,10 +950,10 @@ export default function AtletiPage() {
               /* ── Storico infortuni ── */
               (() => {
                 const storico = selected.storicoInfortuni ?? [];
-                const giorni = storico.map((inf) => giorniPersi(inf.inizioRehab, inf.fineRehab));
+                const giorni = storico.map((inf) => programmiAtleta.filter((p) => p.infortunioId === inf.id).length);
                 const totaleArchivio = giorni.reduce((s, g) => s + g, 0);
                 const giorniCorrente = selected.stato === "Infortunato" && selected.inizioRehab
-                  ? giorniPersi(selected.inizioRehab, new Date().toISOString().slice(0, 10))
+                  ? programmiAtleta.filter((p) => !p.infortunioId && p.data >= selected.inizioRehab).length
                   : 0;
                 const totale = totaleArchivio + giorniCorrente;
 
@@ -958,7 +965,7 @@ export default function AtletiPage() {
                     {/* Riepilogo + download */}
                     <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Giorni persi totali</p>
+                        <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Sessioni totali</p>
                         <p className="text-2xl font-bold text-orange-600">{totale}</p>
                       </div>
                       <button onClick={scaricaPDFStorico}
@@ -975,7 +982,7 @@ export default function AtletiPage() {
                           <div className="flex items-center justify-between">
                             <span className="font-semibold text-gray-900">{selected.infortunio || "—"}</span>
                             <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">
-                              {giorniCorrente} gg
+                              {giorniCorrente} sess.
                             </span>
                           </div>
                           {selected.tipoInfortunio && (
@@ -1059,7 +1066,7 @@ export default function AtletiPage() {
                                       <span className="font-semibold text-gray-900 flex-1">{inf.diagnosi}</span>
                                       <div className="flex items-center gap-1 shrink-0">
                                         <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-semibold">
-                                          {giorni[realIdx]} gg
+                                          {giorni[realIdx]} sess.
                                         </span>
                                         <button onClick={() => { setEditStorico({ inf, idx: realIdx }); setEditStoricoForm({ ...inf }); }}
                                           className="p-1 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-700" title="Modifica">
