@@ -318,9 +318,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   const giorniArchivio = storico.map((inf) => sessStoricoMap.get(inf.id) ?? 0);
   const giorniCorrente = atleta.stato === "Infortunato" && atleta.inizioRehab
     ? programmi.filter((p) => !p.infortunioId && p.data >= atleta.inizioRehab).length : 0;
-  const totaleGiorni = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
-  y = secTitle(`Storico infortuni — ${totaleGiorni} sessioni totali`, y);
+  y = secTitle("Storico infortuni", y);
 
   const storicoBody: any[] = [];
   // Infortunio corrente se in corso
@@ -951,11 +950,9 @@ export default function AtletiPage() {
               (() => {
                 const storico = selected.storicoInfortuni ?? [];
                 const giorni = storico.map((inf) => programmiAtleta.filter((p) => p.infortunioId === inf.id).length);
-                const totaleArchivio = giorni.reduce((s, g) => s + g, 0);
                 const giorniCorrente = selected.stato === "Infortunato" && selected.inizioRehab
                   ? programmiAtleta.filter((p) => !p.infortunioId && p.data >= selected.inizioRehab).length
                   : 0;
-                const totale = totaleArchivio + giorniCorrente;
 
                 const fmtData = (d: string) =>
                   d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
@@ -965,8 +962,8 @@ export default function AtletiPage() {
                     {/* Riepilogo + download */}
                     <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
                       <div>
-                        <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Sessioni totali</p>
-                        <p className="text-2xl font-bold text-orange-600">{totale}</p>
+                        <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Sessioni infortunio attuale</p>
+                        <p className="text-2xl font-bold text-orange-600">{giorniCorrente}</p>
                       </div>
                       <button onClick={scaricaPDFStorico}
                         className="flex items-center gap-1.5 bg-[#C8102E] text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-red-800 transition-colors">
