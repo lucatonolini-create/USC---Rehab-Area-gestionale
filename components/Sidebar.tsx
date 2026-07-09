@@ -40,8 +40,8 @@ export default function Sidebar() {
       {/* Bottone hamburger — mobile, quando sidebar è chiusa */}
       {!mobileAperta && (
         <button onClick={() => setMobileAperta(true)}
-          className="fixed top-4 left-4 z-50 md:hidden text-white p-2.5 rounded-xl shadow-lg"
-          style={{ backgroundColor: RED }}>
+          className="fixed left-4 z-50 md:hidden text-white p-2.5 rounded-xl shadow-lg"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 1rem)", backgroundColor: RED }}>
           <Menu className="w-5 h-5" />
         </button>
       )}
@@ -52,8 +52,9 @@ export default function Sidebar() {
         className={`
           flex flex-col shadow-2xl text-white shrink-0
           transition-all duration-300 ease-in-out
-          fixed inset-y-0 left-0 z-40
+          fixed left-0 z-40
           md:static md:translate-x-0
+          top-0 bottom-0
           ${mobileAperta ? "translate-x-0 w-64" : "-translate-x-full w-64"}
           ${collapsed ? "md:w-16" : "md:w-64"}
         `}

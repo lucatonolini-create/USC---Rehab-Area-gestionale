@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#f9fafb",
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -28,7 +29,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body className={inter.className}>
-        <div className="flex h-screen overflow-hidden bg-gray-50">
+        <div className="flex overflow-hidden bg-gray-50" style={{ height: "100dvh", paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <Sidebar />
           <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
             {children}
