@@ -478,7 +478,7 @@ export default function EserciziPage() {
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</label>
                   <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white appearance-none" />
                 </div>
               </div>
 
