@@ -978,50 +978,53 @@ export default function AtletiPage() {
 
                 return (
                   <div className="space-y-4 text-sm">
-                    {/* Riepilogo + download */}
-                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-6">
-                          {selected.stato === "Infortunato" && (
-                            <div>
-                              <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Infortunio attuale</p>
-                              <p className="text-2xl font-bold text-orange-600">{giorniCorrente} <span className="text-sm font-normal">sess.</span></p>
-                            </div>
-                          )}
-                          <div>
-                            <p className="text-xs text-orange-400 font-semibold uppercase tracking-wide">Totale stagione</p>
-                            <p className="text-2xl font-bold text-orange-400">{totaleStagione} <span className="text-sm font-normal">sess.</span></p>
-                          </div>
+                    {/* Stat tiles */}
+                    <div className={`grid gap-3 ${selected.stato === "Infortunato" ? "grid-cols-2" : "grid-cols-1"}`}>
+                      {selected.stato === "Infortunato" && (
+                        <div className="bg-orange-50 border border-orange-100 rounded-2xl p-3 text-center">
+                          <p className="text-[10px] text-orange-400 font-semibold uppercase tracking-widest mb-1">Infortunio attuale</p>
+                          <p className="text-3xl font-bold text-orange-600 leading-none">{giorniCorrente}</p>
+                          <p className="text-[11px] text-orange-400 mt-1">sessioni</p>
                         </div>
-                        <button onClick={scaricaPDFStorico}
-                          className="flex items-center gap-1.5 bg-[#C8102E] text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-red-800 transition-colors">
-                          <FileDown className="w-3.5 h-3.5" /> PDF completo
-                        </button>
+                      )}
+                      <div className="bg-gray-50 border border-gray-100 rounded-2xl p-3 text-center">
+                        <p className="text-[10px] text-gray-400 font-semibold uppercase tracking-widest mb-1">Totale stagione</p>
+                        <p className="text-3xl font-bold text-gray-700 leading-none">{totaleStagione}</p>
+                        <p className="text-[11px] text-gray-400 mt-1">sessioni</p>
                       </div>
                     </div>
+
+                    {/* PDF download */}
+                    <button onClick={scaricaPDFStorico}
+                      className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 text-xs font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
+                      <FileDown className="w-3.5 h-3.5" /> Scarica PDF completo
+                    </button>
 
                     {/* Infortunio corrente */}
                     {selected.stato === "Infortunato" && (selected.infortunio || selected.inizioRehab) && (
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">In corso</p>
-                        <div className="bg-orange-50 border border-orange-200 rounded-xl p-3 space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-gray-900">{selected.infortunio || "—"}</span>
-                            <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-semibold">
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">In corso</p>
+                        <div className="border border-orange-200 rounded-2xl p-4 space-y-2 bg-white">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-semibold text-gray-900 leading-tight">{selected.infortunio || "—"}</span>
+                            <span className="shrink-0 text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-semibold">
                               {giorniCorrente} sess.
                             </span>
                           </div>
                           {selected.tipoInfortunio && (
-                            <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block">{selected.tipoInfortunio}</span>
+                            <p className="text-xs text-gray-400">{selected.tipoInfortunio}</p>
                           )}
-                          <p className="text-xs text-gray-500">
-                            Inizio: {fmtData(selected.inizioRehab)}
-                            <span className="ml-2 text-orange-400 font-medium">· in corso</span>
+                          <p className="text-xs text-gray-400">
+                            Dal {fmtData(selected.inizioRehab)} <span className="text-orange-400 font-medium">· in corso</span>
                           </p>
-                          <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden mt-1">
-                            <div className="h-full bg-orange-400 rounded-full" style={{ width: `${selected.progresso}%` }} />
+                          <div className="pt-1">
+                            <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+                              <span>Recupero</span><span className="font-semibold text-orange-500">{selected.progresso}%</span>
+                            </div>
+                            <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${selected.progresso}%` }} />
+                            </div>
                           </div>
-                          <p className="text-xs text-gray-400 text-right">{selected.progresso}% recupero</p>
                         </div>
                       </div>
                     )}
