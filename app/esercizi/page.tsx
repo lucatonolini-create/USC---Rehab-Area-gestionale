@@ -531,18 +531,22 @@ export default function EserciziPage() {
 
               {/* Tab selector */}
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-                <button className={tabClass("esercizi")} onClick={() => setSezioneAttiva("esercizi")}>
-                  <span className="flex items-center justify-center gap-1"><Dumbbell className="w-3.5 h-3.5" /> Palestra ({form.esercizi.length})</span>
-                </button>
-                <button className={tabClass("campo")} onClick={() => setSezioneAttiva("campo")}>
-                  <span className="flex items-center justify-center gap-1"><Footprints className="w-3.5 h-3.5" /> Campo ({esercizicampo.length})</span>
-                </button>
-                <button className={tabClass("test")} onClick={() => setSezioneAttiva("test")}>
-                  <span className="flex items-center justify-center gap-1"><FlaskConical className="w-3.5 h-3.5" /> Test ({tests.length})</span>
-                </button>
-                <button className={tabClass("carico")} onClick={() => setSezioneAttiva("carico")}>
-                  <span className="flex items-center justify-center gap-1"><Gauge className="w-3.5 h-3.5" /> GPS</span>
-                </button>
+                {([
+                  { key: "esercizi", icon: Dumbbell, label: "Palestra", count: form.esercizi.length },
+                  { key: "campo",    icon: Footprints, label: "Campo",  count: esercizicampo.length },
+                  { key: "test",     icon: FlaskConical, label: "Test", count: tests.length },
+                  { key: "carico",   icon: Gauge, label: "GPS",         count: null },
+                ] as const).map(({ key, icon: Icon, label, count }) => (
+                  <button key={key} className={tabClass(key)} onClick={() => setSezioneAttiva(key)}>
+                    <span className="flex items-center justify-center gap-1 whitespace-nowrap">
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                      <span>{label}</span>
+                      {count !== null && count > 0 && (
+                        <span className="bg-[#C8102E] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shrink-0">{count}</span>
+                      )}
+                    </span>
+                  </button>
+                ))}
               </div>
 
               {/* Sezione Esercizi */}
@@ -552,35 +556,36 @@ export default function EserciziPage() {
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi</label>
                     <button onClick={aggiungiEs} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {form.esercizi.map((es, i) => (
-                      <div key={i} className="bg-gray-50 rounded-xl p-4 space-y-3">
+                      <div key={i} className="bg-gray-50 rounded-xl p-3 space-y-2.5">
+                        {/* Nome + cestino */}
                         <div className="flex items-center gap-2">
                           <span className="w-6 h-6 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{i + 1}</span>
                           <input value={es.nome} onChange={(e) => aggiornaEs(i, "nome", e.target.value)}
                             placeholder="Nome esercizio"
-                            className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                            className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                           {form.esercizi.length > 1 && (
                             <button onClick={() => rimuoviEs(i)} className="text-gray-300 hover:text-red-400 shrink-0">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <input value={es.serie} onChange={(e) => aggiornaEs(i, "serie", e.target.value)} placeholder="N° serie (es. 3)"
-                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                          <input value={es.reps} onChange={(e) => aggiornaEs(i, "reps", e.target.value)} placeholder="Reps / durata"
-                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                          <input value={es.carico} onChange={(e) => aggiornaEs(i, "carico", e.target.value)} placeholder="Carico (es. 60 kg)"
-                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
-                          <input value={es.rir} onChange={(e) => aggiornaEs(i, "rir", e.target.value)} placeholder="RIR (es. 2)"
-                            className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                        {/* Metriche: 4 colonne compatte */}
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {([ ["Serie", "serie"], ["Reps", "reps"], ["Carico", "carico"], ["RIR", "rir"] ] as const).map(([label, key]) => (
+                            <div key={key}>
+                              <p className="text-[10px] text-gray-400 mb-0.5 text-center">{label}</p>
+                              <input value={es[key]} onChange={(e) => aggiornaEs(i, key, e.target.value)} placeholder="—"
+                                className="w-full bg-white border border-gray-200 rounded-lg px-1.5 py-1.5 text-xs text-center focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                            </div>
+                          ))}
                         </div>
-                        <div className="pt-1">
-                          <ScaleInput label={`VAS: ${es.vas || 0}/10`} value={es.vas} max={10} onChange={(v) => aggiornaEs(i, "vas", v)} color="text-red-500" />
-                        </div>
-                        <input value={es.note} onChange={(e) => aggiornaEs(i, "note", e.target.value)} placeholder="Note sull'esercizio"
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
+                        {/* VAS */}
+                        <ScaleInput label={`VAS: ${es.vas || 0}/10`} value={es.vas} max={10} onChange={(v) => aggiornaEs(i, "vas", v)} color="text-red-500" />
+                        {/* Note */}
+                        <input value={es.note} onChange={(e) => aggiornaEs(i, "note", e.target.value)} placeholder="Note"
+                          className="w-full bg-white border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                       </div>
                     ))}
                   </div>
