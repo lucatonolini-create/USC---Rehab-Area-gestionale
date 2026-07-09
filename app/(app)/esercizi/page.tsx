@@ -466,8 +466,8 @@ export default function EserciziPage() {
 
             <div className="p-5 overflow-y-auto flex-1 space-y-5">
               {/* Info base */}
-              <div className="space-y-3">
-                <div>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 min-w-0">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Atleta *</label>
                   <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value, infortunioId: undefined, infortunioLabel: undefined })}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
@@ -475,10 +475,11 @@ export default function EserciziPage() {
                     {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</label>
+                <div className="shrink-0">
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block">Data</label>
                   <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white appearance-none" />
+                    style={{ width: "6rem" }}
+                    className="mt-1 border border-gray-200 rounded-xl px-2 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                 </div>
               </div>
 
