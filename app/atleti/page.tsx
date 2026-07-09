@@ -794,12 +794,6 @@ export default function AtletiPage() {
           <div className="flex-1 overflow-y-auto p-5">
             {tab === "dati" ? (
               <div className="space-y-2.5 text-sm">
-                {selected.tipoInfortunio && (
-                  <div className="bg-gray-50 rounded-xl p-3 border border-gray-200">
-                    <p className="text-xs text-gray-400">Tipo infortunio</p>
-                    <p className="font-semibold text-gray-600">{selected.tipoInfortunio}</p>
-                  </div>
-                )}
                 {[
                   ["Data di nascita", selected.dataNascita ? new Date(selected.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
                   ["Piede dominante", selected.piedeDominante || "—"],
@@ -812,6 +806,27 @@ export default function AtletiPage() {
                     <p className="font-medium text-gray-900">{value}</p>
                   </div>
                 ))}
+
+                {(selected.tipoInfortunio || selected.evento || selected.meccanismo || selected.contatto || selected.lato || selected.posizioneInfortunio) && (
+                  <div className="pt-1 border-t border-gray-100">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Dettaglio infortunio</p>
+                    <div className="space-y-2">
+                      {[
+                        ["Tipologia", selected.tipoInfortunio],
+                        ["Evento", selected.evento],
+                        ["Meccanismo", selected.meccanismo],
+                        ["Contatto", selected.contatto],
+                        ["Lato", selected.lato],
+                        ["Posizione", selected.posizioneInfortunio],
+                      ].filter(([, v]) => !!v).map(([label, value]) => (
+                        <div key={label} className="bg-gray-50 rounded-xl p-3">
+                          <p className="text-xs text-gray-400">{label}</p>
+                          <p className="font-medium text-gray-900">{value}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="bg-gray-50 rounded-xl p-3">
                   <div className="flex justify-between mb-1.5">
