@@ -318,8 +318,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   const giorniArchivio = storico.map((inf) => sessStoricoMap.get(inf.id) ?? 0);
   const giorniCorrente = atleta.stato === "Infortunato" && atleta.inizioRehab
     ? programmi.filter((p) => !p.infortunioId && p.data >= atleta.inizioRehab).length : 0;
+  const totaleStagionePDF = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
-  y = secTitle("Storico infortuni", y);
+  y = secTitle(`Storico infortuni — ${totaleStagionePDF} sessioni totali stagione`, y);
 
   const storicoBody: any[] = [];
   // Infortunio corrente se in corso
@@ -953,6 +954,7 @@ export default function AtletiPage() {
                 const giorniCorrente = selected.stato === "Infortunato" && selected.inizioRehab
                   ? programmiAtleta.filter((p) => !p.infortunioId && p.data >= selected.inizioRehab).length
                   : 0;
+                const totaleStagione = giorni.reduce((s, g) => s + g, 0) + giorniCorrente;
 
                 const fmtData = (d: string) =>
                   d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
@@ -960,15 +962,25 @@ export default function AtletiPage() {
                 return (
                   <div className="space-y-4 text-sm">
                     {/* Riepilogo + download */}
-                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Sessioni infortunio attuale</p>
-                        <p className="text-2xl font-bold text-orange-600">{giorniCorrente}</p>
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex gap-6">
+                          {selected.stato === "Infortunato" && (
+                            <div>
+                              <p className="text-xs text-orange-500 font-semibold uppercase tracking-wide">Infortunio attuale</p>
+                              <p className="text-2xl font-bold text-orange-600">{giorniCorrente} <span className="text-sm font-normal">sess.</span></p>
+                            </div>
+                          )}
+                          <div>
+                            <p className="text-xs text-orange-400 font-semibold uppercase tracking-wide">Totale stagione</p>
+                            <p className="text-2xl font-bold text-orange-400">{totaleStagione} <span className="text-sm font-normal">sess.</span></p>
+                          </div>
+                        </div>
+                        <button onClick={scaricaPDFStorico}
+                          className="flex items-center gap-1.5 bg-[#C8102E] text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-red-800 transition-colors">
+                          <FileDown className="w-3.5 h-3.5" /> PDF completo
+                        </button>
                       </div>
-                      <button onClick={scaricaPDFStorico}
-                        className="flex items-center gap-1.5 bg-[#C8102E] text-white text-xs font-semibold px-3 py-2 rounded-xl hover:bg-red-800 transition-colors">
-                        <FileDown className="w-3.5 h-3.5" /> PDF completo
-                      </button>
                     </div>
 
                     {/* Infortunio corrente */}
