@@ -466,8 +466,8 @@ export default function EserciziPage() {
 
             <div className="p-5 overflow-y-auto flex-1 space-y-5">
               {/* Info base */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 min-w-0">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Atleta *</label>
                   <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value, infortunioId: undefined, infortunioLabel: undefined })}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
@@ -475,10 +475,10 @@ export default function EserciziPage() {
                     {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
                   </select>
                 </div>
-                <div>
+                <div className="w-36 shrink-0">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</label>
                   <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                 </div>
               </div>
 
@@ -532,17 +532,20 @@ export default function EserciziPage() {
               {/* Tab selector */}
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
                 {([
-                  { key: "esercizi", label: "Palestra", count: form.esercizi.length },
-                  { key: "campo",    label: "Campo",    count: esercizicampo.length },
-                  { key: "test",     label: "Test",     count: tests.length },
-                  { key: "carico",   label: "GPS",      count: null },
-                ] as const).map(({ key, label, count }) => (
+                  { key: "esercizi" as FormSection, label: "Palestra", icon: Dumbbell,     count: form.esercizi.length },
+                  { key: "campo"    as FormSection, label: "Campo",    icon: Footprints,   count: esercizicampo.length },
+                  { key: "test"     as FormSection, label: "Test",     icon: FlaskConical, count: tests.length },
+                  { key: "carico"   as FormSection, label: "GPS",      icon: Gauge,        count: null },
+                ]).map(({ key, label, icon: Icon, count }) => (
                   <button key={key} className={tabClass(key)} onClick={() => setSezioneAttiva(key)}>
-                    <span className="flex items-center justify-center gap-1.5 whitespace-nowrap">
-                      {label}
-                      {count !== null && count > 0 && (
-                        <span className="bg-[#C8102E] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shrink-0">{count}</span>
-                      )}
+                    <span className="flex flex-col items-center gap-0.5">
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span className="flex items-center gap-1">
+                        {label}
+                        {count !== null && count > 0 && (
+                          <span className="bg-[#C8102E] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shrink-0">{count}</span>
+                        )}
+                      </span>
                     </span>
                   </button>
                 ))}
