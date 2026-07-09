@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Zap } from "lucide-react";
-import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, calcolaPHV, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, calcolaPHV, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 
 interface PerfAthlete {
   id: string;
@@ -174,11 +174,53 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
           </div>
 
           <div>
-            <Label>Tipo infortunio</Label>
+            <Label>Tipologia</Label>
             <Sel className="mt-1" value={form.tipoInfortunio ?? ""} onChange={(e) => f("tipoInfortunio", e.target.value as TipoInfortunio)}>
-              <option value="">Seleziona categoria...</option>
+              <option value="">—</option>
               {TIPI_INFORTUNIO.map((t) => <option key={t}>{t}</option>)}
             </Sel>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Evento</Label>
+              <Sel className="mt-1" value={form.evento ?? ""} onChange={(e) => f("evento", e.target.value)}>
+                <option value="">—</option>
+                {EVENTI_INFORTUNIO.map((v) => <option key={v}>{v}</option>)}
+              </Sel>
+            </div>
+            <div>
+              <Label>Contatto</Label>
+              <Sel className="mt-1" value={form.contatto ?? ""} onChange={(e) => f("contatto", e.target.value)}>
+                <option value="">—</option>
+                {CONTATTI_INFORTUNIO.map((v) => <option key={v}>{v}</option>)}
+              </Sel>
+            </div>
+          </div>
+
+          <div>
+            <Label>Meccanismo</Label>
+            <Sel className="mt-1" value={form.meccanismo ?? ""} onChange={(e) => f("meccanismo", e.target.value)}>
+              <option value="">—</option>
+              {MECCANISMI_INFORTUNIO.map((v) => <option key={v}>{v}</option>)}
+            </Sel>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label>Lato</Label>
+              <Sel className="mt-1" value={form.lato ?? ""} onChange={(e) => f("lato", e.target.value)}>
+                <option value="">—</option>
+                {LATI_INFORTUNIO.map((v) => <option key={v}>{v}</option>)}
+              </Sel>
+            </div>
+            <div>
+              <Label>Posizione</Label>
+              <Sel className="mt-1" value={form.posizioneInfortunio ?? ""} onChange={(e) => f("posizioneInfortunio", e.target.value)}>
+                <option value="">—</option>
+                {POSIZIONI_INFORTUNIO.map((v) => <option key={v}>{v}</option>)}
+              </Sel>
+            </div>
           </div>
 
           <div>

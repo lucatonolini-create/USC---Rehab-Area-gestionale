@@ -11,15 +11,82 @@ export const PIEDI = ["Destro", "Sinistro", "Ambidestro"] as const;
 export type Piede = (typeof PIEDI)[number];
 
 export const TIPI_INFORTUNIO = [
-  "Muscolare",
-  "Art. - Leg. - Cart.",
-  "Tendineo",
-  "Osseo",
-  "Cutaneo",
-  "Concussion",
-  "Altro",
+  "Frattura",
+  "Altro Infortunio Osseo",
+  "Dislocazione/Sublussazione",
+  "Distorsione/Lesione Legamentosa",
+  "Lesione meniscale o cartilaginea",
+  "Muscolare: Strappo/Stiramento/Crampo",
+  "Tendineo: Tendinopatia/Lesione/Borsite",
+  "Ematoma/Contusione",
+  "Abrasione",
+  "Vescica",
+  "Lacerazione/Taglio",
+  "Concussion (with or without loss of consciousness)",
+  "Infortunio Nervoso",
+  "Infortunio Dentale",
+  "Altri infortuni",
+  "Malattia",
 ] as const;
 export type TipoInfortunio = (typeof TIPI_INFORTUNIO)[number];
+
+export const EVENTI_INFORTUNIO = ["Partita", "Allenamento"] as const;
+export type EventoInfortunio = (typeof EVENTI_INFORTUNIO)[number];
+
+export const MECCANISMI_INFORTUNIO = [
+  "Corsa/Sprint",
+  "Cambio direzione/Pivot",
+  "Tiro",
+  "Passaggio/Cross",
+  "Dribbling",
+  "Salto/atterraggio",
+  "Caduta/Tuffo",
+  "Stretching",
+  "Scivolata",
+  "Overuse",
+  "Pallonata",
+  "Scontro",
+  "Colpo di testa",
+  "Contrasto subito",
+  "Contrasto effettuato",
+  "Calciato",
+  "Placcato",
+  "Sbracciata/Gomitata",
+  "Other acute",
+] as const;
+export type MeccanismoInfortunio = (typeof MECCANISMI_INFORTUNIO)[number];
+
+export const CONTATTI_INFORTUNIO = [
+  "Non contatto",
+  "Contatto con giocatore",
+  "Contatto con attrezzo",
+] as const;
+export type ContattoInfortunio = (typeof CONTATTI_INFORTUNIO)[number];
+
+export const LATI_INFORTUNIO = ["Destro", "Sinistro", "Bilaterale", "Non applicabile"] as const;
+export type LatoInfortunio = (typeof LATI_INFORTUNIO)[number];
+
+export const POSIZIONI_INFORTUNIO = [
+  "Testa/Faccia",
+  "Collo/Rachide Cervicale",
+  "Spalla/Clavicola",
+  "Braccio Superiore",
+  "Gomito",
+  "Avambraccio",
+  "Polso",
+  "Mano/Dita",
+  "Sterno/Coste/Rachide Toracico",
+  "Addome",
+  "Rachide Lombare/Pelvi/Sacro",
+  "Anca/Groin",
+  "Coscia",
+  "Ginocchio",
+  "Gamba inferiore/T.Achille",
+  "Caviglia",
+  "Piede/Dita Piede",
+  "Sistemico",
+] as const;
+export type PosizioneInfortunio = (typeof POSIZIONI_INFORTUNIO)[number];
 
 export interface InfortunioStorico {
   id: string;
@@ -48,6 +115,11 @@ export interface Atleta {
   posizione: string;
   piedeDominante: Piede;
   tipoInfortunio?: TipoInfortunio;
+  evento?: string;
+  meccanismo?: string;
+  contatto?: string;
+  lato?: string;
+  posizioneInfortunio?: string;
   infortunio: string;
   inizioRehab: string;
   fineRehab?: string;
@@ -237,6 +309,11 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
     posizione: (r.posizione as string) ?? "",
     piedeDominante: (r.piede_dominante as Piede) ?? "Destro",
     tipoInfortunio: (r.tipo_infortunio as TipoInfortunio) ?? undefined,
+    evento: (r.evento as string) ?? undefined,
+    meccanismo: (r.meccanismo as string) ?? undefined,
+    contatto: (r.contatto as string) ?? undefined,
+    lato: (r.lato as string) ?? undefined,
+    posizioneInfortunio: (r.posizione_infortunio as string) ?? undefined,
     infortunio: (r.infortunio as string) ?? "",
     inizioRehab: (r.inizio_rehab as string) ?? "",
     fineRehab: (r.fine_rehab as string) ?? undefined,
@@ -264,6 +341,11 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
     posizione: a.posizione,
     piede_dominante: a.piedeDominante,
     tipo_infortunio: a.tipoInfortunio ?? null,
+    evento: a.evento ?? null,
+    meccanismo: a.meccanismo ?? null,
+    contatto: a.contatto ?? null,
+    lato: a.lato ?? null,
+    posizione_infortunio: a.posizioneInfortunio ?? null,
     infortunio: a.infortunio,
     inizio_rehab: a.inizioRehab,
     fine_rehab: a.fineRehab ?? null,
