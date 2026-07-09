@@ -1032,13 +1032,13 @@ export default function AtletiPage() {
                     {/* Storico archiviato */}
                     {storico.length > 0 && (
                       <div>
-                        <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Infortuni precedenti</p>
+                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Infortuni precedenti</p>
                         <div className="space-y-2">
                           {[...storico].reverse().map((inf, i) => {
                             const realIdx = storico.length - 1 - i;
                             const isEditing = editStorico?.idx === realIdx;
                             return (
-                              <div key={inf.id} className="bg-gray-50 border border-gray-100 rounded-xl p-3 space-y-1.5">
+                              <div key={inf.id} className="border border-gray-100 rounded-2xl p-4 space-y-2 bg-white">
                                 {isEditing && editStoricoForm ? (
                                   /* ── Form modifica inline ── */
                                   <div className="space-y-2">
@@ -1092,29 +1092,29 @@ export default function AtletiPage() {
                                   /* ── Vista card normale ── */
                                   <>
                                     <div className="flex items-start justify-between gap-2">
-                                      <span className="font-semibold text-gray-900 flex-1">{inf.diagnosi}</span>
+                                      <span className="font-semibold text-gray-900 leading-tight flex-1">{inf.diagnosi}</span>
                                       <div className="flex items-center gap-1 shrink-0">
-                                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full font-semibold">
+                                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-semibold">
                                           {giorni[realIdx]} sess.
                                         </span>
                                         <button onClick={() => { setEditStorico({ inf, idx: realIdx }); setEditStoricoForm({ ...inf }); }}
-                                          className="p-1 rounded-lg hover:bg-gray-200 text-gray-400 hover:text-gray-700" title="Modifica">
+                                          className="p-1 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-gray-600" title="Modifica">
                                           <Pencil className="w-3 h-3" />
                                         </button>
                                         <button onClick={() => ripristinaInfortunio(inf, realIdx)}
-                                          className="p-1 rounded-lg hover:bg-orange-100 text-gray-400 hover:text-orange-600" title="Ripristina come attivo">
+                                          className="p-1 rounded-lg hover:bg-orange-50 text-gray-300 hover:text-orange-500" title="Ripristina come attivo">
                                           <RotateCcw className="w-3 h-3" />
                                         </button>
                                       </div>
                                     </div>
                                     {inf.tipo && (
-                                      <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full inline-block">{inf.tipo}</span>
+                                      <p className="text-xs text-gray-400">{inf.tipo}</p>
                                     )}
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-gray-400">
                                       {fmtData(inf.inizioRehab)} → {fmtData(inf.fineRehab)}
                                     </p>
                                     {inf.note && <p className="text-xs text-gray-400 italic">{inf.note}</p>}
-                                    <div className="flex items-center gap-1 text-green-600">
+                                    <div className="flex items-center gap-1 text-green-500 pt-0.5">
                                       <CheckCircle2 className="w-3 h-3" />
                                       <span className="text-xs font-medium">Recuperato</span>
                                     </div>
