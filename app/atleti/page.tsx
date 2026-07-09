@@ -712,9 +712,9 @@ export default function AtletiPage() {
                 </div>
                 <div className="space-y-3">
                   {lista.map((atleta) => (
-                    <div key={atleta.id} className="relative group">
+                    <div key={atleta.id} className="group flex items-center gap-2">
                     <button onClick={() => { setSelected(atleta); setTab("dati"); }}
-                      className={`w-full bg-white rounded-xl p-4 border text-left transition-all hover:shadow-md ${
+                      className={`flex-1 min-w-0 bg-white rounded-xl p-4 border text-left transition-all hover:shadow-md ${
                         selected?.id === atleta.id ? "border-[#C8102E] shadow-md" : "border-gray-100"
                       }`}>
                       <div className="flex items-center gap-3">
@@ -756,7 +756,7 @@ export default function AtletiPage() {
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (confirm(`Eliminare ${nd(atleta)}?`)) elimina(atleta.id); }}
-                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500"
                       title="Elimina atleta">
                       <Trash2 className="w-4 h-4" />
                     </button>
