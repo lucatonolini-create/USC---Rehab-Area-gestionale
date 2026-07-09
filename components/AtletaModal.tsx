@@ -254,17 +254,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
               className="w-full accent-[#C8102E] mt-2" />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Telefono</Label>
-              <Input className="mt-1" value={form.telefono} onChange={(e) => f("telefono", e.target.value)} placeholder="+39 333 0000000" />
-            </div>
-            <div>
-              <Label>Email</Label>
-              <Input className="mt-1" value={form.email} onChange={(e) => f("email", e.target.value)} placeholder="nome@email.it" />
-            </div>
-          </div>
-
           <div>
             <Label>Note</Label>
             <textarea value={form.note} onChange={(e) => f("note", e.target.value)}
@@ -289,7 +278,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
                   placeholder="es. 175" />
               </div>
               <div>
-                <Label>Alt. da seduto (cm)</Label>
+                <Label>Seduto (cm)</Label>
                 <Input className="mt-1" type="number" min="0" step="0.1"
                   value={form.altezzaDaSeduto ?? ""} onChange={(e) => f("altezzaDaSeduto", e.target.value)}
                   placeholder="es. 90" />
