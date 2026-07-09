@@ -16,7 +16,7 @@ const campoVuoto: EsercizioCampo = { tipo: "", serie: "", durata: "", descrizion
 const progVuoto: Omit<Programma, "id"> = {
   atletaId: "", nome: "", fase: "",
   data: new Date().toISOString().slice(0, 10),
-  esercizi: [{ ...esVuoto }],
+  esercizi: [],
   esercizicampo: [],
   tests: [],
   carico: { ...caricoVuoto },
@@ -109,7 +109,7 @@ export default function EserciziPage() {
   };
 
   const apriNuovo = () => {
-    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [{ ...esVuoto }], esercizicampo: [], tests: [], carico: { ...caricoVuoto } });
+    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto } });
     setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
@@ -466,8 +466,8 @@ export default function EserciziPage() {
 
             <div className="p-5 overflow-y-auto flex-1 space-y-5">
               {/* Info base */}
-              <div className="flex gap-3 items-end">
-                <div className="flex-1 min-w-0">
+              <div className="space-y-3">
+                <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Atleta *</label>
                   <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value, infortunioId: undefined, infortunioLabel: undefined })}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
@@ -475,10 +475,10 @@ export default function EserciziPage() {
                     {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
                   </select>
                 </div>
-                <div className="w-28 shrink-0">
+                <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</label>
                   <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                 </div>
               </div>
 
@@ -567,11 +567,9 @@ export default function EserciziPage() {
                           <input value={es.nome} onChange={(e) => aggiornaEs(i, "nome", e.target.value)}
                             placeholder="Nome esercizio"
                             className="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                          {form.esercizi.length > 1 && (
-                            <button onClick={() => rimuoviEs(i)} className="text-gray-300 hover:text-red-400 shrink-0">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          )}
+                          <button onClick={() => rimuoviEs(i)} className="text-gray-300 hover:text-red-400 shrink-0">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                         {/* Metriche: 4 colonne compatte */}
                         <div className="grid grid-cols-4 gap-1.5">
