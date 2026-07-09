@@ -320,7 +320,24 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     ? programmi.filter((p) => !p.infortunioId && p.data >= atleta.inizioRehab).length : 0;
   const totaleStagionePDF = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
-  y = secTitle(`Storico infortuni — ${totaleStagionePDF} sessioni totali stagione`, y);
+  y = secTitle("Storico infortuni", y);
+
+  // Riquadro riepilogativo sessioni
+  {
+    const boxes: [string, string][] = [];
+    if (atleta.stato === "Infortunato") boxes.push(["Infortunio attuale", `${giorniCorrente} sess.`]);
+    boxes.push(["Totale stagione", `${totaleStagionePDF} sess.`]);
+    const bw = (W - 2 * M - (boxes.length - 1) * 4) / boxes.length;
+    boxes.forEach(([label, val], i) => {
+      const bx = M + i * (bw + 4);
+      doc.setFillColor(255, 247, 237); doc.roundedRect(bx, y, bw, 16, 2, 2, "F");
+      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(234, 88, 12);
+      doc.text(label.toUpperCase(), bx + bw / 2, y + 5.5, { align: "center" });
+      doc.setFontSize(11);
+      doc.text(val, bx + bw / 2, y + 13, { align: "center" });
+    });
+    y += 22;
+  }
 
   const storicoBody: any[] = [];
   // Infortunio corrente se in corso
