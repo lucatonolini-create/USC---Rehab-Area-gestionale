@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, Gauge,
+  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, Gauge, LogOut,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const navItems = [
   { href: "/",             label: "Dashboard",   icon: LayoutDashboard },
@@ -23,11 +24,21 @@ const DARK = "#2B2B2B";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  // mobile: aperta/chiusa; desktop: espansa/collassata
+  const router = useRouter();
   const [mobileAperta, setMobileAperta] = useState(false);
   const [collapsed, setCollapsed]       = useState(false);
+  const [userEmail, setUserEmail]       = useState<string | null>(null);
 
   useEffect(() => { setMobileAperta(false); }, [pathname]);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <>
@@ -111,18 +122,27 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        {!collapsed && (
-          <div className="p-4 border-t border-white/10 shrink-0">
+        <div className={`border-t border-white/10 shrink-0 ${collapsed ? "p-2 flex justify-center" : "p-4"}`}>
+          {collapsed ? (
+            <button onClick={handleLogout} title="Esci" className="text-white/40 hover:text-white transition-colors p-1">
+              <LogOut className="w-4 h-4" />
+            </button>
+          ) : (
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-                style={{ backgroundColor: RED }}>S</div>
-              <div>
-                <p className="text-sm font-medium text-white">Staff Medico</p>
+                style={{ backgroundColor: RED }}>
+                {userEmail ? userEmail[0].toUpperCase() : "S"}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">{userEmail ?? "Staff Medico"}</p>
                 <p className="text-white/40 text-xs">U.S. Cremonese</p>
               </div>
+              <button onClick={handleLogout} title="Esci" className="text-white/40 hover:text-white transition-colors shrink-0">
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </aside>
     </>
   );
