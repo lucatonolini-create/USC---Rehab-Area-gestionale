@@ -276,6 +276,8 @@ export interface Programma {
   esercizicampo?: EsercizioCampo[];
   tests: TestFisiometrico[];
   carico: Carico;
+  assente?: boolean;
+  noteAssenza?: string;
 }
 
 export interface Impostazioni {
@@ -378,6 +380,8 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     esercizicampo: (r.esercizicampo as EsercizioCampo[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
     carico: (r.carico as Carico) ?? { ...defaultCarico },
+    assente: (r.assente as boolean) ?? false,
+    noteAssenza: (r.note_assenza as string) ?? undefined,
   };
 }
 
@@ -394,6 +398,8 @@ function programmaToRow(p: Programma): Record<string, unknown> {
     esercizicampo: p.esercizicampo ?? [],
     tests: p.tests,
     carico: p.carico,
+    assente: p.assente ?? false,
+    note_assenza: p.noteAssenza ?? null,
   };
 }
 

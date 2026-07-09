@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2 } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
   TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO,
@@ -20,6 +20,8 @@ const progVuoto: Omit<Programma, "id"> = {
   esercizicampo: [],
   tests: [],
   carico: { ...caricoVuoto },
+  assente: false,
+  noteAssenza: "",
 };
 
 function ScaleInput({ label, value, max, onChange, color }: {
@@ -109,7 +111,7 @@ export default function EserciziPage() {
   };
 
   const apriNuovo = () => {
-    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto } });
+    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, noteAssenza: "" });
     setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
@@ -120,8 +122,10 @@ export default function EserciziPage() {
   };
 
   const salvaProgramma = async () => {
-    if (!form.atletaId || !form.nome.trim()) return;
-    const pulito = { ...form, esercizi: form.esercizi.filter((e) => e.nome.trim()), esercizicampo: (form.esercizicampo ?? []).filter((c) => c.tipo), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
+    if (!form.atletaId) return;
+    const nomeEffettivo = form.assente && !form.nome.trim() ? "Assenza" : form.nome;
+    if (!nomeEffettivo.trim()) return;
+    const pulito = { ...form, nome: nomeEffettivo, esercizi: form.esercizi.filter((e) => e.nome.trim()), esercizicampo: (form.esercizicampo ?? []).filter((c) => c.tipo), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
     const prog: Programma = editId ? { ...pulito, id: editId } : { ...pulito, id: uid() };
     await upsertProgramma(prog);
     setProgrammiPerAtleta((prev) => {
@@ -255,22 +259,24 @@ export default function EserciziPage() {
                           </div>
                         )}
                         {progs.map((prog) => (
-                  <div key={prog.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm">
+                  <div key={prog.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${prog.assente ? "border-orange-100" : "border-gray-100"}`}>
                     <button onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
                       className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 text-left">
-                      <div className="w-10 h-10 bg-[#C8102E] rounded-xl flex items-center justify-center shrink-0">
-                        <Dumbbell className="w-5 h-5 text-white" />
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${prog.assente ? "bg-orange-400" : "bg-[#C8102E]"}`}>
+                        {prog.assente ? <CalendarX2 className="w-5 h-5 text-white" /> : <Dumbbell className="w-5 h-5 text-white" />}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <h3 className="font-semibold text-gray-900">{prog.nome}</h3>
-                          {prog.fase && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{prog.fase}</span>}
+                          {prog.assente && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">Assente</span>}
+                          {prog.fase && !prog.assente && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{prog.fase}</span>}
                         </div>
                         <p className="text-xs text-gray-400">
-                          {prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : ""} ·{" "}
-                          {prog.esercizi.length} esercizi
-                          {prog.esercizicampo?.length ? ` · ${prog.esercizicampo.length} in campo` : ""}
-                          {prog.tests?.length ? ` · ${prog.tests.length} test` : ""}
+                          {prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : ""}
+                          {prog.assente
+                            ? (prog.noteAssenza ? ` · ${prog.noteAssenza}` : "")
+                            : (<>{" "}· {prog.esercizi.length} esercizi{prog.esercizicampo?.length ? ` · ${prog.esercizicampo.length} in campo` : ""}{prog.tests?.length ? ` · ${prog.tests.length} test` : ""}</>)
+                          }
                         </p>
                       </div>
                       <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform shrink-0 ${aperto === prog.id ? "rotate-180" : ""}`} />
@@ -530,7 +536,32 @@ export default function EserciziPage() {
                 </div>
               </div>
 
+              {/* Toggle assente */}
+              <div className="flex items-center justify-between bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Segna come assente</p>
+                  <p className="text-xs text-gray-500 mt-0.5">La sessione viene comunque conteggiata</p>
+                </div>
+                <button type="button" onClick={() => setForm({ ...form, assente: !form.assente })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${form.assente ? "bg-[#C8102E]" : "bg-gray-300"}`}>
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${form.assente ? "translate-x-6" : "translate-x-1"}`} />
+                </button>
+              </div>
+
+              {/* Nota assenza */}
+              {form.assente && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Motivo assenza</label>
+                  <textarea value={form.noteAssenza ?? ""}
+                    onChange={(e) => setForm({ ...form, noteAssenza: e.target.value })}
+                    placeholder="Es. Febbre, impegno scolastico, infortunio acuto…"
+                    rows={2}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
+                </div>
+              )}
+
               {/* Tab selector */}
+              {!form.assente && <>
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
                 {([
                   { key: "esercizi" as FormSection, label: "Palestra", icon: Dumbbell,     count: form.esercizi.length },
@@ -863,6 +894,7 @@ export default function EserciziPage() {
                   </div>
                 </div>
               )}
+              </>}
             </div>
 
             <div className="flex gap-3 p-6 border-t border-gray-100">
@@ -870,7 +902,7 @@ export default function EserciziPage() {
                 className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">
                 Annulla
               </button>
-              <button onClick={salvaProgramma} disabled={!form.atletaId || !form.nome.trim()}
+              <button onClick={salvaProgramma} disabled={!form.atletaId || (!form.assente && !form.nome.trim())}
                 className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
                 {editId ? "Salva modifiche" : "Crea programma"}
               </button>
