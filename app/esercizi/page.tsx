@@ -458,7 +458,7 @@ export default function EserciziPage() {
       {/* Modale */}
       {mostraForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">{editId ? "Modifica Programma" : "Nuovo Programma"}</h2>
               <button onClick={() => setMostraForm(false)}><X className="w-5 h-5 text-gray-400" /></button>
@@ -532,15 +532,14 @@ export default function EserciziPage() {
               {/* Tab selector */}
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
                 {([
-                  { key: "esercizi", icon: Dumbbell, label: "Palestra", count: form.esercizi.length },
-                  { key: "campo",    icon: Footprints, label: "Campo",  count: esercizicampo.length },
-                  { key: "test",     icon: FlaskConical, label: "Test", count: tests.length },
-                  { key: "carico",   icon: Gauge, label: "GPS",         count: null },
-                ] as const).map(({ key, icon: Icon, label, count }) => (
+                  { key: "esercizi", label: "Palestra", count: form.esercizi.length },
+                  { key: "campo",    label: "Campo",    count: esercizicampo.length },
+                  { key: "test",     label: "Test",     count: tests.length },
+                  { key: "carico",   label: "GPS",      count: null },
+                ] as const).map(({ key, label, count }) => (
                   <button key={key} className={tabClass(key)} onClick={() => setSezioneAttiva(key)}>
-                    <span className="flex items-center justify-center gap-1 whitespace-nowrap">
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
-                      <span>{label}</span>
+                    <span className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                      {label}
                       {count !== null && count > 0 && (
                         <span className="bg-[#C8102E] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center shrink-0">{count}</span>
                       )}
