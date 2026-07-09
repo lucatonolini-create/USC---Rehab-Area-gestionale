@@ -26,9 +26,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="it">
       <head>
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={inter.className}>
+        {/* Riempie l'area della status bar con il colore scuro dell'app — black-translucent la rende trasparente quindi mostra questo div */}
+        <div
+          className="fixed top-0 left-0 right-0 z-[200] md:hidden"
+          style={{ height: "env(safe-area-inset-top, 0px)", backgroundColor: "#2B2B2B" }}
+        />
         <div className="flex overflow-hidden bg-gray-50" style={{ height: "100dvh", paddingTop: "env(safe-area-inset-top, 0px)" }}>
           <Sidebar />
           <main className="flex-1 overflow-y-auto pt-16 md:pt-0">
