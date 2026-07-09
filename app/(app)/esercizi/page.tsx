@@ -475,10 +475,10 @@ export default function EserciziPage() {
                     {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
                   </select>
                 </div>
-                <div className="w-36 shrink-0">
+                <div className="w-28 shrink-0">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Data</label>
                   <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                 </div>
               </div>
 
