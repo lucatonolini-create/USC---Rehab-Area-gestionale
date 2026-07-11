@@ -1060,7 +1060,7 @@ async function esportaPDFReport(
         doc.text(`${Math.round(maxRVal * pct)}`, M - 1, ly + 1, { align: "right" });
       });
       trendR.forEach((t, i) => {
-        const bw = slot * 0.5; const bx = M + i * slot + (slot - bw) / 2;
+        const bw = slot * 0.3; const bx = M + i * slot + (slot - bw) / 2;
         let bot = sy + cHr;
         keys.forEach((k) => {
           const cnt = getC(t, k);
