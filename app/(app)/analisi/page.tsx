@@ -623,7 +623,7 @@ async function esportaPDFPanoramica(params: {
       doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
       doc.text(t.label, M + i * slot + slot / 2, sy + cHh + 3, { align: "center" });
     });
-    return sy + cHh + 5;
+    return sy + cHh + 10;
   };
 
   const drawLegend = (items: string[], colorMap: Record<string, [number,number,number]>, sy: number): number => {
@@ -645,10 +645,10 @@ async function esportaPDFPanoramica(params: {
     if (y + needH2 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
     y = secTitle("Distribuzione mensile per categoria e tipologia", y);
     y = drawStackedBar("Per categoria squadra", y, catStacked, (t, k) => t.perCat[k] ?? 0, catColPdf);
-    y = drawLegend(catStacked, catColPdf, y + 5);
+    y = drawLegend(catStacked, catColPdf, y + 6);
     if (y + 60 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
     y = drawStackedBar("Per tipo di infortunio", y, tipiStacked, (t, k) => t.perTipo[k] ?? 0, tipoColPdf);
-    y = drawLegend(tipiStacked, tipoColPdf, y + 5);
+    y = drawLegend(tipiStacked, tipoColPdf, y + 6);
   }
 
   // ── Infortuni per squadra e tipo (panoramica) ─────────────────────────────
