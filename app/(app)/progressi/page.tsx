@@ -618,7 +618,11 @@ async function esportaPDFReportMensile(
 
   // ── Trend mensile 12 mesi impilato ────────────────────────────────────────
   if (atleti && atleti.length > 0) {
-    const trendPeriod = mesiP ?? [{ anno, mese }];
+    const firstM = mesiP ? mesiP[0] : { anno, mese };
+    const trendPeriod = Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(firstM.anno, firstM.mese + i, 1);
+      return { anno: d.getFullYear(), mese: d.getMonth() };
+    });
     const trendR = trendPeriod.map(({ anno: a2, mese: m2 }) => {
       const attv = atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
       const perCat: Record<string, number> = {};
