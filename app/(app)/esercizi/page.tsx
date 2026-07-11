@@ -494,7 +494,32 @@ export default function EserciziPage() {
                 </div>
               </div>
 
-              {/* Injury selector */}
+              {/* Presente / Assente */}
+              <div className="flex gap-2">
+                <button type="button" onClick={() => setForm({ ...form, assente: false })}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${!form.assente ? "bg-green-500 text-white border-green-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
+                  ✓ Presente
+                </button>
+                <button type="button" onClick={() => setForm({ ...form, assente: true })}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.assente ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
+                  ✗ Assente
+                </button>
+              </div>
+
+              {/* Nota assenza */}
+              {form.assente && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Motivo assenza</label>
+                  <textarea value={form.noteAssenza ?? ""}
+                    onChange={(e) => setForm({ ...form, noteAssenza: e.target.value })}
+                    placeholder="Es. Febbre, impegno scolastico, infortunio acuto…"
+                    rows={2}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
+                </div>
+              )}
+
+              {/* Injury selector + Nome/Fase + Tab */}
+              {!form.assente && <>
               {(() => {
                 const atletaSelezionato = atleti.find((a) => a.id === form.atletaId);
                 if (!atletaSelezionato) return null;
@@ -525,7 +550,6 @@ export default function EserciziPage() {
                   </div>
                 );
               })()}
-
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome programma *</label>
@@ -540,33 +564,6 @@ export default function EserciziPage() {
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                 </div>
               </div>
-
-              {/* Toggle assente */}
-              <div className="flex items-center justify-between bg-orange-50 border border-orange-100 rounded-xl px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-gray-800">Segna come assente</p>
-                  <p className="text-xs text-gray-500 mt-0.5">La sessione viene comunque conteggiata</p>
-                </div>
-                <button type="button" onClick={() => setForm({ ...form, assente: !form.assente })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${form.assente ? "bg-[#C8102E]" : "bg-gray-300"}`}>
-                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform ${form.assente ? "translate-x-6" : "translate-x-1"}`} />
-                </button>
-              </div>
-
-              {/* Nota assenza */}
-              {form.assente && (
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Motivo assenza</label>
-                  <textarea value={form.noteAssenza ?? ""}
-                    onChange={(e) => setForm({ ...form, noteAssenza: e.target.value })}
-                    placeholder="Es. Febbre, impegno scolastico, infortunio acuto…"
-                    rows={2}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
-                </div>
-              )}
-
-              {/* Tab selector */}
-              {!form.assente && <>
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
                 {([
                   { key: "esercizi" as FormSection, label: "Palestra", icon: Dumbbell,     count: form.esercizi.length },
