@@ -370,23 +370,27 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
 
 function rowToProgramma(r: Record<string, unknown>): Programma {
   const noteRaw = r.note_assenza as string | null;
-  // riposo is encoded in note_assenza with a prefix to avoid needing a separate DB column
+  // riposo encoded in note_assenza with prefix (no separate DB column needed)
   const isRiposo = typeof noteRaw === "string" && noteRaw.startsWith("__riposo__");
   const noteAssenza = isRiposo
     ? (noteRaw.slice("__riposo__".length) || undefined)
     : (noteRaw ?? undefined);
+  // Optional fields encoded inside carico JSONB (no separate DB columns needed)
+  const caricoRaw = (r.carico as Record<string, unknown>) ?? {};
+  const { _esercizicampo, _infortunio_id, _infortunio_label, ...caricoClean } = caricoRaw;
   return {
     id: r.id as string,
     atletaId: r.atleta_id as string,
     nome: r.nome as string,
     fase: (r.fase as string) ?? "",
     data: r.data as string,
-    infortunioId: (r.infortunio_id as string) ?? undefined,
-    infortunioLabel: (r.infortunio_label as string) ?? undefined,
+    // read from carico._* first, fall back to top-level columns for backward compat
+    infortunioId: (_infortunio_id as string) ?? (r.infortunio_id as string) ?? undefined,
+    infortunioLabel: (_infortunio_label as string) ?? (r.infortunio_label as string) ?? undefined,
     esercizi: (r.esercizi as Esercizio[]) ?? [],
-    esercizicampo: (r.esercizicampo as EsercizioCampo[]) ?? [],
+    esercizicampo: (_esercizicampo as EsercizioCampo[]) ?? (r.esercizicampo as EsercizioCampo[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
-    carico: (r.carico as Carico) ?? { ...defaultCarico },
+    carico: caricoClean as Carico,
     assente: !isRiposo && ((r.assente as boolean) ?? false),
     riposo: isRiposo,
     noteAssenza,
@@ -394,22 +398,26 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
 }
 
 function programmaToRow(p: Programma): Record<string, unknown> {
-  // riposo is encoded in note_assenza with a prefix to avoid needing a separate DB column
+  // riposo encoded in note_assenza with prefix (no separate DB column needed)
   const note_assenza = p.riposo
     ? "__riposo__" + (p.noteAssenza ?? "")
     : (p.noteAssenza ?? null);
+  // Optional fields encoded inside carico JSONB to avoid schema dependency
+  const caricoExtended: Record<string, unknown> = { ...(p.carico as Record<string, unknown>) };
+  if (p.esercizicampo?.length) caricoExtended._esercizicampo = p.esercizicampo;
+  if (p.infortunioId) {
+    caricoExtended._infortunio_id = p.infortunioId;
+    if (p.infortunioLabel) caricoExtended._infortunio_label = p.infortunioLabel;
+  }
   return {
     id: p.id,
     atleta_id: p.atletaId,
     nome: p.nome,
     fase: p.fase,
     data: p.data,
-    infortunio_id: p.infortunioId ?? null,
-    infortunio_label: p.infortunioLabel ?? null,
     esercizi: p.esercizi,
-    esercizicampo: p.esercizicampo ?? [],
     tests: p.tests,
-    carico: p.carico,
+    carico: caricoExtended,
     assente: p.assente ?? false,
     note_assenza,
   };
@@ -434,8 +442,10 @@ export async function syncFlush(): Promise<void> {
         }
       } else if (op.table === "programmi") {
         if (op.op === "upsert") {
-          await supabase.from("programmi").upsert(op.payload as Record<string, unknown>);
-          ok = true;
+          // Re-encode via rowToProgramma→programmaToRow to ensure safe column set
+          const safePayload = programmaToRow(rowToProgramma(op.payload as Record<string, unknown>));
+          const { error } = await supabase.from("programmi").upsert(safePayload);
+          ok = !error;
         } else {
           await supabase.from("programmi").delete().eq("id", (op.payload as { id: string }).id);
           ok = true;
