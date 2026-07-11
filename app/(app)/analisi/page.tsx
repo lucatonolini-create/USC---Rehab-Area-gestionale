@@ -49,6 +49,7 @@ function StatCard({ label, value, sub, icon: Icon, color }: {
 }
 
 type AnalisiTab = "overview" | "report";
+type TipoReport = "mensile" | "trimestrale" | "semestrale" | "stagione";
 
 function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   const meseStart = new Date(anno, mese, 1);
@@ -67,6 +68,18 @@ function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
 }
 
 type InfortunioNelMese = { diagnosi: string; tipo?: string; inizio: string; fine?: string };
+
+function infortunitNelPeriodo(a: Atleta, mesi: { anno: number; mese: number }[]): InfortunioNelMese[] {
+  const seen = new Set<string>();
+  const result: InfortunioNelMese[] = [];
+  for (const { anno, mese } of mesi)
+    infortunitNelMese(a, anno, mese).forEach((inf) => {
+      const key = `${inf.diagnosi}|${inf.inizio ?? ""}`;
+      if (!seen.has(key)) { seen.add(key); result.push(inf); }
+    });
+  return result;
+}
+
 function infortunitNelMese(a: Atleta, anno: number, mese: number): InfortunioNelMese[] {
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
@@ -283,14 +296,17 @@ async function esportaExcelReport(
   anno: number,
   filtroCat: string,
   filtroTipoInf: string,
+  mesiP?: { anno: number; mese: number }[],
+  periodoLbl?: string,
 ) {
   const { Workbook } = await import("exceljs");
   const wb = new Workbook();
   wb.creator = "U.S. Cremonese Rehab Area";
 
   const oggi = new Date().toLocaleDateString("it-IT");
+  const nomeP = periodoLbl ?? `${MESI_LUNGHI[mese]} ${anno}`;
   const subtitle = [
-    MESI_LUNGHI[mese], String(anno),
+    nomeP,
     filtroCat !== "Tutte" ? filtroCat : "",
     filtroTipoInf || "",
   ].filter(Boolean).join(" – ");
@@ -298,13 +314,13 @@ async function esportaExcelReport(
   const logoBuf = await getLogoArrayBuffer();
   const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
 
-  const ws = wb.addWorksheet("Report Mensile");
+  const ws = wb.addWorksheet("Report");
   ws.columns = [
     { width: 28 }, { width: 14 }, { width: 38 }, { width: 18 },
     { width: 12 }, { width: 12 }, { width: 10 }, { width: 16 }, { width: 10 },
   ];
 
-  xlAddSheetHeader(ws, wb, logoId, "REPORT MENSILE", subtitle, oggi);
+  xlAddSheetHeader(ws, wb, logoId, "REPORT", subtitle, oggi);
 
   // Info totale
   ws.getRow(2).getCell(4).value = `Totale atleti: ${atletiMese.length}`;
@@ -322,7 +338,7 @@ async function esportaExcelReport(
     : "—";
 
   atletiMese.forEach((a, athleteIdx) => {
-    const infortuni = infortunitNelMese(a, anno, mese);
+    const infortuni = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
     const count = Math.max(infortuni.length, 1);
     const startRowNum = ws.rowCount + 1;
 
@@ -364,7 +380,7 @@ async function esportaExcelReport(
     xlAddDataRow(ws, [cat, "", n], i % 2 !== 0, [3]);
   });
 
-  await xlSave(wb, `USC_Report_${MESI[mese]}_${anno}.xlsx`);
+  await xlSave(wb, `USC_Report_${nomeP.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`);
 }
 
 // ─── PDF panoramica ────────────────────────────────────────────────────────────
@@ -778,6 +794,8 @@ async function esportaPDFReport(
   filtroCat: string,
   filtroTipoInf?: string,
   atleti?: Atleta[],
+  mesiP?: { anno: number; mese: number }[],
+  periodoLbl?: string,
 ) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
@@ -797,7 +815,7 @@ async function esportaPDFReport(
     doc.setTextColor(...red); doc.setFontSize(14); doc.setFont("helvetica", "bold");
     doc.text("U.S. Cremonese", tx, 15);
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
-    doc.text("Report Mensile", tx, 19);
+    doc.text("Report", tx, 19);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
     doc.text(oggi, W - M, 15, { align: "right" });
   };
@@ -823,10 +841,10 @@ async function esportaPDFReport(
 
   addHeader();
 
-  const titolo = `${MESI_LUNGHI[mese]} ${anno}`;
+  const nomeP = periodoLbl ?? `${MESI_LUNGHI[mese]} ${anno}`;
   const filtri = [filtroCat !== "Tutte" ? filtroCat : "", filtroTipoInf || ""].filter(Boolean).join("  ·  ");
   doc.setTextColor(...dark); doc.setFontSize(17); doc.setFont("helvetica", "bold");
-  doc.text(titolo, M, HDR + 13);
+  doc.text(nomeP, M, HDR + 13);
   if (filtri) {
     doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
     doc.text(filtri, M, HDR + 21);
@@ -868,7 +886,7 @@ async function esportaPDFReport(
     if (catAtleti.length === 0) return;
     const tipoMap: Record<string, number> = {};
     catAtleti.forEach((a) => {
-      const infMese = infortunitNelMese(a, anno, mese);
+      const infMese = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
       if (infMese.length === 0) return;
       Array.from(new Set(infMese.map((i) => i.tipo ?? "Non specificato"))).forEach((t) => {
         tipoMap[t] = (tipoMap[t] ?? 0) + 1;
@@ -890,7 +908,7 @@ async function esportaPDFReport(
     const rowH = 9;
     const needH = Math.max(catChart.length, rightRows) * rowH + 26;
     if (y + needH > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
-    y = secTitle("Distribuzione infortuni nel mese", y);
+    y = secTitle("Distribuzione infortuni nel periodo", y);
 
     const halfW = (W - M * 2 - 10) / 2;
     const labelW = 32;
@@ -952,7 +970,7 @@ async function esportaPDFReport(
 
   // ── Tabella incrociata squadra × tipo infortunio ───────────────────────────
   const tipiPresenti = Array.from(
-    new Set(atletiMese.flatMap((a) => infortunitNelMese(a, anno, mese).map((i) => i.tipo ?? "Non specificato")))
+    new Set(atletiMese.flatMap((a) => infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).map((i) => i.tipo ?? "Non specificato")))
   ).sort();
 
   if (tipiPresenti.length > 0) {
@@ -961,7 +979,7 @@ async function esportaPDFReport(
       const catAtleti = atletiMese.filter((a) => a.categoria === cat);
       const tipoMap: Record<string, number> = {};
       catAtleti.forEach((a) => {
-        infortunitNelMese(a, anno, mese).forEach((inf) => {
+        infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).forEach((inf) => {
           const t = inf.tipo ?? "Non specificato";
           tipoMap[t] = (tipoMap[t] ?? 0) + 1;
         });
@@ -1088,7 +1106,7 @@ async function esportaPDFReport(
   const analisiRows: any[][] = [];
   const athleteForRowA: number[] = [];
   atletiMese.forEach((a, athleteIdx) => {
-    const tuttiInf = infortunitNelMese(a, anno, mese);
+    const tuttiInf = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
     const infortuni = filtroTipoInf
       ? tuttiInf.filter((inf) => (inf.tipo ?? "") === filtroTipoInf)
       : tuttiInf;
@@ -1141,7 +1159,7 @@ async function esportaPDFReport(
   });
 
   addFooter();
-  doc.save(`USC_Report_${MESI[mese]}_${anno}.pdf`);
+  doc.save(`USC_Report_${nomeP.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`);
 }
 
 // ─── Componente principale ─────────────────────────────────────────────────────
@@ -1156,6 +1174,8 @@ export default function AnalisiPage() {
   const [reportMese, setReportMese] = useState(oggi.getMonth());
   const [filtroCat, setFiltroCat] = useState("Tutte");
   const [filtroTipoInf, setFiltroTipoInf] = useState("Tutti");
+  const [tipoReport, setTipoReport] = useState<TipoReport>("mensile");
+  const [reportMeseInizio, setReportMeseInizio] = useState(oggi.getMonth());
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -1164,6 +1184,31 @@ export default function AnalisiPage() {
 
   const attivi = atleti.filter((a) => a.stato !== "Disponibile");
   const guariti = atleti.filter((a) => a.stato === "Disponibile");
+
+  const mesiPeriodo: { anno: number; mese: number }[] = (() => {
+    if (tipoReport === "mensile") return [{ anno: reportAnno, mese: reportMese }];
+    if (tipoReport === "stagione") {
+      return Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(reportAnno - 1, 6 + i, 1);
+        return { anno: d.getFullYear(), mese: d.getMonth() };
+      });
+    }
+    const count = tipoReport === "trimestrale" ? 3 : 6;
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(reportAnno, reportMeseInizio + i, 1);
+      return { anno: d.getFullYear(), mese: d.getMonth() };
+    });
+  })();
+
+  const periodoLabel = (() => {
+    if (tipoReport === "mensile") return `${MESI_LUNGHI[reportMese]} ${reportAnno}`;
+    if (tipoReport === "stagione") return `Stagione ${reportAnno - 1}–${reportAnno}`;
+    const first = mesiPeriodo[0];
+    const last = mesiPeriodo[mesiPeriodo.length - 1];
+    const tipoLbl = tipoReport === "trimestrale" ? "Trimestre" : "Semestre";
+    const annoLbl = first.anno === last.anno ? `${first.anno}` : `${first.anno}–${last.anno}`;
+    return `${tipoLbl} ${MESI_LUNGHI[first.mese]}–${MESI_LUNGHI[last.mese]} ${annoLbl}`;
+  })();
 
   const perCategoria = useMemo(() => {
     return CATEGORIE.map((cat) => ({
@@ -1261,7 +1306,7 @@ export default function AnalisiPage() {
 
   const anni = Array.from({ length: 5 }, (_, i) => oggi.getFullYear() - 2 + i);
   const atletiMese = atleti.filter((a) => {
-    if (!atletaAttivoInMese(a, reportAnno, reportMese)) return false;
+    if (!mesiPeriodo.some(({ anno, mese }) => atletaAttivoInMese(a, anno, mese))) return false;
     if (filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
     if (filtroTipoInf !== "Tutti") {
       const tipoAttivo = a.tipoInfortunio === filtroTipoInf;
@@ -1285,8 +1330,8 @@ export default function AnalisiPage() {
         if (tipo === "excel") await esportaExcelPanoramica(params);
         else await esportaPDFPanoramica(params);
       } else {
-        if (tipo === "excel") await esportaExcelReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "");
-        else await esportaPDFReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "", atleti);
+        if (tipo === "excel") await esportaExcelReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "", mesiPeriodo, periodoLabel);
+        else await esportaPDFReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "", atleti, mesiPeriodo, periodoLabel);
       }
     } finally {
       setEsportando(null);
@@ -1321,7 +1366,7 @@ export default function AnalisiPage() {
                 className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   tab === t ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"
                 }`}>
-                {t === "overview" ? "Panoramica" : "Report mensile"}
+                {t === "overview" ? "Panoramica" : "Report"}
               </button>
             ))}
           </div>
@@ -1661,26 +1706,50 @@ export default function AnalisiPage() {
           </div>
         </div>
       ) : (
-        /* Report mensile */
+        /* Report */
         <div className="space-y-5">
           <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Calendar className="w-4 h-4 text-[#C8102E]" />
               <h2 className="font-bold text-gray-900">Seleziona periodo e filtri</h2>
             </div>
+            {/* Tipo report */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {(["mensile", "trimestrale", "semestrale", "stagione"] as TipoReport[]).map((t) => (
+                <button key={t} onClick={() => setTipoReport(t)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                    tipoReport === t ? "bg-[#C8102E] text-white border-[#C8102E]" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                  }`}>
+                  {t === "mensile" ? "Mensile" : t === "trimestrale" ? "Trimestrale" : t === "semestrale" ? "Semestrale" : "Fine stagione"}
+                </button>
+              ))}
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {tipoReport === "mensile" && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mese</label>
+                  <select value={reportMese} onChange={(e) => setReportMese(Number(e.target.value))}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
+                    {MESI_LUNGHI.map((m, i) => <option key={m} value={i}>{m}</option>)}
+                  </select>
+                </div>
+              )}
+              {(tipoReport === "trimestrale" || tipoReport === "semestrale") && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mese inizio</label>
+                  <select value={reportMeseInizio} onChange={(e) => setReportMeseInizio(Number(e.target.value))}
+                    className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
+                    {MESI_LUNGHI.map((m, i) => <option key={m} value={i}>{m}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mese</label>
-                <select value={reportMese} onChange={(e) => setReportMese(Number(e.target.value))}
-                  className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
-                  {MESI_LUNGHI.map((m, i) => <option key={m} value={i}>{m}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Anno</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                  {tipoReport === "stagione" ? "Stagione (anno fine)" : "Anno"}
+                </label>
                 <select value={reportAnno} onChange={(e) => setReportAnno(Number(e.target.value))}
                   className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
-                  {anni.map((a) => <option key={a}>{a}</option>)}
+                  {anni.map((a) => <option key={a} value={a}>{tipoReport === "stagione" ? `${a - 1}–${a}` : a}</option>)}
                 </select>
               </div>
               <div>
@@ -1719,7 +1788,7 @@ export default function AnalisiPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
               <h2 className="font-bold text-gray-900">
-                {MESI_LUNGHI[reportMese]} {reportAnno}
+                {periodoLabel}
                 {filtroCat !== "Tutte" && ` · ${filtroCat}`}
                 {filtroTipoInf !== "Tutti" && ` · ${filtroTipoInf}`}
               </h2>
@@ -1741,7 +1810,7 @@ export default function AnalisiPage() {
                 </div>
                 <div className="divide-y divide-gray-50">
                   {atletiMese.map((a) => {
-                    const infortuni = infortunitNelMese(a, reportAnno, reportMese);
+                    const infortuni = infortunitNelPeriodo(a, mesiPeriodo);
                     return (
                       <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-start px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
