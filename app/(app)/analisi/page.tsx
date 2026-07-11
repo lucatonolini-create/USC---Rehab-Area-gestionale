@@ -1039,9 +1039,10 @@ async function esportaPDFReport(
     const catR = CATEGORIE.filter((cat) => trendR.some((t) => (t.perCat[cat] ?? 0) > 0));
     const tipiR = Array.from(new Set(trendR.flatMap((t) => Object.keys(t.perTipo)))).sort();
     const catColR: Record<string, [number, number, number]> = {};
-    catR.forEach((cat, i) => { catColR[cat] = hexToRgb(CAT_PALETTE[i % CAT_PALETTE.length]); });
+    catR.forEach((cat) => { const idx = CATEGORIE.indexOf(cat); catColR[cat] = hexToRgb(CAT_PALETTE[(idx >= 0 ? idx : 0) % CAT_PALETTE.length]); });
+    const TIPI_ORDER = ["Distorsione/Lesione Legamentosa","Muscolare: Strappo/Stiramento/Crampo","Contusione","Frattura","Tendinopatia/Borsite","Overuse/Sovraccarico","Altro"];
     const tipoColR: Record<string, [number, number, number]> = {};
-    tipiR.forEach((tipo, i) => { tipoColR[tipo] = hexToRgb(TIPO_PALETTE[i % TIPO_PALETTE.length]); });
+    tipiR.forEach((tipo) => { const idx = TIPI_ORDER.indexOf(tipo); tipoColR[tipo] = hexToRgb(TIPO_PALETTE[(idx >= 0 ? idx : tipiR.indexOf(tipo)) % TIPO_PALETTE.length]); });
 
     const drawBarR = (
       title: string, sy: number,
