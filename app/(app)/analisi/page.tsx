@@ -1060,7 +1060,7 @@ async function esportaPDFReport(
         doc.text(`${Math.round(maxRVal * pct)}`, M - 1, ly + 1, { align: "right" });
       });
       trendR.forEach((t, i) => {
-        const bx = M + i * slot + 0.5; const bw = slot - 1;
+        const bw = slot * 0.5; const bx = M + i * slot + (slot - bw) / 2;
         let bot = sy + cHr;
         keys.forEach((k) => {
           const cnt = getC(t, k);
@@ -1071,7 +1071,7 @@ async function esportaPDFReport(
           doc.rect(bx, bot, bw, segH, "F");
         });
         doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-        doc.text(t.label, bx + bw / 2, sy + cHr + 3, { align: "center" });
+        doc.text(t.label, M + i * slot + slot / 2, sy + cHr + 3, { align: "center" });
       });
       return sy + cHr + 5;
     };
