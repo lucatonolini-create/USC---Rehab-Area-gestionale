@@ -258,7 +258,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       head: [["#", "Tipo", "Diagnosi / Infortunio", "Inizio", "Fine", "Giorni"]],
       body: tuttiInfortuni.map((inf, i) => [
         i + 1,
-        inf.tipo ? (inf.tipo.length > 26 ? inf.tipo.slice(0, 25) + "…" : inf.tipo) : "—",
+        inf.tipo ?? "—",
         inf.diagnosi,
         inf.inizio ? fmtDCl(inf.inizio) : "—",
         inf.fine ? fmtDCl(inf.fine) : "—",
@@ -269,7 +269,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 8 }, 1: { cellWidth: 46 }, 2: { cellWidth: 60 },
+        0: { cellWidth: 8 }, 1: { cellWidth: 52, overflow: "ellipsize" }, 2: { cellWidth: 66 },
         3: { cellWidth: 22 }, 4: { cellWidth: 22 }, 5: { cellWidth: 16 },
       },
     });
@@ -728,10 +728,9 @@ async function esportaPDFReportMensile(
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
-        const tipoP = inf.tipo ? (inf.tipo.length > 32 ? inf.tipo.slice(0, 31) + "…" : inf.tipo) : "—";
         row.push(
           inf.diagnosi,
-          tipoP,
+          inf.tipo ?? "—",
           inf.inizio ? fmtDP(inf.inizio) : "—",
           inf.fine ? fmtDP(inf.fine) : "—",
           inf.inizio ? ggP(inf.inizio, inf.fine) : "—",
@@ -752,9 +751,9 @@ async function esportaPDFReportMensile(
     bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 34 }, 1: { cellWidth: 22 }, 2: { cellWidth: 68 },
-      3: { cellWidth: 44 }, 4: { cellWidth: 20 }, 5: { cellWidth: 20 },
-      6: { cellWidth: 16 }, 7: { cellWidth: 24 }, 8: { cellWidth: 13 },
+      0: { cellWidth: 30 }, 1: { cellWidth: 20 }, 2: { cellWidth: 66 },
+      3: { cellWidth: 56, overflow: "ellipsize" }, 4: { cellWidth: 20 }, 5: { cellWidth: 20 },
+      6: { cellWidth: 14 }, 7: { cellWidth: 23 }, 8: { cellWidth: 12 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {

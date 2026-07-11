@@ -1122,10 +1122,9 @@ async function esportaPDFReport(
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
-        const tipoA = inf.tipo ? (inf.tipo.length > 32 ? inf.tipo.slice(0, 31) + "…" : inf.tipo) : "—";
         row.push(
           inf.diagnosi,
-          tipoA,
+          inf.tipo ?? "—",
           inf.inizio ? fmtDPdf(inf.inizio) : "—",
           inf.fine ? fmtDPdf(inf.fine) : "—",
           inf.inizio ? ggPdf(inf.inizio, inf.fine) : "—",
@@ -1146,9 +1145,9 @@ async function esportaPDFReport(
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 34 }, 1: { cellWidth: 22 }, 2: { cellWidth: 66 },
-      3: { cellWidth: 44 }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
-      6: { cellWidth: 14 }, 7: { cellWidth: 26 }, 8: { cellWidth: 14 },
+      0: { cellWidth: 32 }, 1: { cellWidth: 20 }, 2: { cellWidth: 62 },
+      3: { cellWidth: 56, overflow: "ellipsize" }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
+      6: { cellWidth: 14 }, 7: { cellWidth: 24 }, 8: { cellWidth: 12 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
