@@ -546,12 +546,13 @@ async function esportaPDFPanoramica(params: {
   doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
   doc.rect(cX, cY, cW, cH, "FD");
 
-  ([0.25, 0.5, 0.75, 1] as number[]).forEach(pct => {
-    const ly = cY + cH - pct * cH;
-    doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.2); doc.line(cX, ly, cX + cW, ly);
-    doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(`${Math.round(maxVal * pct)}`, cX - 1, ly + 1.5, { align: "right" });
-  });
+  { const tStep = Math.max(1, Math.ceil(maxVal / 4));
+    for (let v = tStep; v <= maxVal; v += tStep) {
+      const ly = cY + cH - (v / maxVal) * cH;
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.2); doc.line(cX, ly, cX + cW, ly);
+      doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      doc.text(`${v}`, cX - 1, ly + 1.5, { align: "right" });
+    } }
 
   trendRows.forEach((t, i) => {
     const barH = t.count > 0 ? (t.count / maxVal) * (cH - 2) : 0;
