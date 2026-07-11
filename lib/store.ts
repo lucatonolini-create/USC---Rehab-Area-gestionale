@@ -369,6 +369,12 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
 }
 
 function rowToProgramma(r: Record<string, unknown>): Programma {
+  const noteRaw = r.note_assenza as string | null;
+  // riposo is encoded in note_assenza with a prefix to avoid needing a separate DB column
+  const isRiposo = typeof noteRaw === "string" && noteRaw.startsWith("__riposo__");
+  const noteAssenza = isRiposo
+    ? (noteRaw.slice("__riposo__".length) || undefined)
+    : (noteRaw ?? undefined);
   return {
     id: r.id as string,
     atletaId: r.atleta_id as string,
@@ -381,13 +387,17 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     esercizicampo: (r.esercizicampo as EsercizioCampo[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
     carico: (r.carico as Carico) ?? { ...defaultCarico },
-    assente: (r.assente as boolean) ?? false,
-    riposo: (r.riposo as boolean) ?? false,
-    noteAssenza: (r.note_assenza as string) ?? undefined,
+    assente: !isRiposo && ((r.assente as boolean) ?? false),
+    riposo: isRiposo,
+    noteAssenza,
   };
 }
 
 function programmaToRow(p: Programma): Record<string, unknown> {
+  // riposo is encoded in note_assenza with a prefix to avoid needing a separate DB column
+  const note_assenza = p.riposo
+    ? "__riposo__" + (p.noteAssenza ?? "")
+    : (p.noteAssenza ?? null);
   return {
     id: p.id,
     atleta_id: p.atletaId,
@@ -401,8 +411,7 @@ function programmaToRow(p: Programma): Record<string, unknown> {
     tests: p.tests,
     carico: p.carico,
     assente: p.assente ?? false,
-    riposo: p.riposo ?? false,
-    note_assenza: p.noteAssenza ?? null,
+    note_assenza,
   };
 }
 
