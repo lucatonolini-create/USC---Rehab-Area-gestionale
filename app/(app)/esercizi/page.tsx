@@ -96,6 +96,8 @@ export default function EserciziPage() {
   const [sezioneAttiva, setSezioneAttiva] = useState<FormSection>("esercizi");
   const [gpsCaricando, setGpsCaricando] = useState(false);
   const gpsInputRef = useRef<HTMLInputElement>(null);
+  const [showNomeSuggest, setShowNomeSuggest] = useState(false);
+  const [showFaseSuggest, setShowFaseSuggest] = useState(false);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -195,6 +197,12 @@ export default function EserciziPage() {
 
   const tabClass = (s: FormSection) =>
     `flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${sezioneAttiva === s ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`;
+
+  const tuttiProgrammi = Object.values(programmiPerAtleta).flat();
+  const nomiUnici = [...new Set(tuttiProgrammi.map((p) => p.nome).filter(Boolean))];
+  const fasiUniche = [...new Set(tuttiProgrammi.map((p) => p.fase).filter(Boolean))];
+  const nomiFiltrati = nomiUnici.filter((n) => !form.nome.trim() || n.toLowerCase().includes(form.nome.toLowerCase())).slice(0, 6);
+  const fasiFiltrate = fasiUniche.filter((f) => !form.fase.trim() || f.toLowerCase().includes(form.fase.toLowerCase())).slice(0, 6);
 
   return (
     <div className="p-6">
@@ -573,14 +581,38 @@ export default function EserciziPage() {
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome programma *</label>
                   <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    onFocus={() => setShowNomeSuggest(true)}
+                    onBlur={() => setShowNomeSuggest(false)}
                     placeholder="Es. Recupero LCA – Settimana 3"
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                  {showNomeSuggest && nomiFiltrati.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {nomiFiltrati.map((n) => (
+                        <button key={n} onMouseDown={() => { setForm({ ...form, nome: n }); setShowNomeSuggest(false); }}
+                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Fase</label>
                   <input value={form.fase} onChange={(e) => setForm({ ...form, fase: e.target.value })}
+                    onFocus={() => setShowFaseSuggest(true)}
+                    onBlur={() => setShowFaseSuggest(false)}
                     placeholder="Es. Fase 2 – Recupero forza"
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                  {showFaseSuggest && fasiFiltrate.length > 0 && (
+                    <div className="mt-1 space-y-0.5">
+                      {fasiFiltrate.map((f) => (
+                        <button key={f} onMouseDown={() => { setForm({ ...form, fase: f }); setShowFaseSuggest(false); }}
+                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
+                          {f}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
