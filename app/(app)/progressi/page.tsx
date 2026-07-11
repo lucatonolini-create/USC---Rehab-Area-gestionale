@@ -623,7 +623,11 @@ async function esportaPDFReportMensile(
       const d = new Date(firstM.anno, firstM.mese + i, 1);
       return { anno: d.getFullYear(), mese: d.getMonth() };
     });
+    const todayT = new Date(); const nowY = todayT.getFullYear(); const nowM = todayT.getMonth();
     const trendR = trendPeriod.map(({ anno: a2, mese: m2 }) => {
+      if (a2 > nowY || (a2 === nowY && m2 > nowM)) {
+        return { label: MESI_BREVI[m2], total: 0, perCat: {} as Record<string, number>, perTipo: {} as Record<string, number> };
+      }
       const attv = atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
       const perCat: Record<string, number> = {};
       const perTipo: Record<string, number> = {};
