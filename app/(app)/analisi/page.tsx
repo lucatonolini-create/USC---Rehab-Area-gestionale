@@ -645,10 +645,10 @@ async function esportaPDFPanoramica(params: {
     if (y + needH2 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
     y = secTitle("Distribuzione mensile per categoria e tipologia", y);
     y = drawStackedBar("Per categoria squadra", y, catStacked, (t, k) => t.perCat[k] ?? 0, catColPdf);
-    y = drawLegend(catStacked, catColPdf, y);
+    y = drawLegend(catStacked, catColPdf, y + 5);
     if (y + 60 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
     y = drawStackedBar("Per tipo di infortunio", y, tipiStacked, (t, k) => t.perTipo[k] ?? 0, tipoColPdf);
-    y = drawLegend(tipiStacked, tipoColPdf, y);
+    y = drawLegend(tipiStacked, tipoColPdf, y + 5);
   }
 
   // ── Infortuni per squadra e tipo (panoramica) ─────────────────────────────
