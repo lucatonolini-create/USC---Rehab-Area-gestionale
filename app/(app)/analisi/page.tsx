@@ -1053,14 +1053,15 @@ async function esportaPDFReport(
       doc.text(title, M + cWr / 2, sy, { align: "center" }); sy += 2;
       doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
       doc.rect(M, sy, cWr, cHr, "FD");
-      [0.5, 1].forEach((pct) => {
-        const ly = sy + cHr - pct * cHr;
+      const tickStep = Math.max(1, Math.ceil(maxRVal / 4));
+      for (let v = tickStep; v <= maxRVal; v += tickStep) {
+        const ly = sy + cHr - (v / maxRVal) * cHr;
         doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2); doc.line(M, ly, M + cWr, ly);
         doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-        doc.text(`${Math.round(maxRVal * pct)}`, M - 1, ly + 1, { align: "right" });
-      });
+        doc.text(`${v}`, M - 1, ly + 1, { align: "right" });
+      }
       trendR.forEach((t, i) => {
-        const bw = slot * 0.3; const bx = M + i * slot + (slot - bw) / 2;
+        const bw = slot * 0.2; const bx = M + i * slot + (slot - bw) / 2;
         let bot = sy + cHr;
         keys.forEach((k) => {
           const cnt = getC(t, k);
