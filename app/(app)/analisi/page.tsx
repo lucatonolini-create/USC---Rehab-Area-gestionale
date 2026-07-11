@@ -555,15 +555,15 @@ async function esportaPDFPanoramica(params: {
     } }
 
   trendRows.forEach((t, i) => {
-    const barH = t.count > 0 ? (t.count / maxVal) * (cH - 2) : 0;
-    const bx = cX + i * barSlot + 1; const bw = barSlot - 2;
+    const bw = barSlot * 0.2; const bx = cX + i * barSlot + (barSlot - bw) / 2;
+    const barH = t.count > 0 ? (t.count / maxVal) * cH : 0;
     if (barH > 0) {
       doc.setFillColor(...red); doc.rect(bx, cY + cH - barH, bw, barH, "F");
       doc.setFontSize(5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
       doc.text(`${t.count}`, bx + bw / 2, cY + cH - barH - 1, { align: "center" });
     }
     doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(t.label.split(" ")[0], bx + bw / 2, cY + cH + 4, { align: "center" });
+    doc.text(t.label.split(" ")[0], cX + i * barSlot + barSlot / 2, cY + cH + 4, { align: "center" });
   });
 
   y = Math.max(trendEndY, cY + cH) + 12;
@@ -587,9 +587,10 @@ async function esportaPDFPanoramica(params: {
   const catStacked = CATEGORIE.filter((cat) => trendStacked.some((t) => (t.perCat[cat] ?? 0) > 0));
   const tipiStacked = Array.from(new Set(trendStacked.flatMap((t) => Object.keys(t.perTipo)))).sort();
   const catColPdf: Record<string, [number,number,number]> = {};
-  catStacked.forEach((cat, i) => { catColPdf[cat] = hexToRgb(CAT_PALETTE[i % CAT_PALETTE.length]); });
+  catStacked.forEach((cat) => { const idx = CATEGORIE.indexOf(cat); catColPdf[cat] = hexToRgb(CAT_PALETTE[(idx >= 0 ? idx : 0) % CAT_PALETTE.length]); });
+  const TIPI_ORDER_PAN = ["Distorsione/Lesione Legamentosa","Muscolare: Strappo/Stiramento/Crampo","Contusione","Frattura","Tendinopatia/Borsite","Overuse/Sovraccarico","Altro"];
   const tipoColPdf: Record<string, [number,number,number]> = {};
-  tipiStacked.forEach((tipo, i) => { tipoColPdf[tipo] = hexToRgb(TIPO_PALETTE[i % TIPO_PALETTE.length]); });
+  tipiStacked.forEach((tipo) => { const idx = TIPI_ORDER_PAN.indexOf(tipo); tipoColPdf[tipo] = hexToRgb(TIPO_PALETTE[(idx >= 0 ? idx : tipiStacked.indexOf(tipo)) % TIPO_PALETTE.length]); });
 
   const drawStackedBar = (
     title: string, sy: number,
@@ -609,7 +610,7 @@ async function esportaPDFPanoramica(params: {
       doc.text(`${v}`, M - 1, ly + 1, { align: "right" });
     }
     trendStacked.forEach((t, i) => {
-      const bx = M + i * slot + 0.5; const bw = slot - 1;
+      const bw = slot * 0.2; const bx = M + i * slot + (slot - bw) / 2;
       let bot = sy + cHh;
       keys.forEach((k) => {
         const cnt = getC(t, k);
@@ -620,7 +621,7 @@ async function esportaPDFPanoramica(params: {
         doc.rect(bx, bot, bw, segH, "F");
       });
       doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-      doc.text(t.label, bx + bw / 2, sy + cHh + 3, { align: "center" });
+      doc.text(t.label, M + i * slot + slot / 2, sy + cHh + 3, { align: "center" });
     });
     return sy + cHh + 5;
   };
