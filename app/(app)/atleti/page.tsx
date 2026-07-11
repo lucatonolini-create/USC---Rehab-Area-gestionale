@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
+  subscribeToAtleti, subscribeToProgrammi,
   CATEGORIE, TIPI_INFORTUNIO, calcolaPHV,
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
 } from "@/lib/store";
@@ -532,10 +533,21 @@ export default function AtletiPage() {
   const [editStoricoForm, setEditStoricoForm] = useState<InfortunioStorico | null>(null);
   const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
 
-  useEffect(() => { loadAtleti().then(setAtleti); }, []);
   useEffect(() => {
-    if (selected) loadProgrammi(selected.id).then(setProgrammiAtleta);
-    else setProgrammiAtleta([]);
+    loadAtleti().then(setAtleti);
+    const unsub = subscribeToAtleti(() => loadAtleti().then(setAtleti));
+    return unsub;
+  }, []);
+
+  useEffect(() => {
+    if (!selected) { setProgrammiAtleta([]); return; }
+    loadProgrammi(selected.id).then(setProgrammiAtleta);
+    const unsub = subscribeToProgrammi((atletaId) => {
+      if (!atletaId || atletaId === selected.id) {
+        loadProgrammi(selected.id).then(setProgrammiAtleta);
+      }
+    });
+    return unsub;
   }, [selected?.id]);
 
   const apriNuovo = () => { setEditAtleta(undefined); setMostraForm(true); setSelected(null); };

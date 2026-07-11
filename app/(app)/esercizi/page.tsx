@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2 } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
+  subscribeToAtleti, subscribeToProgrammi,
   TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO,
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo,
 } from "@/lib/store";
@@ -98,6 +99,15 @@ export default function EserciziPage() {
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
+    const unsubAtleti = subscribeToAtleti(() => loadAtleti().then(setAtleti));
+    const unsubProgrammi = subscribeToProgrammi((atletaId) => {
+      if (atletaId) {
+        loadProgrammi(atletaId).then((progs) =>
+          setProgrammiPerAtleta((prev) => ({ ...prev, [atletaId]: progs }))
+        );
+      }
+    });
+    return () => { unsubAtleti(); unsubProgrammi(); };
   }, []);
 
   const apriAtleta = async (atletaId: string) => {

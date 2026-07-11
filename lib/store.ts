@@ -579,6 +579,31 @@ export async function deleteProgramma(id: string): Promise<void> {
   await db.pendingOps.add({ table: "programmi", op: "delete", payload: { id }, createdAt: Date.now() });
 }
 
+// ─── Realtime subscriptions ──────────────────────────────────────────────────
+
+export function subscribeToAtleti(onChange: () => void): () => void {
+  const channel = supabase
+    .channel("atleti-realtime")
+    .on("postgres_changes", { event: "*", schema: "public", table: "atleti" }, onChange)
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
+export function subscribeToProgrammi(onChange: (atletaId?: string) => void): () => void {
+  const channel = supabase
+    .channel("programmi-realtime")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "programmi" },
+      (payload) => {
+        const row = (payload.new ?? payload.old) as Record<string, unknown> | null;
+        onChange(row?.atleta_id as string | undefined);
+      }
+    )
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
 // ─── Impostazioni ────────────────────────────────────────────────────────────
 
 const defaultImpostazioni: Impostazioni = {

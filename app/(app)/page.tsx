@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Users, Activity, TrendingUp, Dumbbell, ChevronRight, X } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, nd,
+  subscribeToAtleti, subscribeToProgrammi,
   CATEGORIE, type Atleta, type Programma, type Stato,
 } from "@/lib/store";
 import Link from "next/link";
@@ -26,6 +27,9 @@ export default function Dashboard() {
   useEffect(() => {
     loadAtleti().then(setAtleti);
     loadProgrammi().then(setProgrammi);
+    const unsubAtleti = subscribeToAtleti(() => loadAtleti().then(setAtleti));
+    const unsubProgrammi = subscribeToProgrammi(() => loadProgrammi().then(setProgrammi));
+    return () => { unsubAtleti(); unsubProgrammi(); };
   }, []);
 
   const aggiornaDopo = () => {
