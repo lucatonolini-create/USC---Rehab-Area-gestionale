@@ -96,8 +96,6 @@ export default function EserciziPage() {
   const [sezioneAttiva, setSezioneAttiva] = useState<FormSection>("esercizi");
   const [gpsCaricando, setGpsCaricando] = useState(false);
   const gpsInputRef = useRef<HTMLInputElement>(null);
-  const [showNomeSuggest, setShowNomeSuggest] = useState(false);
-  const [showFaseSuggest, setShowFaseSuggest] = useState(false);
   const [suggestionProgrammi, setSuggestionProgrammi] = useState<Programma[]>([]);
 
   useEffect(() => {
@@ -125,9 +123,9 @@ export default function EserciziPage() {
   };
 
   useEffect(() => {
-    if (!mostraForm) return;
-    loadProgrammi().then(setSuggestionProgrammi);
-  }, [mostraForm]);
+    if (!mostraForm || !form.atletaId) return;
+    loadProgrammi(form.atletaId).then(setSuggestionProgrammi);
+  }, [mostraForm, form.atletaId]);
 
   const apriNuovo = () => {
     setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, riposo: false, noteAssenza: "" });
@@ -586,15 +584,13 @@ export default function EserciziPage() {
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome programma *</label>
                   <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                    onFocus={() => setShowNomeSuggest(true)}
-                    onBlur={() => setShowNomeSuggest(false)}
                     placeholder="Es. Recupero LCA – Settimana 3"
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                  {showNomeSuggest && nomiFiltrati.length > 0 && (
+                  {nomiFiltrati.length > 0 && (
                     <div className="mt-1 space-y-0.5">
                       {nomiFiltrati.map((n) => (
-                        <button key={n} onMouseDown={() => { setForm({ ...form, nome: n }); setShowNomeSuggest(false); }}
-                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
+                        <button key={n} type="button" onClick={() => setForm({ ...form, nome: n })}
+                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 active:bg-red-50 active:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
                           {n}
                         </button>
                       ))}
@@ -604,15 +600,13 @@ export default function EserciziPage() {
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Fase</label>
                   <input value={form.fase} onChange={(e) => setForm({ ...form, fase: e.target.value })}
-                    onFocus={() => setShowFaseSuggest(true)}
-                    onBlur={() => setShowFaseSuggest(false)}
                     placeholder="Es. Fase 2 – Recupero forza"
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                  {showFaseSuggest && fasiFiltrate.length > 0 && (
+                  {fasiFiltrate.length > 0 && (
                     <div className="mt-1 space-y-0.5">
                       {fasiFiltrate.map((f) => (
-                        <button key={f} onMouseDown={() => { setForm({ ...form, fase: f }); setShowFaseSuggest(false); }}
-                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 hover:bg-red-50 hover:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
+                        <button key={f} type="button" onClick={() => setForm({ ...form, fase: f })}
+                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 active:bg-red-50 active:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
                           {f}
                         </button>
                       ))}
