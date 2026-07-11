@@ -98,6 +98,7 @@ export default function EserciziPage() {
   const gpsInputRef = useRef<HTMLInputElement>(null);
   const [showNomeSuggest, setShowNomeSuggest] = useState(false);
   const [showFaseSuggest, setShowFaseSuggest] = useState(false);
+  const [suggestionProgrammi, setSuggestionProgrammi] = useState<Programma[]>([]);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -122,6 +123,11 @@ export default function EserciziPage() {
       setCaricandoAtleta(false);
     }
   };
+
+  useEffect(() => {
+    if (!mostraForm) return;
+    loadProgrammi().then(setSuggestionProgrammi);
+  }, [mostraForm]);
 
   const apriNuovo = () => {
     setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, riposo: false, noteAssenza: "" });
@@ -198,9 +204,8 @@ export default function EserciziPage() {
   const tabClass = (s: FormSection) =>
     `flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${sezioneAttiva === s ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`;
 
-  const tuttiProgrammi = Object.values(programmiPerAtleta).flat();
-  const nomiUnici = [...new Set(tuttiProgrammi.map((p) => p.nome).filter(Boolean))];
-  const fasiUniche = [...new Set(tuttiProgrammi.map((p) => p.fase).filter(Boolean))];
+  const nomiUnici = [...new Set(suggestionProgrammi.map((p) => p.nome).filter(Boolean))];
+  const fasiUniche = [...new Set(suggestionProgrammi.map((p) => p.fase).filter(Boolean))];
   const nomiFiltrati = nomiUnici.filter((n) => !form.nome.trim() || n.toLowerCase().includes(form.nome.toLowerCase())).slice(0, 6);
   const fasiFiltrate = fasiUniche.filter((f) => !form.fase.trim() || f.toLowerCase().includes(form.fase.toLowerCase())).slice(0, 6);
 
