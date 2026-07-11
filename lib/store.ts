@@ -428,7 +428,7 @@ function programmaToRow(p: Programma): Record<string, unknown> {
 export async function syncFlush(): Promise<void> {
   if (!isOnline()) return;
   const db = getDB();
-  const ops = await db.pendingOps.orderBy("createdAt").toArray();
+  const ops = await db.pendingOps.orderBy("id").toArray();
   for (const op of ops) {
     let ok = false;
     try {
