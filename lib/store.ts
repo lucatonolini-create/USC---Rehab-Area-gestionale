@@ -277,6 +277,7 @@ export interface Programma {
   tests: TestFisiometrico[];
   carico: Carico;
   assente?: boolean;
+  riposo?: boolean;
   noteAssenza?: string;
 }
 
@@ -381,6 +382,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     tests: (r.tests as TestFisiometrico[]) ?? [],
     carico: (r.carico as Carico) ?? { ...defaultCarico },
     assente: (r.assente as boolean) ?? false,
+    riposo: (r.riposo as boolean) ?? false,
     noteAssenza: (r.note_assenza as string) ?? undefined,
   };
 }
@@ -399,6 +401,7 @@ function programmaToRow(p: Programma): Record<string, unknown> {
     tests: p.tests,
     carico: p.carico,
     assente: p.assente ?? false,
+    riposo: p.riposo ?? false,
     note_assenza: p.noteAssenza ?? null,
   };
 }

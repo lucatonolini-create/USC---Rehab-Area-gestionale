@@ -169,6 +169,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     const subHeaderRowIndices = new Set<number>();
     const altRowIndices = new Set<number>();
     const absenteRowIndices = new Set<number>();
+    const riposoRowIndices = new Set<number>();
 
     Array.from(weekMap.entries()).forEach(([wk, wkProgs]) => {
       let weekLabel: string;
@@ -195,6 +196,14 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
           absenteRowIndices.add(body.length);
           body.push([dataStr, label, { content: "ASSENTE", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          dataRowCount++;
+          continue;
+        }
+
+        if (prog.riposo) {
+          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
+          riposoRowIndices.add(body.length);
+          body.push([dataStr, label, { content: "RIPOSO", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
@@ -274,6 +283,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];
           data.cell.styles.textColor = [154, 52, 18];
+        } else if (riposoRowIndices.has(data.row.index)) {
+          data.cell.styles.fillColor = [219, 234, 254];
+          data.cell.styles.textColor = [30, 64, 175];
         } else if (altRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [243, 244, 246];
         } else {
