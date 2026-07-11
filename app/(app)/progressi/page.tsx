@@ -833,7 +833,6 @@ export default function ProgressiPage() {
   const [filtroCat, setFiltroCat] = useState("Tutte");
   const [filtroInf, setFiltroInf] = useState("");
   const [tipoReport, setTipoReport] = useState<TipoReport>("mensile");
-  const [reportMeseInizio, setReportMeseInizio] = useState(oggi.getMonth());
   const [stagioneMeseInizio, setStagioneMeseInizio] = useState(6);
   const [stagioneMeseFine, setStagioneMeseFine] = useState(5);
 
@@ -844,40 +843,26 @@ export default function ProgressiPage() {
 
   const mesiPeriodo: { anno: number; mese: number }[] = (() => {
     if (tipoReport === "mensile") return [{ anno: reportAnno, mese: reportMese }];
-    if (tipoReport === "annuale") return Array.from({ length: 12 }, (_, i) => ({ anno: reportAnno, mese: i }));
-    if (tipoReport === "stagione") {
-      const mesi: { anno: number; mese: number }[] = [];
-      const crossYear = stagioneMeseInizio > stagioneMeseFine;
-      const annoStart = crossYear ? reportAnno - 1 : reportAnno;
-      let m = stagioneMeseInizio;
-      let a = annoStart;
-      while (mesi.length < 24) {
-        mesi.push({ anno: a, mese: m });
-        if (m === stagioneMeseFine && a === reportAnno) break;
-        m = (m + 1) % 12;
-        if (m === 0) a++;
-      }
-      return mesi;
+    const mesi: { anno: number; mese: number }[] = [];
+    const crossYear = stagioneMeseInizio > stagioneMeseFine;
+    const annoStart = crossYear ? reportAnno - 1 : reportAnno;
+    let m = stagioneMeseInizio;
+    let a = annoStart;
+    while (mesi.length < 24) {
+      mesi.push({ anno: a, mese: m });
+      if (m === stagioneMeseFine && a === reportAnno) break;
+      m = (m + 1) % 12;
+      if (m === 0) a++;
     }
-    const count = tipoReport === "trimestrale" ? 3 : 6;
-    return Array.from({ length: count }, (_, i) => {
-      const d = new Date(reportAnno, reportMeseInizio + i, 1);
-      return { anno: d.getFullYear(), mese: d.getMonth() };
-    });
+    return mesi;
   })();
 
   const periodoLabel = (() => {
     if (tipoReport === "mensile") return `${MESI[reportMese]} ${reportAnno}`;
-    if (tipoReport === "annuale") return `Anno ${reportAnno}`;
-    if (tipoReport === "stagione") {
-      const crossYear = stagioneMeseInizio > stagioneMeseFine;
-      const annoStart = crossYear ? reportAnno - 1 : reportAnno;
-      return `Stagione ${MESI[stagioneMeseInizio]} ${annoStart}–${MESI[stagioneMeseFine]} ${reportAnno}`;
-    }
     const first = mesiPeriodo[0];
     const last = mesiPeriodo[mesiPeriodo.length - 1];
-    const tipoLbl = tipoReport === "trimestrale" ? "Trimestre" : "Semestre";
     const annoLbl = first.anno === last.anno ? `${first.anno}` : `${first.anno}–${last.anno}`;
+    const tipoLbl = tipoReport === "trimestrale" ? "Trimestre" : tipoReport === "semestrale" ? "Semestre" : tipoReport === "annuale" ? "Anno" : "Stagione";
     return `${tipoLbl} ${MESI[first.mese]}–${MESI[last.mese]} ${annoLbl}`;
   })();
 
@@ -1071,16 +1056,7 @@ export default function ProgressiPage() {
                   </select>
                 </div>
               )}
-              {(tipoReport === "trimestrale" || tipoReport === "semestrale") && (
-                <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mese inizio</label>
-                  <select value={reportMeseInizio} onChange={(e) => setReportMeseInizio(Number(e.target.value))}
-                    className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
-                    {MESI.map((m, i) => <option key={m} value={i}>{m}</option>)}
-                  </select>
-                </div>
-              )}
-              {tipoReport === "stagione" && (
+              {tipoReport !== "mensile" && (
                 <>
                   <div>
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Mese inizio</label>
@@ -1100,11 +1076,11 @@ export default function ProgressiPage() {
               )}
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                  {tipoReport === "stagione" ? "Anno fine" : "Anno"}
+                  {tipoReport !== "mensile" && stagioneMeseInizio > stagioneMeseFine ? "Anno fine" : "Anno"}
                 </label>
                 <select value={reportAnno} onChange={(e) => setReportAnno(Number(e.target.value))}
                   className="mt-1 w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]">
-                  {anni.map((a) => <option key={a} value={a}>{tipoReport === "stagione" && stagioneMeseInizio > stagioneMeseFine ? `${a - 1}–${a}` : a}</option>)}
+                  {anni.map((a) => <option key={a} value={a}>{tipoReport !== "mensile" && stagioneMeseInizio > stagioneMeseFine ? `${a - 1}–${a}` : a}</option>)}
                 </select>
               </div>
               <div>
