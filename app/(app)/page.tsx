@@ -41,11 +41,14 @@ export default function Dashboard() {
     ? atleti
     : atleti.filter((a) => a.categoria === filtroCategoria);
 
+  const oggi = new Date().toISOString().slice(0, 10);
+  const programmiOggi = programmi.filter((p) => p.data === oggi).length;
+
   const stats = [
-    { label: "Atleti Totali",    value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
-    { label: "Infortunati",       value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
-    { label: "Disponibili",      value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
-    { label: "Programmi Attivi", value: programmi.length, icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
+    { label: "Atleti Totali",    value: atleti.length,  icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
+    { label: "Infortunati",       value: inRecupero,     icon: Activity,   color: "bg-orange-500", href: "/atleti" },
+    { label: "Disponibili",      value: guariti,         icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
+    { label: "Programmi Attivi", value: programmiOggi,  icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
   ];
 
   return (
