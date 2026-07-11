@@ -618,9 +618,8 @@ async function esportaPDFReportMensile(
 
   // ── Trend mensile 12 mesi impilato ────────────────────────────────────────
   if (atleti && atleti.length > 0) {
-    const trendR = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(anno, mese - 11 + i, 1);
-      const a2 = d.getFullYear(); const m2 = d.getMonth();
+    const trendPeriod = mesiP ?? [{ anno, mese }];
+    const trendR = trendPeriod.map(({ anno: a2, mese: m2 }) => {
       const attv = atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
       const perCat: Record<string, number> = {};
       const perTipo: Record<string, number> = {};
@@ -644,7 +643,7 @@ async function esportaPDFReportMensile(
       keys: string[], getC: (t: typeof trendR[0], k: string) => number,
       colorMap: Record<string, [number, number, number]>
     ): number => {
-      const cHr = 38; const cWr = W - M * 2; const slot = cWr / 12;
+      const cHr = 38; const cWr = W - M * 2; const slot = cWr / trendR.length;
       doc.setFontSize(6); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
       doc.text(title, M + cWr / 2, sy, { align: "center" }); sy += 2;
       doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3);
@@ -688,12 +687,12 @@ async function esportaPDFReportMensile(
 
     if (catR.length > 0 || tipiR.length > 0) {
       doc.addPage(); addHeader(); y = HDR + 12;
-      y = secTitle("Trend mensile – ultimi 12 mesi", y);
+      y = secTitle(`Trend mensile – ${nomeP}`, y);
       y = drawBarR("Per categoria squadra", y, catR, (t, k) => t.perCat[k] ?? 0, catColR);
-      y = drawLegR(catR, catColR, y);
+      y = drawLegR(catR, catColR, y + 5);
       if (y + 60 > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
       y = drawBarR("Per tipo di infortunio", y, tipiR, (t, k) => t.perTipo[k] ?? 0, tipoColR);
-      y = drawLegR(tipiR, tipoColR, y);
+      y = drawLegR(tipiR, tipoColR, y + 5);
     }
   }
 
