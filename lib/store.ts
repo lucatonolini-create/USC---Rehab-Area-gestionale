@@ -390,7 +390,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     esercizi: (r.esercizi as Esercizio[]) ?? [],
     esercizicampo: (_esercizicampo as EsercizioCampo[]) ?? (r.esercizicampo as EsercizioCampo[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
-    carico: caricoClean as Carico,
+    carico: caricoClean as unknown as Carico,
     assente: !isRiposo && ((r.assente as boolean) ?? false),
     riposo: isRiposo,
     noteAssenza,
@@ -403,7 +403,7 @@ function programmaToRow(p: Programma): Record<string, unknown> {
     ? "__riposo__" + (p.noteAssenza ?? "")
     : (p.noteAssenza ?? null);
   // Optional fields encoded inside carico JSONB to avoid schema dependency
-  const caricoExtended: Record<string, unknown> = { ...(p.carico as Record<string, unknown>) };
+  const caricoExtended: Record<string, unknown> = { ...(p.carico as unknown as Record<string, unknown>) };
   if (p.esercizicampo?.length) caricoExtended._esercizicampo = p.esercizicampo;
   if (p.infortunioId) {
     caricoExtended._infortunio_id = p.infortunioId;
