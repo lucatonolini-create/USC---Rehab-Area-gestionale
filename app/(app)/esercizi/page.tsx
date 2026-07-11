@@ -96,7 +96,8 @@ export default function EserciziPage() {
   const [sezioneAttiva, setSezioneAttiva] = useState<FormSection>("esercizi");
   const [gpsCaricando, setGpsCaricando] = useState(false);
   const gpsInputRef = useRef<HTMLInputElement>(null);
-  const [suggestionProgrammi, setSuggestionProgrammi] = useState<Programma[]>([]);
+  const [nomeFocus, setNomeFocus] = useState(false);
+  const [faseFocus, setFaseFocus] = useState(false);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -122,11 +123,6 @@ export default function EserciziPage() {
     }
   };
 
-  useEffect(() => {
-    if (!mostraForm || !form.atletaId) return;
-    loadProgrammi(form.atletaId).then(setSuggestionProgrammi);
-  }, [mostraForm, form.atletaId]);
-
   const apriNuovo = () => {
     setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, riposo: false, noteAssenza: "" });
     setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
@@ -136,6 +132,11 @@ export default function EserciziPage() {
     const { id, ...rest } = p;
     setForm({ ...rest, esercizi: rest.esercizi.map((e) => ({ ...e })), esercizicampo: (rest.esercizicampo ?? []).map((c) => ({ ...c })), tests: (rest.tests ?? []).map((t) => ({ ...t })), carico: rest.carico ?? { ...caricoVuoto } });
     setEditId(id); setMostraForm(true); setSezioneAttiva("esercizi");
+    if (rest.atletaId && !(rest.atletaId in programmiPerAtleta)) {
+      loadProgrammi(rest.atletaId).then((progs) =>
+        setProgrammiPerAtleta((prev) => ({ ...prev, [rest.atletaId]: progs }))
+      ).catch(() => {});
+    }
   };
 
   const salvaProgramma = async () => {
@@ -202,8 +203,9 @@ export default function EserciziPage() {
   const tabClass = (s: FormSection) =>
     `flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${sezioneAttiva === s ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`;
 
-  const nomiUnici = [...new Set(suggestionProgrammi.map((p) => p.nome).filter(Boolean))];
-  const fasiUniche = [...new Set(suggestionProgrammi.map((p) => p.fase).filter(Boolean))];
+  const fontePerSuggerimenti = (programmiPerAtleta[form.atletaId] ?? []).filter((p) => !p.assente && !p.riposo);
+  const nomiUnici = Array.from(new Set(fontePerSuggerimenti.map((p) => p.nome).filter(Boolean)));
+  const fasiUniche = Array.from(new Set(fontePerSuggerimenti.map((p) => p.fase).filter(Boolean)));
   const nomiFiltrati = nomiUnici.filter((n) => !form.nome.trim() || n.toLowerCase().includes(form.nome.toLowerCase())).slice(0, 6);
   const fasiFiltrate = fasiUniche.filter((f) => !form.fase.trim() || f.toLowerCase().includes(form.fase.toLowerCase())).slice(0, 6);
 
@@ -506,7 +508,15 @@ export default function EserciziPage() {
               <div className="flex gap-3 items-end">
                 <div className="flex-1 min-w-0">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Atleta *</label>
-                  <select value={form.atletaId} onChange={(e) => setForm({ ...form, atletaId: e.target.value, infortunioId: undefined, infortunioLabel: undefined })}
+                  <select value={form.atletaId} onChange={(e) => {
+                      const id = e.target.value;
+                      setForm({ ...form, atletaId: id, infortunioId: undefined, infortunioLabel: undefined });
+                      if (id && !(id in programmiPerAtleta)) {
+                        loadProgrammi(id).then((progs) =>
+                          setProgrammiPerAtleta((prev) => ({ ...prev, [id]: progs }))
+                        ).catch(() => {});
+                      }
+                    }}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
                     <option value="">Seleziona atleta...</option>
                     {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
@@ -581,32 +591,40 @@ export default function EserciziPage() {
                 );
               })()}
               <div className="grid grid-cols-2 gap-3">
-                <div>
+                <div className="relative">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Nome programma *</label>
                   <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                    onFocus={() => setNomeFocus(true)}
+                    onBlur={() => setTimeout(() => setNomeFocus(false), 150)}
                     placeholder="Es. Recupero LCA – Settimana 3"
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                  {nomiFiltrati.length > 0 && (
-                    <div className="mt-1 space-y-0.5">
+                  {nomeFocus && nomiFiltrati.length > 0 && (
+                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                       {nomiFiltrati.map((n) => (
-                        <button key={n} type="button" onClick={() => setForm({ ...form, nome: n })}
-                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 active:bg-red-50 active:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
+                        <button key={n} type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { setForm({ ...form, nome: n }); setNomeFocus(false); }}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 hover:text-[#C8102E] border-b border-gray-50 last:border-0 truncate">
                           {n}
                         </button>
                       ))}
                     </div>
                   )}
                 </div>
-                <div>
+                <div className="relative">
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Fase</label>
                   <input value={form.fase} onChange={(e) => setForm({ ...form, fase: e.target.value })}
+                    onFocus={() => setFaseFocus(true)}
+                    onBlur={() => setTimeout(() => setFaseFocus(false), 150)}
                     placeholder="Es. Fase 2 – Recupero forza"
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                  {fasiFiltrate.length > 0 && (
-                    <div className="mt-1 space-y-0.5">
+                  {faseFocus && fasiFiltrate.length > 0 && (
+                    <div className="absolute z-20 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
                       {fasiFiltrate.map((f) => (
-                        <button key={f} type="button" onClick={() => setForm({ ...form, fase: f })}
-                          className="w-full text-left text-xs px-3 py-1.5 rounded-lg bg-gray-50 active:bg-red-50 active:text-[#C8102E] text-gray-700 border border-gray-100 truncate">
+                        <button key={f} type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => { setForm({ ...form, fase: f }); setFaseFocus(false); }}
+                          className="w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 hover:text-[#C8102E] border-b border-gray-50 last:border-0 truncate">
                           {f}
                         </button>
                       ))}
