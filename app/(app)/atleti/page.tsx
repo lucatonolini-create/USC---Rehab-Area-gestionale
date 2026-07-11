@@ -343,7 +343,10 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   const sessStoricoMap = new Map(storico.map((inf) => [inf.id, programmi.filter((p) => p.infortunioId === inf.id && isSessionePDF(p)).length]));
   const giorniArchivio = storico.map((inf) => sessStoricoMap.get(inf.id) ?? 0);
   const giorniCorrente = atleta.stato === "Infortunato" && atleta.inizioRehab
-    ? programmi.filter((p) => !p.infortunioId && p.data >= atleta.inizioRehab && isSessionePDF(p)).length : 0;
+    ? programmi.filter((p) => (
+        p.infortunioId === "__corrente__" ||
+        (!p.infortunioId && p.data >= atleta.inizioRehab)
+      ) && isSessionePDF(p)).length : 0;
   const totaleStagionePDF = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
   y = secTitle("Storico infortuni", y);
@@ -538,6 +541,12 @@ export default function AtletiPage() {
     const unsub = subscribeToAtleti(() => loadAtleti().then(setAtleti));
     return unsub;
   }, []);
+
+  useEffect(() => {
+    if (!selected) return;
+    const updated = atleti.find((a) => a.id === selected.id);
+    if (updated && updated !== selected) setSelected(updated);
+  }, [atleti]);
 
   useEffect(() => {
     if (!selected) { setProgrammiAtleta([]); return; }
@@ -1005,7 +1014,10 @@ export default function AtletiPage() {
                 const isSessione = (p: Programma) => !p.assente && !p.riposo;
                 const giorni = storico.map((inf) => programmiAtleta.filter((p) => p.infortunioId === inf.id && isSessione(p)).length);
                 const giorniCorrente = selected.stato === "Infortunato" && selected.inizioRehab
-                  ? programmiAtleta.filter((p) => !p.infortunioId && p.data >= selected.inizioRehab && isSessione(p)).length
+                  ? programmiAtleta.filter((p) => (
+                      p.infortunioId === "__corrente__" ||
+                      (!p.infortunioId && p.data >= selected.inizioRehab)
+                    ) && isSessione(p)).length
                   : 0;
                 const totaleStagione = giorni.reduce((s, g) => s + g, 0) + giorniCorrente;
 
