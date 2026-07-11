@@ -666,7 +666,7 @@ async function esportaPDFPanoramica(params: {
     const ttPan = tipiPan.map((_, ti) => crossPan.reduce((s, r) => s + (r[ti + 2] as number), 0));
     const totRowPan: any[] = [{ content: "TOTALE", styles: { fontStyle: "bold" } }, gtPan, ...ttPan];
     const needHPan = (crossPan.length + 2) * 8 + 20;
-    if (y + needHPan > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    if (y + needHPan > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; } else { y += 10; }
     y = secTitle("Infortuni per squadra e tipo", y);
     autoTable(doc, {
       startY: y,
