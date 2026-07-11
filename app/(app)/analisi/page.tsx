@@ -600,12 +600,13 @@ async function esportaPDFPanoramica(params: {
     doc.text(title, M + cWw / 2, sy, { align: "center" }); sy += 2;
     doc.setFillColor(248,248,248); doc.setDrawColor(220,220,220); doc.setLineWidth(0.3);
     doc.rect(M, sy, cWw, cHh, "FD");
-    [0.5, 1].forEach((pct) => {
-      const ly = sy + cHh - pct * cHh;
-      doc.setDrawColor(220,220,220); doc.setLineWidth(0.2); doc.line(M, ly, M + cWw, ly);
+    const tStep = Math.max(1, Math.ceil(maxStackVal / 4));
+    for (let v = tStep; v <= maxStackVal; v += tStep) {
+      const ly = sy + cHh - (v / maxStackVal) * cHh;
+      doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.2); doc.line(M, ly, M + cWw, ly);
       doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-      doc.text(`${Math.round(maxStackVal * pct)}`, M - 1, ly + 1, { align: "right" });
-    });
+      doc.text(`${v}`, M - 1, ly + 1, { align: "right" });
+    }
     trendStacked.forEach((t, i) => {
       const bx = M + i * slot + 0.5; const bw = slot - 1;
       let bot = sy + cHh;
