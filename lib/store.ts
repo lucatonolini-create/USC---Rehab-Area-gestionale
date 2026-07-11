@@ -524,9 +524,15 @@ export async function loadProgrammi(atletaId?: string): Promise<Programma[]> {
       if (atletaId) q = q.eq("atleta_id", atletaId);
       const { data, error } = await q;
       if (!error && data) {
-        const programmi = data.map(rowToProgramma);
-        await db.programmi.bulkPut(programmi);
-        return programmi;
+        const fromSupabase = data.map(rowToProgramma);
+        await db.programmi.bulkPut(fromSupabase);
+        // Merge with local-only records not yet synced to Supabase
+        const supabaseIds = new Set(fromSupabase.map(p => p.id));
+        const allLocal = atletaId
+          ? await db.programmi.where("atletaId").equals(atletaId).toArray()
+          : await db.programmi.toArray();
+        const localOnly = allLocal.filter(p => !supabaseIds.has(p.id));
+        return [...fromSupabase, ...localOnly].sort((a, b) => a.data.localeCompare(b.data));
       }
     } catch {}
   }
@@ -541,9 +547,12 @@ export async function upsertProgramma(p: Programma): Promise<void> {
   await db.programmi.put(p);
   if (isOnline()) {
     try {
-      await supabase.from("programmi").upsert(programmaToRow(p));
-      return;
-    } catch {}
+      const { error } = await supabase.from("programmi").upsert(programmaToRow(p));
+      if (!error) return;
+      console.error("[sync] programmi upsert error:", error.message, error.details);
+    } catch (e) {
+      console.error("[sync] programmi upsert exception:", e);
+    }
   }
   await db.pendingOps.add({ table: "programmi", op: "upsert", payload: programmaToRow(p), createdAt: Date.now() });
 }
