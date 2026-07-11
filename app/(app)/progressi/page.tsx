@@ -687,8 +687,7 @@ async function esportaPDFReportMensile(
     };
 
     if (catR.length > 0 || tipiR.length > 0) {
-      const needHR = 120;
-      if (y + needHR > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+      doc.addPage(); addHeader(); y = HDR + 12;
       y = secTitle("Trend mensile – ultimi 12 mesi", y);
       y = drawBarR("Per categoria squadra", y, catR, (t, k) => t.perCat[k] ?? 0, catColR);
       y = drawLegR(catR, catColR, y);
@@ -698,6 +697,7 @@ async function esportaPDFReportMensile(
     }
   }
 
+  doc.addPage(); addHeader(); y = HDR + 12;
   y = secTitle("Atleti del periodo", y);
 
   const fmtDP = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });

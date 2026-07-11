@@ -906,8 +906,8 @@ async function esportaPDFReport(
 
   if (catChart.length > 0 || catTipoCharts.length > 0) {
     const rowH = 9;
-    const needH = Math.max(catChart.length, rightRows) * rowH + 26;
-    if (y + needH > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    const needH = Math.max(catChart.length, rightRows) * rowH + 26; void needH;
+    doc.addPage(); addHeader(); y = HDR + 12;
     y = secTitle("Distribuzione infortuni nel periodo", y);
 
     const halfW = (W - M * 2 - 10) / 2;
@@ -991,8 +991,7 @@ async function esportaPDFReport(
     const tipeTotals = tipiPresenti.map((_, ti) => crossBody.reduce((s, r) => s + (r[ti + 2] as number), 0));
     const totRow: any[] = [{ content: "TOTALE", styles: { fontStyle: "bold" } }, grandTotal, ...tipeTotals];
 
-    const needHCross = (crossBody.length + 2) * 8 + 20;
-    if (y + needHCross > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+    doc.addPage(); addHeader(); y = HDR + 12;
     y = secTitle("Infortuni per squadra e tipo", y);
     autoTable(doc, {
       startY: y,
@@ -1085,8 +1084,7 @@ async function esportaPDFReport(
     };
 
     if (catR.length > 0 || tipiR.length > 0) {
-      const needHR = 120;
-      if (y + needHR > H - 18) { doc.addPage(); addHeader(); y = HDR + 12; }
+      doc.addPage(); addHeader(); y = HDR + 12;
       y = secTitle("Trend mensile – ultimi 12 mesi", y);
       y = drawBarR("Per categoria squadra", y, catR, (t, k) => t.perCat[k] ?? 0, catColR);
       y = drawLegR(catR, catColR, y);
@@ -1096,6 +1094,7 @@ async function esportaPDFReport(
     }
   }
 
+  doc.addPage(); addHeader(); y = HDR + 12;
   y = secTitle("Dettaglio atleti", y);
 
   const fmtDPdf = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" });
