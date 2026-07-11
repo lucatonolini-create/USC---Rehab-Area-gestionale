@@ -4,7 +4,7 @@ import { syncInfortunioAPI, pullPerformanceAthletesMap } from "./performance-syn
 
 export type Stato = "Infortunato" | "Disponibile";
 
-export const CATEGORIE = ["Primavera", "U17", "U16", "U15", "U14"] as const;
+export const CATEGORIE = ["U19", "U17", "U16", "U15", "U14"] as const;
 export type Categoria = (typeof CATEGORIE)[number];
 
 export const PIEDI = ["Destro", "Sinistro", "Ambidestro"] as const;
