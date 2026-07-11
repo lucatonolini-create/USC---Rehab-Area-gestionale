@@ -218,9 +218,14 @@ export default function EserciziPage() {
                 </div>
                 <span className="font-bold text-gray-800 flex-1">{nd(atleta)}</span>
                 <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{atleta.categoria}</span>
-                {isOpen && atleta.id in programmiPerAtleta && (
-                  <span className="text-xs text-gray-400">{lista.length} programmi</span>
-                )}
+                {isOpen && atleta.id in programmiPerAtleta && (() => {
+                  const assenze = lista.filter((p) => p.assente).length;
+                  return (
+                    <span className="text-xs text-gray-400">
+                      {lista.length} sessioni{assenze > 0 && <span className="text-orange-400"> · {assenze} ass.</span>}
+                    </span>
+                  );
+                })()}
                 <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`} />
               </button>
 
