@@ -45,10 +45,11 @@ export default function Dashboard() {
   const programmiAttivi = programmi.filter((p) => infortunatiIds.has(p.atletaId)).length;
 
   const stats = [
-    { label: "Atleti Totali",    value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
-    { label: "Infortunati",       value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
-    { label: "Disponibili",      value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
-    { label: "Programmi Attivi", value: programmiAttivi,  icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
+    { label: "Atleti Totali",     value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
+    { label: "Infortunati",        value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
+    { label: "Disponibili",       value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
+    { label: "Programmi Attivi",  value: programmiAttivi,  icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
+    { label: "Programmi Totali",  value: programmi.length, icon: Dumbbell,   color: "bg-[#2B2B2B]",  href: "/esercizi" },
   ];
 
   return (
@@ -61,7 +62,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stat cards cliccabili */}
-      <div className="grid grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
         {stats.map((stat) => {
           const Icon = stat.icon;
           return (
