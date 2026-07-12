@@ -999,11 +999,36 @@ export default function AtletiPage() {
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2 overflow-hidden">
                         <div>
                           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Data</p>
-                          <div className="w-full overflow-hidden">
-                            <input type="date" value={nuovoReferto.data}
-                              onChange={(e) => setNuovoReferto((r) => r && ({ ...r, data: e.target.value }))}
-                              className="w-full min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]" />
-                          </div>
+                          {(() => {
+                            const [yy, mm, dd] = (nuovoReferto.data || "").split("-");
+                            const upd = (y: string, m: string, d: string) =>
+                              setNuovoReferto((r) => r && ({ ...r, data: `${y}-${m.padStart(2,"0")}-${d.padStart(2,"0")}` }));
+                            const MESI_IT = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
+                            const anniOpts = Array.from({ length: 4 }, (_, i) => String(new Date().getFullYear() - 2 + i));
+                            const sel = "w-full text-sm border border-gray-200 rounded-lg px-2 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]";
+                            return (
+                              <div className="grid grid-cols-3 gap-1.5">
+                                <div>
+                                  <p className="text-[9px] text-gray-400 mb-0.5">Giorno</p>
+                                  <select value={dd} onChange={(e) => upd(yy, mm, e.target.value)} className={sel}>
+                                    {Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2,"0")).map((g) => <option key={g}>{g}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <p className="text-[9px] text-gray-400 mb-0.5">Mese</p>
+                                  <select value={mm} onChange={(e) => upd(yy, e.target.value, dd)} className={sel}>
+                                    {MESI_IT.map((nm, i) => <option key={nm} value={String(i + 1).padStart(2,"0")}>{nm}</option>)}
+                                  </select>
+                                </div>
+                                <div>
+                                  <p className="text-[9px] text-gray-400 mb-0.5">Anno</p>
+                                  <select value={yy} onChange={(e) => upd(e.target.value, mm, dd)} className={sel}>
+                                    {anniOpts.map((a) => <option key={a}>{a}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
                         <div>
                           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Tipo esame</p>
