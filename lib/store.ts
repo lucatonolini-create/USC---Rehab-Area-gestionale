@@ -106,9 +106,9 @@ export interface QuestionarioKinesiofobia {
   infortunioLabel?: string;
 }
 
-export type TipoReferto = "Ecografia" | "Risonanza Magnetica" | "Radiografia" | "Visita clinica" | "Altro";
+export type TipoReferto = "Ecografia" | "Risonanza Magnetica" | "TAC" | "Radiografia" | "Visita clinica" | "Altro";
 export type EsitoReferto = "Positivo" | "Nella norma" | "Miglioramento parziale" | "Negativo";
-export const TIPI_REFERTO: TipoReferto[] = ["Ecografia", "Risonanza Magnetica", "Radiografia", "Visita clinica", "Altro"];
+export const TIPI_REFERTO: TipoReferto[] = ["Ecografia", "Risonanza Magnetica", "TAC", "Radiografia", "Visita clinica", "Altro"];
 export const ESITI_REFERTO: EsitoReferto[] = ["Positivo", "Nella norma", "Miglioramento parziale", "Negativo"];
 
 export interface RefertoClinico {
