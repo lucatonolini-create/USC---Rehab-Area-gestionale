@@ -64,14 +64,15 @@ export default function Dashboard() {
     : atleti.filter((a) => a.categoria === filtroCategoria);
 
   const infortunatiIds = new Set(atleti.filter((a) => a.stato === "Infortunato").map((a) => a.id));
-  const programmiAttivi = programmi.filter((p) => infortunatiIds.has(p.atletaId)).length;
+  const programmiReali = programmi.filter((p) => !p.riposo && !p.assente);
+  const programmiAttivi = programmiReali.filter((p) => infortunatiIds.has(p.atletaId)).length;
 
   const stats = [
-    { label: "Atleti Totali",     value: atleti.length,    icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
-    { label: "Infortunati",        value: inRecupero,       icon: Activity,   color: "bg-orange-500", href: "/atleti" },
-    { label: "Disponibili",       value: guariti,           icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
-    { label: "Programmi Attivi",  value: programmiAttivi,  icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
-    { label: "Programmi Totali",  value: programmi.length, icon: Dumbbell,   color: "bg-[#2B2B2B]",  href: "/esercizi" },
+    { label: "Atleti Totali",     value: atleti.length,         icon: Users,      color: "bg-[#2B2B2B]", href: "/atleti" },
+    { label: "Infortunati",        value: inRecupero,            icon: Activity,   color: "bg-orange-500", href: "/atleti" },
+    { label: "Disponibili",       value: guariti,                icon: TrendingUp, color: "bg-green-500",  href: "/atleti" },
+    { label: "Programmi Attivi",  value: programmiAttivi,       icon: Dumbbell,   color: "bg-[#C8102E]",  href: "/esercizi" },
+    { label: "Programmi Totali",  value: programmiReali.length, icon: Dumbbell,   color: "bg-[#2B2B2B]",  href: "/esercizi" },
   ];
 
   return (
