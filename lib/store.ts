@@ -369,51 +369,57 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
 }
 
 function rowToProgramma(r: Record<string, unknown>): Programma {
+  // All optional fields live in carico JSONB with _ prefix to avoid schema dependency
+  const caricoRaw = (r.carico as Record<string, unknown>) ?? {};
+  const {
+    _esercizicampo, _infortunio_id, _infortunio_label,
+    _riposo, _assente, _note_assenza,
+    ...caricoClean
+  } = caricoRaw;
+
+  // Backward compat: note_assenza was once a top-level column with __riposo__/__assente__ prefixes
   const noteRaw = r.note_assenza as string | null;
-  // riposo and assente encoded in note_assenza with prefix (no separate DB columns needed)
-  const isRiposo  = typeof noteRaw === "string" && noteRaw.startsWith("__riposo__");
-  const isAssente = !isRiposo && typeof noteRaw === "string" && noteRaw.startsWith("__assente__");
-  const noteAssenza = isRiposo
+  const legacyRiposo  = typeof noteRaw === "string" && noteRaw.startsWith("__riposo__");
+  const legacyAssente = !legacyRiposo && typeof noteRaw === "string" && noteRaw.startsWith("__assente__");
+  const legacyNote = legacyRiposo
     ? (noteRaw.slice("__riposo__".length) || undefined)
-    : isAssente
+    : legacyAssente
     ? (noteRaw.slice("__assente__".length) || undefined)
     : (noteRaw ?? undefined);
-  // Optional fields encoded inside carico JSONB (no separate DB columns needed)
-  const caricoRaw = (r.carico as Record<string, unknown>) ?? {};
-  const { _esercizicampo, _infortunio_id, _infortunio_label, ...caricoClean } = caricoRaw;
+
+  const isRiposo  = !!_riposo  || legacyRiposo;
+  const isAssente = !!_assente || legacyAssente || (!_riposo && !legacyRiposo && ((r.assente as boolean) ?? false));
+  const noteAssenza = (_note_assenza as string | undefined) ?? legacyNote;
+
   return {
     id: r.id as string,
     atletaId: r.atleta_id as string,
     nome: r.nome as string,
     fase: (r.fase as string) ?? "",
     data: r.data as string,
-    // read from carico._* first, fall back to top-level columns for backward compat
     infortunioId: (_infortunio_id as string) ?? (r.infortunio_id as string) ?? undefined,
     infortunioLabel: (_infortunio_label as string) ?? (r.infortunio_label as string) ?? undefined,
     esercizi: (r.esercizi as Esercizio[]) ?? [],
     esercizicampo: (_esercizicampo as EsercizioCampo[]) ?? (r.esercizicampo as EsercizioCampo[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
     carico: caricoClean as unknown as Carico,
-    assente: isAssente || (!isRiposo && !isAssente && ((r.assente as boolean) ?? false)),
+    assente: isAssente,
     riposo: isRiposo,
     noteAssenza,
   };
 }
 
 function programmaToRow(p: Programma): Record<string, unknown> {
-  // riposo and assente encoded in note_assenza with prefix (no separate DB columns needed)
-  const note_assenza = p.riposo
-    ? "__riposo__" + (p.noteAssenza ?? "")
-    : p.assente
-    ? "__assente__" + (p.noteAssenza ?? "")
-    : (p.noteAssenza ?? null);
-  // Optional fields encoded inside carico JSONB to avoid schema dependency
+  // All optional fields encoded in carico JSONB to avoid schema dependency
   const caricoExtended: Record<string, unknown> = { ...(p.carico as unknown as Record<string, unknown>) };
   if (p.esercizicampo?.length) caricoExtended._esercizicampo = p.esercizicampo;
   if (p.infortunioId) {
     caricoExtended._infortunio_id = p.infortunioId;
     if (p.infortunioLabel) caricoExtended._infortunio_label = p.infortunioLabel;
   }
+  if (p.riposo)      caricoExtended._riposo       = true;
+  if (p.assente)     caricoExtended._assente      = true;
+  if (p.noteAssenza) caricoExtended._note_assenza = p.noteAssenza;
   return {
     id: p.id,
     atleta_id: p.atletaId,
@@ -423,7 +429,6 @@ function programmaToRow(p: Programma): Record<string, unknown> {
     esercizi: p.esercizi,
     tests: p.tests,
     carico: caricoExtended,
-    note_assenza,
   };
 }
 
