@@ -538,7 +538,7 @@ export default function AtletiPage() {
   const [editStorico, setEditStorico] = useState<{ inf: InfortunioStorico; idx: number } | null>(null);
   const [editStoricoForm, setEditStoricoForm] = useState<InfortunioStorico | null>(null);
   const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
-  const [nuovoReferto, setNuovoReferto] = useState<{ data: string; tipo: TipoReferto; esito: EsitoReferto; note: string } | null>(null);
+  const [nuovoReferto, setNuovoReferto] = useState<{ data: string; tipo: TipoReferto | ""; esito: EsitoReferto | ""; note: string } | null>(null);
   const [editingRefertoId, setEditingRefertoId] = useState<string | null>(null);
   const [fileReferto, setFileReferto] = useState<File | null>(null);
   const [editingFileInfo, setEditingFileInfo] = useState<{ id: string; nome: string } | null>(null);
@@ -663,20 +663,23 @@ export default function AtletiPage() {
 
   const aggiungiReferto = async () => {
     if (!selected || !nuovoReferto) return;
+    if (!nuovoReferto.tipo || !nuovoReferto.esito) return;
+    const tipo = nuovoReferto.tipo as TipoReferto;
+    const esito = nuovoReferto.esito as EsitoReferto;
     const refertiEsistenti = selected.refertiClinici ?? [];
     let nuoviReferti: RefertoClinico[];
     if (editingRefertoId) {
       nuoviReferti = refertiEsistenti.map((r) =>
         r.id === editingRefertoId
-          ? { ...r, data: nuovoReferto.data, tipo: nuovoReferto.tipo, esito: nuovoReferto.esito, note: nuovoReferto.note || undefined }
+          ? { ...r, data: nuovoReferto.data, tipo, esito, note: nuovoReferto.note || undefined }
           : r
       );
     } else {
       nuoviReferti = [...refertiEsistenti, {
         id: crypto.randomUUID(),
         data: nuovoReferto.data,
-        tipo: nuovoReferto.tipo,
-        esito: nuovoReferto.esito,
+        tipo,
+        esito,
         note: nuovoReferto.note || undefined,
       }];
     }
@@ -1015,7 +1018,7 @@ export default function AtletiPage() {
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Referti clinici</p>
                       {!nuovoReferto && (
                         <button
-                          onClick={() => setNuovoReferto({ data: new Date().toISOString().slice(0, 10), tipo: "Ecografia", esito: "Positivo", note: "" })}
+                          onClick={() => setNuovoReferto({ data: new Date().toISOString().slice(0, 10), tipo: "", esito: "", note: "" })}
                           className="text-xs text-[#C8102E] font-medium hover:underline flex items-center gap-1">
                           <Plus className="w-3 h-3" /> Aggiungi
                         </button>
@@ -1105,6 +1108,7 @@ export default function AtletiPage() {
                           <select value={nuovoReferto.tipo}
                             onChange={(e) => setNuovoReferto((r) => r && ({ ...r, tipo: e.target.value as TipoReferto }))}
                             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]">
+                            <option value="" disabled>Seleziona tipo…</option>
                             {TIPI_REFERTO.map((t) => <option key={t}>{t}</option>)}
                           </select>
                         </div>
@@ -1113,6 +1117,7 @@ export default function AtletiPage() {
                           <select value={nuovoReferto.esito}
                             onChange={(e) => setNuovoReferto((r) => r && ({ ...r, esito: e.target.value as EsitoReferto }))}
                             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]">
+                            <option value="" disabled>Seleziona esito…</option>
                             {ESITI_REFERTO.map((e) => <option key={e}>{e}</option>)}
                           </select>
                         </div>
