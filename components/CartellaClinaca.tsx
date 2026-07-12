@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Upload, FileText, Image, Trash2, ExternalLink, FolderOpen, ClipboardList, CheckCircle2 } from "lucide-react";
+import { Upload, FileText, Image, Trash2, ExternalLink, FolderOpen, ClipboardList, CheckCircle2, Sparkles, Loader2 } from "lucide-react";
 import { caricaDocs, salvaDoc, eliminaDoc, formatBytes, type DocMedico } from "@/lib/filestore";
-import { uid, type RefertoClinico } from "@/lib/store";
+import { uid, type RefertoClinico, type TipoReferto, type EsitoReferto } from "@/lib/store";
 
 const TIPI_ACCETTATI = "image/*,application/pdf";
 
@@ -19,16 +19,25 @@ const ESITO_STYLE: Record<string, string> = {
   "Negativo": "bg-red-100 text-red-700",
 };
 
+export interface ParsedReferto {
+  data: string;
+  tipo: TipoReferto;
+  esito: EsitoReferto;
+  note: string;
+}
+
 interface Props {
   atletaId: string;
   refertiClinici?: RefertoClinico[];
   onVaiADati?: () => void;
+  onParsedReferto?: (parsed: ParsedReferto) => void;
 }
 
-export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiADati }: Props) {
+export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiADati, onParsedReferto }: Props) {
   const [docs, setDocs] = useState<DocMedico[]>([]);
   const [caricando, setCaricando] = useState(false);
   const [appenaCaricati, setAppenaCaricati] = useState<string[]>([]);
+  const [analizzando, setAnalizzando] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const fileListRef = useRef<HTMLDivElement>(null);
 
@@ -75,6 +84,23 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
   const elimina = async (id: string) => {
     await eliminaDoc(id);
     await carica();
+  };
+
+  const analizza = async (doc: DocMedico) => {
+    if (!onParsedReferto) return;
+    setAnalizzando(doc.id);
+    try {
+      const fd = new FormData();
+      fd.append("file", doc.blob, doc.nome);
+      const res = await fetch("/api/parse-referto", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("Errore server");
+      const parsed = await res.json();
+      onParsedReferto(parsed);
+    } catch {
+      alert("Non è stato possibile analizzare il documento. Riprova.");
+    } finally {
+      setAnalizzando(null);
+    }
   };
 
   const onDrop = (e: React.DragEvent) => {
@@ -182,6 +208,19 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
                     {formatBytes(doc.dimensione)} · {new Date(doc.dataCaricamento).toLocaleDateString("it-IT")}
                   </p>
                 </div>
+                {onParsedReferto && (
+                  <button
+                    onClick={() => analizza(doc)}
+                    disabled={analizzando === doc.id}
+                    title="Compila referto con AI"
+                    className="text-[#C8102E]/60 hover:text-[#C8102E] transition-colors shrink-0 disabled:opacity-40"
+                  >
+                    {analizzando === doc.id
+                      ? <Loader2 className="w-4 h-4 animate-spin" />
+                      : <Sparkles className="w-4 h-4" />
+                    }
+                  </button>
+                )}
                 <button onClick={() => apri(doc)} title="Apri"
                   className="text-gray-400 hover:text-[#C8102E] transition-colors shrink-0">
                   <ExternalLink className="w-4 h-4" />

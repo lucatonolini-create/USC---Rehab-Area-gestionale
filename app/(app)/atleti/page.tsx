@@ -1164,6 +1164,10 @@ export default function AtletiPage() {
                     atletaId={selected.id}
                     refertiClinici={selected.refertiClinici ?? []}
                     onVaiADati={() => setTab("dati")}
+                    onParsedReferto={(parsed) => {
+                      setTab("dati");
+                      setNuovoReferto({ data: parsed.data, tipo: parsed.tipo, esito: parsed.esito, note: parsed.note });
+                    }}
                   />
                 </div>
               </div>
