@@ -539,6 +539,7 @@ export default function AtletiPage() {
   const [editStoricoForm, setEditStoricoForm] = useState<InfortunioStorico | null>(null);
   const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
   const [nuovoReferto, setNuovoReferto] = useState<{ data: string; tipo: TipoReferto; esito: EsitoReferto; note: string } | null>(null);
+  const [editingRefertoId, setEditingRefertoId] = useState<string | null>(null);
   const [fileReferto, setFileReferto] = useState<File | null>(null);
   const fileRefertoRef = useRef<HTMLInputElement>(null);
 
@@ -661,21 +662,29 @@ export default function AtletiPage() {
 
   const aggiungiReferto = async () => {
     if (!selected || !nuovoReferto) return;
-    const referto: RefertoClinico = {
-      id: crypto.randomUUID(),
-      data: nuovoReferto.data,
-      tipo: nuovoReferto.tipo,
-      esito: nuovoReferto.esito,
-      note: nuovoReferto.note || undefined,
-    };
-    const aggiornato: Atleta = {
-      ...selected,
-      refertiClinici: [...(selected.refertiClinici ?? []), referto],
-    };
+    const refertiEsistenti = selected.refertiClinici ?? [];
+    let nuoviReferti: RefertoClinico[];
+    if (editingRefertoId) {
+      nuoviReferti = refertiEsistenti.map((r) =>
+        r.id === editingRefertoId
+          ? { ...r, data: nuovoReferto.data, tipo: nuovoReferto.tipo, esito: nuovoReferto.esito, note: nuovoReferto.note || undefined }
+          : r
+      );
+    } else {
+      nuoviReferti = [...refertiEsistenti, {
+        id: crypto.randomUUID(),
+        data: nuovoReferto.data,
+        tipo: nuovoReferto.tipo,
+        esito: nuovoReferto.esito,
+        note: nuovoReferto.note || undefined,
+      }];
+    }
+    const aggiornato: Atleta = { ...selected, refertiClinici: nuoviReferti };
     aggiornato.progresso = calcolaProgressoAuto(aggiornato);
     setAtleti((prev) => prev.map((a) => a.id === selected.id ? aggiornato : a));
     setSelected(aggiornato);
     setNuovoReferto(null);
+    setEditingRefertoId(null);
     if (fileReferto) {
       await salvaDoc({
         id: uid(),
@@ -1002,9 +1011,16 @@ export default function AtletiPage() {
                             <p className="text-[10px] text-gray-400">{new Date(r.data + "T12:00").toLocaleDateString("it-IT")}</p>
                             {r.note && <p className="text-xs text-gray-500 mt-0.5">{r.note}</p>}
                           </div>
-                          <button onClick={() => rimuoviReferto(r.id)} className="text-gray-300 hover:text-red-400 shrink-0">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              onClick={() => { setEditingRefertoId(r.id); setNuovoReferto({ data: r.data, tipo: r.tipo, esito: r.esito, note: r.note ?? "" }); }}
+                              className="text-gray-300 hover:text-[#C8102E] transition-colors">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => rimuoviReferto(r.id)} className="text-gray-300 hover:text-red-400 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1098,13 +1114,13 @@ export default function AtletiPage() {
                           )}
                         </div>
                         <div className="flex gap-2 pt-0.5">
-                          <button onClick={() => { setNuovoReferto(null); setFileReferto(null); }}
+                          <button onClick={() => { setNuovoReferto(null); setEditingRefertoId(null); setFileReferto(null); }}
                             className="flex-1 text-sm border border-gray-200 rounded-lg py-2 text-gray-500 bg-white font-medium hover:bg-gray-100 transition-colors">
                             Annulla
                           </button>
                           <button onClick={aggiungiReferto}
                             className="flex-1 text-sm bg-[#C8102E] text-white rounded-lg py-2 font-semibold hover:bg-red-700 transition-colors">
-                            Aggiungi
+                            {editingRefertoId ? "Salva" : "Aggiungi"}
                           </button>
                         </div>
                       </div>
