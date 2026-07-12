@@ -621,6 +621,10 @@ async function esportaPDFPanoramica(params: {
         bot -= segH;
         doc.setFillColor(...(colorMap[k] ?? [180,180,180] as [number,number,number]));
         doc.rect(bx, bot, bw, segH, "F");
+        if (segH >= 3) {
+          doc.setFontSize(4); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
+          doc.text(`${cnt}`, bx + bw / 2, bot + segH / 2 + 1, { align: "center" });
+        }
       });
       doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
       doc.text(t.label, M + i * slot + slot / 2, sy + cHh + 3, { align: "center" });
@@ -1076,6 +1080,10 @@ async function esportaPDFReport(
           bot -= segH;
           doc.setFillColor(...(colorMap[k] ?? [180, 180, 180] as [number, number, number]));
           doc.rect(bx, bot, bw, segH, "F");
+          if (segH >= 3) {
+            doc.setFontSize(4); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
+            doc.text(`${cnt}`, bx + bw / 2, bot + segH / 2 + 1, { align: "center" });
+          }
         });
         doc.setFontSize(4); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
         doc.text(t.label, M + i * slot + slot / 2, sy + cHr + 3, { align: "center" });
