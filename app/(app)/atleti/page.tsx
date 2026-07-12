@@ -339,6 +339,49 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
   y = (doc as any).lastAutoTable.finalY + 10;
 
+  // ── Referti clinici ───────────────────────────────────────────────────────
+  const referti = [...(atleta.refertiClinici ?? [])].sort((a, b) => b.data.localeCompare(a.data));
+  checkPage(20);
+  y = secTitle("Referti clinici", y);
+  if (referti.length === 0) {
+    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...gray);
+    doc.text("Nessun referto registrato.", M, y); y += 10;
+  } else {
+    const esitoColor = (esito: string): [number, number, number] => {
+      if (esito === "Negativo") return [34, 139, 34];
+      if (esito === "In miglioramento") return [180, 120, 0];
+      return [180, 30, 30]; // Positivo
+    };
+    autoTable(doc, {
+      startY: y,
+      head: [["Data", "Tipo esame", "Esito", "Note"]],
+      body: referti.map((r) => [
+        new Date(r.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" }),
+        r.tipo,
+        r.esito,
+        r.note || "—",
+      ]),
+      headStyles: hS(dark),
+      bodyStyles: { ...bS, fontSize: 8 },
+      alternateRowStyles: aS,
+      margin: { left: M, right: M },
+      columnStyles: {
+        0: { cellWidth: 26 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 36 },
+        3: { cellWidth: "auto" as any },
+      },
+      didDrawCell: (data: any) => {
+        if (data.section === "body" && data.column.index === 2) {
+          const esito = referti[data.row.index]?.esito ?? "";
+          data.cell.styles.textColor = esitoColor(esito);
+          data.cell.styles.fontStyle = "bold";
+        }
+      },
+    });
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
+
   // ── Storico infortuni ──────────────────────────────────────────────────────
   const storico = atleta.storicoInfortuni ?? [];
   // Giorni persi = numero di sessioni inserite per quell'infortunio (non giorni di calendario)
