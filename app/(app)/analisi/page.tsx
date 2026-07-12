@@ -1576,8 +1576,8 @@ export default function AnalisiPage() {
                                 <div key={cat} className="flex items-center justify-center overflow-hidden"
                                   style={{ height: `${segH}px`, backgroundColor: trendCombinato.catColorMap[cat], flexShrink: 0 }}>
                                   {segH >= 12 && (
-                                    <span style={{ fontSize: "6px", fontWeight: 700, color: "white", lineHeight: 1, whiteSpace: "nowrap" }}>
-                                      {cat} {cnt}
+                                    <span style={{ fontSize: "6px", fontWeight: 700, color: "white", lineHeight: 1 }}>
+                                      {cnt}
                                     </span>
                                   )}
                                 </div>
