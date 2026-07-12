@@ -1181,6 +1181,7 @@ export default function AnalisiPage() {
   const [esportando, setEsportando] = useState<string | null>(null);
 
   const oggi = new Date();
+  const stagionAnno = oggi.getMonth() >= 6 ? oggi.getFullYear() : oggi.getFullYear() - 1;
   const [reportAnno, setReportAnno] = useState(oggi.getFullYear());
   const [reportMese, setReportMese] = useState(oggi.getMonth());
   const [filtroCat, setFiltroCat] = useState("Tutte");
@@ -1256,11 +1257,11 @@ export default function AnalisiPage() {
 
   const trendMensile = useMemo(() => {
     return Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(oggi.getFullYear(), oggi.getMonth() - 11 + i, 1);
+      const d = new Date(stagionAnno, 6 + i, 1);
       const anno = d.getFullYear();
       const mese = d.getMonth();
       const count = atleti.filter((a) => atletaAttivoInMese(a, anno, mese)).length;
-      return { label: `${MESI[mese]} ${anno !== oggi.getFullYear() ? anno : ""}`.trim(), count };
+      return { label: `${MESI[mese]} ${anno !== stagionAnno ? anno : ""}`.trim(), count };
     });
   }, [atleti]);
 
@@ -1294,9 +1295,9 @@ export default function AnalisiPage() {
 
   const trendCombinato = useMemo(() => {
     const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(oggi.getFullYear(), oggi.getMonth() - 11 + i, 1);
+      const d = new Date(stagionAnno, 6 + i, 1);
       const anno = d.getFullYear(); const mese = d.getMonth();
-      const label = MESI[mese] + (anno !== oggi.getFullYear() ? ` ${anno}` : "");
+      const label = MESI[mese] + (anno !== stagionAnno ? ` ${anno}` : "");
       const attv = atleti.filter((a) => atletaAttivoInMese(a, anno, mese));
       const perCat: Record<string, number> = {};
       const perTipo: Record<string, number> = {};
@@ -1517,7 +1518,7 @@ export default function AnalisiPage() {
 
           {/* Trend mensile */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h2 className="font-bold text-gray-900 mb-1">Atleti in riabilitazione – ultimi 12 mesi</h2>
+            <h2 className="font-bold text-gray-900 mb-1">Atleti in riabilitazione – stagione {stagionAnno}/{stagionAnno + 1}</h2>
             <p className="text-xs text-gray-400 mb-5">Numero di atleti attivi per ogni mese del periodo</p>
             {atleti.length === 0 ? (
               <p className="text-gray-400 text-sm text-center py-8">Nessun dato disponibile</p>
@@ -1532,8 +1533,8 @@ export default function AnalisiPage() {
                     return (
                       <div key={label} className="flex-1 flex flex-col items-center gap-0.5" style={{ minWidth: "28px" }}>
                         <span className="text-[10px] font-bold text-gray-600">{count > 0 ? count : ""}</span>
-                        <div className="w-full flex items-end" style={{ height: "72px" }}>
-                          <div className={`w-full rounded-t transition-all duration-500 ${isOggi ? "bg-[#C8102E]" : "bg-gray-200"}`}
+                        <div className="w-full flex items-end justify-center" style={{ height: "72px" }}>
+                          <div className={`w-1/2 rounded-t transition-all duration-500 ${isOggi ? "bg-[#C8102E]" : "bg-gray-200"}`}
                             style={{ height: `${h}%` }} />
                         </div>
                         <span className="text-[9px] text-gray-400 text-center leading-none font-medium">{nomeMese}</span>
@@ -1563,7 +1564,7 @@ export default function AnalisiPage() {
                       return (
                         <div key={label} className="flex-1 flex flex-col items-center justify-end gap-0.5" style={{ minWidth: "22px" }}>
                           {total > 0 && <span className="text-[8px] font-bold text-gray-500">{total}</span>}
-                          <div className="w-full flex flex-col-reverse overflow-hidden rounded-t"
+                          <div className="w-1/2 flex flex-col-reverse overflow-hidden rounded-t"
                             style={{ height: `${barH}px`, backgroundColor: "#F3F4F6" }}>
                             {trendCombinato.catPresenti.map((cat) => {
                               const cnt = perCat[cat] ?? 0;
@@ -1582,7 +1583,7 @@ export default function AnalisiPage() {
                       return (
                         <div key={label} className="flex-1 flex flex-col items-center justify-end gap-0.5" style={{ minWidth: "22px" }}>
                           {total > 0 && <span className="text-[8px] font-bold text-gray-500">{total}</span>}
-                          <div className="w-full flex flex-col-reverse overflow-hidden rounded-t"
+                          <div className="w-1/2 flex flex-col-reverse overflow-hidden rounded-t"
                             style={{ height: `${barH}px`, backgroundColor: "#F3F4F6" }}>
                             {trendCombinato.tipiPresenti.map((tipo) => {
                               const cnt = perTipo[tipo] ?? 0;
