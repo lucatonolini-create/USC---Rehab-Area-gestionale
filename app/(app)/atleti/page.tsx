@@ -479,7 +479,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     // Programs for this injury
     if (injProgs.length > 0) {
       checkPage(20, sub);
-      y = secTitle(`Sessioni di lavoro — ${injProgs.length} sessioni`, y);
+      y = secTitle(`Sessioni di lavoro — ${injProgs.filter(isSessionePDF).length} sessioni`, y);
       renderWeeklyTable(injProgs, sub);
     } else {
       checkPage(12, sub);
@@ -497,7 +497,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.addPage();
     addHeader(`${nd(atleta)}  ·  Sessioni non associate`);
     y = HDR + 8;
-    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.length} sessioni`, y);
+    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.filter(isSessionePDF).length} sessioni`, y);
     renderWeeklyTable(unassigned, `${nd(atleta)}  ·  Sessioni non associate`);
   }
 
