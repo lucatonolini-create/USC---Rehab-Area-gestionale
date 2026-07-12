@@ -14,8 +14,7 @@ function IconaFile({ mimeType }: { mimeType: string }) {
 
 const ESITO_STYLE: Record<string, string> = {
   "Positivo": "bg-green-100 text-green-700",
-  "Nella norma": "bg-blue-100 text-blue-700",
-  "Miglioramento parziale": "bg-yellow-100 text-yellow-700",
+  "In miglioramento": "bg-yellow-100 text-yellow-700",
   "Negativo": "bg-red-100 text-red-700",
 };
 

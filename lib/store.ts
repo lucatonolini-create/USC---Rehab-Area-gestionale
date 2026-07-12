@@ -107,9 +107,9 @@ export interface QuestionarioKinesiofobia {
 }
 
 export type TipoReferto = "Ecografia" | "Risonanza Magnetica" | "TAC" | "Radiografia" | "Visita clinica" | "Altro";
-export type EsitoReferto = "Positivo" | "Nella norma" | "Miglioramento parziale" | "Negativo";
+export type EsitoReferto = "Positivo" | "In miglioramento" | "Negativo";
 export const TIPI_REFERTO: TipoReferto[] = ["Ecografia", "Risonanza Magnetica", "TAC", "Radiografia", "Visita clinica", "Altro"];
-export const ESITI_REFERTO: EsitoReferto[] = ["Positivo", "Nella norma", "Miglioramento parziale", "Negativo"];
+export const ESITI_REFERTO: EsitoReferto[] = ["Positivo", "In miglioramento", "Negativo"];
 
 export interface RefertoClinico {
   id: string;
@@ -205,7 +205,7 @@ export function calcolaProgressoAuto(
   const referti = [...(atleta.refertiClinici ?? [])].sort((a, b) => b.data.localeCompare(a.data));
   if (referti.length > 0) {
     if (referti[0].esito === "Negativo") base = Math.min(base, 40);
-    else if (referti[0].esito === "Miglioramento parziale") base = Math.min(base, 70);
+    else if (referti[0].esito === "In miglioramento") base = Math.min(base, 70);
   }
   return Math.max(0, base);
 }

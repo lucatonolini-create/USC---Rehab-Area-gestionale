@@ -976,7 +976,7 @@ export default function AtletiPage() {
                       <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Referti clinici</p>
                       {!nuovoReferto && (
                         <button
-                          onClick={() => setNuovoReferto({ data: new Date().toISOString().slice(0, 10), tipo: "Ecografia", esito: "Nella norma", note: "" })}
+                          onClick={() => setNuovoReferto({ data: new Date().toISOString().slice(0, 10), tipo: "Ecografia", esito: "Positivo", note: "" })}
                           className="text-xs text-[#C8102E] font-medium hover:underline flex items-center gap-1">
                           <Plus className="w-3 h-3" /> Aggiungi
                         </button>
@@ -995,8 +995,7 @@ export default function AtletiPage() {
                               <span className="text-xs font-semibold text-gray-700">{r.tipo}</span>
                               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                                 r.esito === "Positivo" ? "bg-green-100 text-green-700"
-                                : r.esito === "Nella norma" ? "bg-blue-100 text-blue-700"
-                                : r.esito === "Miglioramento parziale" ? "bg-yellow-100 text-yellow-700"
+                                : r.esito === "In miglioramento" ? "bg-yellow-100 text-yellow-700"
                                 : "bg-red-100 text-red-700"
                               }`}>{r.esito}</span>
                             </div>
