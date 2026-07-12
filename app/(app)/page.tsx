@@ -25,13 +25,19 @@ export default function Dashboard() {
   const [mostraModifica, setMostraModifica] = useState(false);
 
   useEffect(() => {
-    const reload = () => {
-      loadAtleti().then(setAtleti);
-      loadProgrammi().then(setProgrammi);
+    const reload = async () => {
+      const atletiData = await loadAtleti();
+      setAtleti(atletiData);
+      if (atletiData.length > 0) {
+        const all = (await Promise.all(atletiData.map((a) => loadProgrammi(a.id)))).flat();
+        setProgrammi(all);
+      } else {
+        setProgrammi([]);
+      }
     };
     reload();
-    const unsubAtleti = subscribeToAtleti(() => loadAtleti().then(setAtleti));
-    const unsubProgrammi = subscribeToProgrammi(() => loadProgrammi().then(setProgrammi));
+    const unsubAtleti = subscribeToAtleti(reload);
+    const unsubProgrammi = subscribeToProgrammi(reload);
     const onVisible = () => { if (document.visibilityState === "visible") reload(); };
     const onOnline = () => reload();
     document.addEventListener("visibilitychange", onVisible);
