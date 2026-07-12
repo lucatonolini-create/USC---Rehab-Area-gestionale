@@ -54,6 +54,8 @@ type TipoReport = "mensile" | "trimestrale" | "semestrale" | "annuale" | "stagio
 function atletaAttivoInMese(a: Atleta, anno: number, mese: number): boolean {
   const meseStart = new Date(anno, mese, 1);
   const meseEnd = new Date(anno, mese + 1, 0);
+  // I mesi futuri non contano: un infortunio aperto non proietta atleti nel futuro
+  if (meseStart > new Date()) return false;
   const periodoAttivo = (inizioStr?: string, fineStr?: string): boolean => {
     if (!inizioStr) return false;
     const inizio = new Date(inizioStr + "T12:00");
