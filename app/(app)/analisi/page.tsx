@@ -1196,6 +1196,7 @@ export default function AnalisiPage() {
 
   const attivi = atleti.filter((a) => a.stato !== "Disponibile");
   const guariti = atleti.filter((a) => a.stato === "Disponibile");
+  const programmiReali = programmi.filter((p) => !p.riposo);
 
   const mesiPeriodo: { anno: number; mese: number }[] = (() => {
     if (tipoReport === "mensile") return [{ anno: reportAnno, mese: reportMese }];
@@ -1338,7 +1339,7 @@ export default function AnalisiPage() {
     setEsportando(key);
     try {
       if (tab === "overview") {
-        const params = { atleti, programmi, perCategoria, perTipoInfortunio, perInfortunio, trendMensile };
+        const params = { atleti, programmi: programmiReali, perCategoria, perTipoInfortunio, perInfortunio, trendMensile };
         if (tipo === "excel") await esportaExcelPanoramica(params);
         else await esportaPDFPanoramica(params);
       } else {
@@ -1391,7 +1392,7 @@ export default function AnalisiPage() {
             <StatCard label="Atleti totali" value={atleti.length} sub="in gestione" icon={Users} color="bg-[#2B2B2B]" />
             <StatCard label="In riabilitazione" value={attivi.length} sub="attualmente attivi" icon={Activity} color="bg-orange-500" />
             <StatCard label="Guariti" value={guariti.length} sub="completato percorso" icon={TrendingUp} color="bg-green-500" />
-            <StatCard label="Programmi totali" value={programmi.length} sub="sessioni create" icon={BarChart2} color="bg-[#C8102E]" />
+            <StatCard label="Programmi totali" value={programmiReali.length} sub="sessioni create" icon={BarChart2} color="bg-[#C8102E]" />
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
