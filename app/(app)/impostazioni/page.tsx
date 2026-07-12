@@ -67,15 +67,15 @@ export default function ImpostazioniPage() {
   const sincronizza = async () => {
     setSyncState("loading");
     setSyncMsg("");
-    const { ok, fail } = await pushAllLocalToSupabase();
+    const { ok, fail, lastError } = await pushAllLocalToSupabase();
     if (fail === 0) {
       setSyncState("ok");
       setSyncMsg(`Sincronizzati ${ok} elementi con successo.`);
     } else {
       setSyncState("error");
-      setSyncMsg(`${ok} ok, ${fail} falliti. Controlla la connessione.`);
+      setSyncMsg(`${ok} ok, ${fail} falliti. Errore: ${lastError}`);
     }
-    setTimeout(() => setSyncState("idle"), 5000);
+    setTimeout(() => setSyncState("idle"), 15000);
   };
 
   return (

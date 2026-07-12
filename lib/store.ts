@@ -461,18 +461,19 @@ export async function syncFlush(): Promise<void> {
 
 // ─── Force-push all local data to Supabase ──────────────────────────────────
 
-export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: number }> {
-  if (!isOnline()) return { ok: 0, fail: 0 };
+export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: number; lastError: string }> {
+  if (!isOnline()) return { ok: 0, fail: 0, lastError: "Dispositivo offline" };
   const db = getDB();
-  let ok = 0; let fail = 0;
+  let ok = 0; let fail = 0; let lastError = "";
 
   // Atleti
   const atleti = await db.atleti.toArray();
   for (const a of atleti) {
     try {
       const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
-      if (!error) ok++; else { console.error("[pushAll] atleta", a.id, error.message); fail++; }
-    } catch (e) { console.error("[pushAll] atleta exception", e); fail++; }
+      if (!error) ok++;
+      else { lastError = `atleti: ${error.code} ${error.message}`; console.error("[pushAll] atleta", error); fail++; }
+    } catch (e) { lastError = `atleti exception: ${e}`; fail++; }
   }
 
   // Programmi
@@ -480,14 +481,14 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
   for (const p of programmi) {
     try {
       const { error } = await supabase.from("programmi").upsert(programmaToRow(p));
-      if (!error) ok++; else { console.error("[pushAll] programma", p.id, error.message); fail++; }
-    } catch (e) { console.error("[pushAll] programma exception", e); fail++; }
+      if (!error) ok++;
+      else { lastError = `programmi: ${error.code} ${error.message} ${error.details ?? ""}`; console.error("[pushAll] programma", error); fail++; }
+    } catch (e) { lastError = `programmi exception: ${e}`; fail++; }
   }
 
-  // Clear pendingOps after successful push
   if (fail === 0) await db.pendingOps.clear();
 
-  return { ok, fail };
+  return { ok, fail, lastError };
 }
 
 // ─── Atleti ─────────────────────────────────────────────────────────────────
