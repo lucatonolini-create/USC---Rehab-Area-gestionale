@@ -994,9 +994,9 @@ export default function AtletiPage() {
                             <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
                               <span className="text-xs font-semibold text-gray-700">{r.tipo}</span>
                               <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                                r.esito === "Positivo" ? "bg-green-100 text-green-700"
+                                r.esito === "Positivo" ? "bg-red-100 text-red-700"
                                 : r.esito === "In miglioramento" ? "bg-yellow-100 text-yellow-700"
-                                : "bg-red-100 text-red-700"
+                                : "bg-green-100 text-green-700"
                               }`}>{r.esito}</span>
                             </div>
                             <p className="text-[10px] text-gray-400">{new Date(r.data + "T12:00").toLocaleDateString("it-IT")}</p>
