@@ -999,9 +999,11 @@ export default function AtletiPage() {
                       <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2 overflow-hidden">
                         <div>
                           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Data</p>
-                          <input type="date" value={nuovoReferto.data}
-                            onChange={(e) => setNuovoReferto((r) => r && ({ ...r, data: e.target.value }))}
-                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]" />
+                          <div className="w-full overflow-hidden">
+                            <input type="date" value={nuovoReferto.data}
+                              onChange={(e) => setNuovoReferto((r) => r && ({ ...r, data: e.target.value }))}
+                              className="w-full min-w-0 text-sm border border-gray-200 rounded-lg px-2 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]" />
+                          </div>
                         </div>
                         <div>
                           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Tipo esame</p>

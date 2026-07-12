@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Upload, FileText, Image, Trash2, ExternalLink, FolderOpen, ClipboardList } from "lucide-react";
+import { Upload, FileText, Image, Trash2, ExternalLink, FolderOpen, ClipboardList, CheckCircle2 } from "lucide-react";
 import { caricaDocs, salvaDoc, eliminaDoc, formatBytes, type DocMedico } from "@/lib/filestore";
 import { uid, type RefertoClinico } from "@/lib/store";
 
@@ -28,7 +28,9 @@ interface Props {
 export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiADati }: Props) {
   const [docs, setDocs] = useState<DocMedico[]>([]);
   const [caricando, setCaricando] = useState(false);
+  const [appenaCaricati, setAppenaCaricati] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileListRef = useRef<HTMLDivElement>(null);
 
   const carica = async () => {
     const lista = await caricaDocs(atletaId);
@@ -40,9 +42,12 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setCaricando(true);
+    const nuoviIds: string[] = [];
     for (const file of Array.from(files)) {
+      const id = uid();
+      nuoviIds.push(id);
       await salvaDoc({
-        id: uid(),
+        id,
         atletaId,
         nome: file.name,
         mimeType: file.type,
@@ -53,6 +58,12 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
     }
     await carica();
     setCaricando(false);
+    setAppenaCaricati(nuoviIds);
+    // Scroll alla lista file e rimuovi highlight dopo 2s
+    setTimeout(() => {
+      fileListRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 50);
+    setTimeout(() => setAppenaCaricati([]), 2500);
   };
 
   const apri = (doc: DocMedico) => {
@@ -111,9 +122,19 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
 
       {/* ── Documenti allegati ───────────────────────────────────── */}
       <div>
-        {(refertiOrdinati.length > 0 || docs.length > 0) && (
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Documenti allegati</p>
-        )}
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+            Documenti allegati{docs.length > 0 ? ` (${docs.length})` : ""}
+          </p>
+          {caricando && (
+            <span className="text-[10px] text-gray-400 animate-pulse">Caricamento…</span>
+          )}
+          {!caricando && appenaCaricati.length > 0 && (
+            <span className="text-[10px] text-green-600 font-semibold flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3" /> Salvato
+            </span>
+          )}
+        </div>
 
         {/* Drop zone */}
         <div
@@ -132,23 +153,28 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
           />
           <Upload className="w-7 h-7 text-gray-300 mx-auto mb-1.5" />
           <p className="text-sm font-medium text-gray-500">
-            {caricando ? "Caricamento in corso..." : "Trascina qui o clicca per caricare"}
+            Trascina qui o clicca per caricare
           </p>
           <p className="text-xs text-gray-300 mt-0.5">PDF, immagini (ecografie, RMN, referti…)</p>
         </div>
 
         {/* Lista file */}
         {docs.length === 0 ? (
-          refertiOrdinati.length === 0 && (
-            <div className="text-center py-6">
-              <FolderOpen className="w-10 h-10 text-gray-200 mx-auto mb-2" />
-              <p className="text-sm text-gray-400">Nessun documento caricato</p>
-            </div>
-          )
+          <div className="text-center py-5">
+            <FolderOpen className="w-8 h-8 text-gray-200 mx-auto mb-1.5" />
+            <p className="text-xs text-gray-400">Nessun documento caricato</p>
+          </div>
         ) : (
-          <div className="space-y-2 mt-3">
+          <div className="space-y-2 mt-3" ref={fileListRef}>
             {docs.map((doc) => (
-              <div key={doc.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+              <div
+                key={doc.id}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors duration-700 ${
+                  appenaCaricati.includes(doc.id)
+                    ? "bg-green-50 border border-green-200"
+                    : "bg-gray-50"
+                }`}
+              >
                 <IconaFile mimeType={doc.mimeType} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{doc.nome}</p>
@@ -157,11 +183,11 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
                   </p>
                 </div>
                 <button onClick={() => apri(doc)} title="Apri"
-                  className="text-gray-400 hover:text-[#C8102E] transition-colors">
+                  className="text-gray-400 hover:text-[#C8102E] transition-colors shrink-0">
                   <ExternalLink className="w-4 h-4" />
                 </button>
                 <button onClick={() => elimina(doc.id)} title="Elimina"
-                  className="text-gray-300 hover:text-red-500 transition-colors">
+                  className="text-gray-300 hover:text-red-500 transition-colors shrink-0">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
