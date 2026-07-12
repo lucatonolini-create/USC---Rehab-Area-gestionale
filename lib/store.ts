@@ -106,6 +106,19 @@ export interface QuestionarioKinesiofobia {
   infortunioLabel?: string;
 }
 
+export type TipoReferto = "Ecografia" | "Risonanza Magnetica" | "Radiografia" | "Visita clinica" | "Altro";
+export type EsitoReferto = "Positivo" | "Nella norma" | "Miglioramento parziale" | "Negativo";
+export const TIPI_REFERTO: TipoReferto[] = ["Ecografia", "Risonanza Magnetica", "Radiografia", "Visita clinica", "Altro"];
+export const ESITI_REFERTO: EsitoReferto[] = ["Positivo", "Nella norma", "Miglioramento parziale", "Negativo"];
+
+export interface RefertoClinico {
+  id: string;
+  data: string;
+  tipo: TipoReferto;
+  esito: EsitoReferto;
+  note?: string;
+}
+
 export interface Atleta {
   id: string;
   nome: string;          // nome completo "Cognome Nome" es. "Tonolini Luca" — usato come athlete_name
@@ -125,6 +138,8 @@ export interface Atleta {
   fineRehab?: string;
   stato: Stato;
   progresso: number;
+  progressoManuale?: number;  // se impostato, sovrascrive il calcolo automatico
+  refertiClinici?: RefertoClinico[];
   fisioterapista: string;
   preparatoreAtletico: string;
   telefono: string;
@@ -155,6 +170,48 @@ export function calcolaPHV(
     + 0.007216  * eta * sh
     + 0.02292   * (w / h) * 100;
   return { offset: Math.round(offset * 100) / 100, etaPHV: Math.round((eta - offset) * 10) / 10 };
+}
+
+// Tempi di recupero standard per tipo di infortunio (in giorni)
+export const RECOVERY_DAYS: Partial<Record<TipoInfortunio, number>> = {
+  "Frattura": 84,
+  "Altro Infortunio Osseo": 56,
+  "Dislocazione/Sublussazione": 42,
+  "Distorsione/Lesione Legamentosa": 42,
+  "Lesione meniscale o cartilaginea": 84,
+  "Muscolare: Strappo/Stiramento/Crampo": 21,
+  "Tendineo: Tendinopatia/Lesione/Borsite": 56,
+  "Ematoma/Contusione": 14,
+  "Abrasione": 7,
+  "Vescica": 7,
+  "Lacerazione/Taglio": 14,
+  "Concussion (with or without loss of consciousness)": 21,
+  "Infortunio Nervoso": 56,
+  "Infortunio Dentale": 14,
+  "Altri infortuni": 28,
+  "Malattia": 14,
+};
+
+export function calcolaProgressoAuto(
+  atleta: Pick<Atleta, "stato" | "inizioRehab" | "tipoInfortunio" | "refertiClinici">
+): number {
+  if (atleta.stato === "Disponibile") return 100;
+  if (!atleta.inizioRehab) return 0;
+  const giorni = Math.max(0, Math.floor(
+    (Date.now() - new Date(atleta.inizioRehab + "T12:00").getTime()) / 864e5
+  ));
+  const expectedDays = (atleta.tipoInfortunio ? RECOVERY_DAYS[atleta.tipoInfortunio] : undefined) ?? 42;
+  let base = Math.min(95, Math.floor((giorni / expectedDays) * 100));
+  const referti = [...(atleta.refertiClinici ?? [])].sort((a, b) => b.data.localeCompare(a.data));
+  if (referti.length > 0) {
+    if (referti[0].esito === "Negativo") base = Math.min(base, 40);
+    else if (referti[0].esito === "Miglioramento parziale") base = Math.min(base, 70);
+  }
+  return Math.max(0, base);
+}
+
+function progrEffettivo(a: Atleta): number {
+  return a.progressoManuale !== undefined ? a.progressoManuale : calcolaProgressoAuto(a);
 }
 
 export interface Esercizio {
@@ -329,6 +386,9 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
     note: (r.note as string) ?? "",
     storicoInfortuni: (r.storico_infortuni as InfortunioStorico[]) ?? [],
     questionariKinesiofobia: (r.questionari_kinesiofobia as QuestionarioKinesiofobia[]) ?? [],
+    refertiClinici: (r.referti_clinici as RefertoClinico[]) ?? [],
+    progressoManuale: (r.progresso_manuale !== null && r.progresso_manuale !== undefined)
+      ? (r.progresso_manuale as number) : undefined,
     peso: (r.peso as string) ?? "",
     altezza: (r.altezza as string) ?? "",
     altezzaDaSeduto: (r.altezza_da_seduto as string) ?? "",
@@ -361,6 +421,8 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
     note: a.note,
     storico_infortuni: a.storicoInfortuni ?? [],
     questionari_kinesiofobia: a.questionariKinesiofobia ?? [],
+    referti_clinici: a.refertiClinici ?? [],
+    progresso_manuale: a.progressoManuale ?? null,
     peso: a.peso ?? null,
     altezza: a.altezza ?? null,
     altezza_da_seduto: a.altezzaDaSeduto ?? null,
@@ -443,8 +505,16 @@ export async function syncFlush(): Promise<void> {
     try {
       if (op.table === "atleti") {
         if (op.op === "upsert") {
-          const { error } = await supabase.from("atleti").upsert(op.payload as Record<string, unknown>);
-          ok = !error;
+          const row = op.payload as Record<string, unknown>;
+          const { error } = await supabase.from("atleti").upsert(row);
+          if (error?.code === "PGRST204") {
+            // New columns (referti_clinici, progresso_manuale) don't exist in Supabase yet; retry without them
+            const { referti_clinici, progresso_manuale, ...safeRow } = row;
+            const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
+            ok = !e2;
+          } else {
+            ok = !error;
+          }
         } else {
           await supabase.from("atleti").delete().eq("id", (op.payload as { id: string }).id);
           ok = true;
@@ -479,9 +549,18 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
   const atleti = await db.atleti.toArray();
   for (const a of atleti) {
     try {
-      const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
-      if (!error) ok++;
-      else { lastError = `atleti: ${error.code} ${error.message}`; console.error("[pushAll] atleta", error); fail++; }
+      const row = atletaToRow(a);
+      const { error } = await supabase.from("atleti").upsert(row);
+      if (error?.code === "PGRST204") {
+        const { referti_clinici, progresso_manuale, ...safeRow } = row;
+        const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
+        if (!e2) ok++;
+        else { lastError = `atleti: ${e2.code} ${e2.message}`; fail++; }
+      } else if (!error) {
+        ok++;
+      } else {
+        lastError = `atleti: ${error.code} ${error.message}`; console.error("[pushAll] atleta", error); fail++;
+      }
     } catch (e) { lastError = `atleti exception: ${e}`; fail++; }
   }
 
@@ -511,15 +590,23 @@ export async function loadAtleti(): Promise<Atleta[]> {
         pullPerformanceAthletesMap().catch(() => new Map()),
       ]);
       if (!sbResult.error && sbResult.data) {
+        // Merge with local to preserve IndexedDB-only fields (refertiClinici, progressoManuale)
+        // in case Supabase columns don't exist yet
+        const localAll = await db.atleti.toArray();
+        const localMap = new Map(localAll.map(a => [a.id, a]));
         const atleti = sbResult.data.map(rowToAtleta).map(a => {
           const perf = perfMap.get(a.nome);
-          if (!perf) return a;
+          const local = localMap.get(a.id);
           return {
             ...a,
-            dataNascita: a.dataNascita || perf.birth_date || a.dataNascita,
-            nomeCompleto: perf.full_name || a.nomeCompleto,
+            dataNascita: a.dataNascita || perf?.birth_date || a.dataNascita,
+            nomeCompleto: perf?.full_name || a.nomeCompleto,
+            // Prefer Supabase values if present, else fall back to local
+            refertiClinici: (a.refertiClinici && a.refertiClinici.length > 0)
+              ? a.refertiClinici : (local?.refertiClinici ?? []),
+            progressoManuale: a.progressoManuale ?? local?.progressoManuale,
           };
-        });
+        }).map(a => ({ ...a, progresso: progrEffettivo(a) }));
         await db.atleti.bulkPut(atleti);
         // Persisti data di nascita importata su Supabase (fire-and-forget)
         for (const a of atleti) {
@@ -532,14 +619,15 @@ export async function loadAtleti(): Promise<Atleta[]> {
       }
     } catch {}
   }
-  return db.atleti.toArray();
+  return (await db.atleti.toArray()).map(a => ({ ...a, progresso: progrEffettivo(a) }));
 }
 
 export async function upsertAtleta(a: Atleta): Promise<void> {
   const db = getDB();
-  await db.atleti.put(a);
-  await db.pendingOps.add({ table: "atleti", op: "upsert", payload: atletaToRow(a), createdAt: Date.now() });
-  if (isOnline()) syncFlush().then(() => syncInfortunioAPI(a)).catch(() => {});
+  const toSave = { ...a, progresso: progrEffettivo(a) };
+  await db.atleti.put(toSave);
+  await db.pendingOps.add({ table: "atleti", op: "upsert", payload: atletaToRow(toSave), createdAt: Date.now() });
+  if (isOnline()) syncFlush().then(() => syncInfortunioAPI(toSave)).catch(() => {});
 }
 
 export async function deleteAtleta(id: string): Promise<void> {

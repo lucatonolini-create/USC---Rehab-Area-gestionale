@@ -5,8 +5,10 @@ import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, C
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
-  CATEGORIE, TIPI_INFORTUNIO, calcolaPHV,
+  CATEGORIE, TIPI_INFORTUNIO, calcolaPHV, calcolaProgressoAuto,
+  TIPI_REFERTO, ESITI_REFERTO,
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
+  type RefertoClinico, type TipoReferto, type EsitoReferto,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
@@ -535,6 +537,7 @@ export default function AtletiPage() {
   const [editStorico, setEditStorico] = useState<{ inf: InfortunioStorico; idx: number } | null>(null);
   const [editStoricoForm, setEditStoricoForm] = useState<InfortunioStorico | null>(null);
   const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
+  const [nuovoReferto, setNuovoReferto] = useState<{ data: string; tipo: TipoReferto; esito: EsitoReferto; note: string } | null>(null);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -648,6 +651,38 @@ export default function AtletiPage() {
       progresso: 0,
       storicoInfortuni: nuovoStorico,
     };
+    setAtleti((prev) => prev.map((a) => a.id === selected.id ? aggiornato : a));
+    setSelected(aggiornato);
+    await upsertAtleta(aggiornato);
+  };
+
+  const aggiungiReferto = async () => {
+    if (!selected || !nuovoReferto) return;
+    const referto: RefertoClinico = {
+      id: crypto.randomUUID(),
+      data: nuovoReferto.data,
+      tipo: nuovoReferto.tipo,
+      esito: nuovoReferto.esito,
+      note: nuovoReferto.note || undefined,
+    };
+    const aggiornato: Atleta = {
+      ...selected,
+      refertiClinici: [...(selected.refertiClinici ?? []), referto],
+    };
+    aggiornato.progresso = calcolaProgressoAuto(aggiornato);
+    setAtleti((prev) => prev.map((a) => a.id === selected.id ? aggiornato : a));
+    setSelected(aggiornato);
+    setNuovoReferto(null);
+    await upsertAtleta(aggiornato);
+  };
+
+  const rimuoviReferto = async (refertoId: string) => {
+    if (!selected) return;
+    const aggiornato: Atleta = {
+      ...selected,
+      refertiClinici: (selected.refertiClinici ?? []).filter((r) => r.id !== refertoId),
+    };
+    aggiornato.progresso = calcolaProgressoAuto(aggiornato);
     setAtleti((prev) => prev.map((a) => a.id === selected.id ? aggiornato : a));
     setSelected(aggiornato);
     await upsertAtleta(aggiornato);
@@ -905,12 +940,108 @@ export default function AtletiPage() {
                 <div className="bg-gray-50 rounded-xl p-3">
                   <div className="flex justify-between mb-1.5">
                     <p className="text-xs text-gray-400">Progresso recupero</p>
-                    <p className="text-xs font-bold text-[#C8102E]">{selected.progresso}%</p>
+                    <div className="flex items-center gap-1.5">
+                      {selected.progressoManuale !== undefined && (
+                        <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
+                          Manuale
+                        </span>
+                      )}
+                      <p className="text-xs font-bold text-[#C8102E]">{selected.progresso}%</p>
+                    </div>
                   </div>
                   <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${selected.progresso}%` }} />
                   </div>
                 </div>
+
+                {/* Referti clinici */}
+                {selected.stato === "Infortunato" && (
+                  <div className="pt-2 border-t border-gray-100">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Referti clinici</p>
+                      {!nuovoReferto && (
+                        <button
+                          onClick={() => setNuovoReferto({ data: new Date().toISOString().slice(0, 10), tipo: "Ecografia", esito: "Nella norma", note: "" })}
+                          className="text-xs text-[#C8102E] font-medium hover:underline flex items-center gap-1">
+                          <Plus className="w-3 h-3" /> Aggiungi
+                        </button>
+                      )}
+                    </div>
+
+                    {(selected.refertiClinici ?? []).length === 0 && !nuovoReferto && (
+                      <p className="text-xs text-gray-400 italic text-center py-2">Nessun referto registrato</p>
+                    )}
+
+                    <div className="space-y-2">
+                      {[...(selected.refertiClinici ?? [])].sort((a, b) => b.data.localeCompare(a.data)).map((r) => (
+                        <div key={r.id} className="bg-gray-50 rounded-xl p-2.5 flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                              <span className="text-xs font-semibold text-gray-700">{r.tipo}</span>
+                              <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                                r.esito === "Positivo" ? "bg-green-100 text-green-700"
+                                : r.esito === "Nella norma" ? "bg-blue-100 text-blue-700"
+                                : r.esito === "Miglioramento parziale" ? "bg-yellow-100 text-yellow-700"
+                                : "bg-red-100 text-red-700"
+                              }`}>{r.esito}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-400">{new Date(r.data + "T12:00").toLocaleDateString("it-IT")}</p>
+                            {r.note && <p className="text-xs text-gray-500 mt-0.5">{r.note}</p>}
+                          </div>
+                          <button onClick={() => rimuoviReferto(r.id)} className="text-gray-300 hover:text-red-400 shrink-0">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {nuovoReferto && (
+                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-2 mt-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Data</p>
+                            <input type="date" value={nuovoReferto.data}
+                              onChange={(e) => setNuovoReferto((r) => r && ({ ...r, data: e.target.value }))}
+                              className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Tipo</p>
+                            <select value={nuovoReferto.tipo}
+                              onChange={(e) => setNuovoReferto((r) => r && ({ ...r, tipo: e.target.value as TipoReferto }))}
+                              className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
+                              {TIPI_REFERTO.map((t) => <option key={t}>{t}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Esito</p>
+                          <select value={nuovoReferto.esito}
+                            onChange={(e) => setNuovoReferto((r) => r && ({ ...r, esito: e.target.value as EsitoReferto }))}
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
+                            {ESITI_REFERTO.map((e) => <option key={e}>{e}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Note (opzionale)</p>
+                          <input value={nuovoReferto.note}
+                            onChange={(e) => setNuovoReferto((r) => r && ({ ...r, note: e.target.value }))}
+                            placeholder="Dettagli referto..."
+                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
+                        </div>
+                        <div className="flex gap-2 pt-1">
+                          <button onClick={() => setNuovoReferto(null)}
+                            className="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 text-gray-500 bg-white">
+                            Annulla
+                          </button>
+                          <button onClick={aggiungiReferto}
+                            className="flex-1 text-xs bg-[#C8102E] text-white rounded-lg py-1.5 font-medium">
+                            Aggiungi
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {(selected.telefono || selected.email) && (
                   <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
