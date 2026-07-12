@@ -107,10 +107,10 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${ESITO_STYLE[r.esito] ?? "bg-gray-100 text-gray-600"}`}>
                       {r.esito}
                     </span>
+                    <span className="text-[10px] text-gray-400">
+                      {new Date(r.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" })}
+                    </span>
                   </div>
-                  <p className="text-[10px] text-gray-400">
-                    {new Date(r.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "long", year: "numeric" })}
-                  </p>
                   {r.note && <p className="text-xs text-gray-500 mt-1 leading-relaxed">{r.note}</p>}
                 </div>
               </div>
