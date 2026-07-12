@@ -996,7 +996,7 @@ export default function AtletiPage() {
                     </div>
 
                     {nuovoReferto && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2 overflow-hidden">
                         <div>
                           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Data</p>
                           <input type="date" value={nuovoReferto.data}
