@@ -870,13 +870,21 @@ async function esportaPDFReport(
   }).filter(Boolean) as any[][];
 
   if (catRows.length > 0) {
+    const totCat: any[] = [{ content: "TOTALE", styles: { fontStyle: "bolditalic" } }, { content: `${atletiMese.length} atleti`, styles: { fontStyle: "bolditalic" } }];
     y = secTitle("Riepilogo per categoria", y);
     autoTable(doc, {
-      startY: y, body: catRows, theme: "striped",
+      startY: y, body: [...catRows, totCat], theme: "striped",
       styles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, textColor: dark } },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: W / 2 },
+      didParseCell: (data: any) => {
+        if (data.section === "body" && data.row.index === catRows.length) {
+          data.cell.styles.fillColor = [220, 220, 220];
+          data.cell.styles.textColor = dark;
+          data.cell.styles.fontStyle = "bolditalic";
+        }
+      },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
   }
