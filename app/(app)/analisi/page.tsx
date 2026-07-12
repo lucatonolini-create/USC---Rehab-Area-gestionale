@@ -466,15 +466,30 @@ async function esportaPDFPanoramica(params: {
   y = (doc as any).lastAutoTable.finalY + 8;
 
   y = secTitle("Atleti per categoria", y);
+  const totPan = params.perCategoria.reduce((s, x) => s + x.totale, 0);
+  const attPan = params.perCategoria.reduce((s, x) => s + x.attivi, 0);
+  const totRowPan2: any[] = [
+    { content: "TOTALE", styles: { fontStyle: "bolditalic" } },
+    { content: totPan, styles: { fontStyle: "bolditalic" } },
+    { content: attPan, styles: { fontStyle: "bolditalic" } },
+    { content: totPan - attPan, styles: { fontStyle: "bolditalic" } },
+  ];
   autoTable(doc, {
     startY: y,
     head: [["Categoria", "Totale", "In riabilitazione", "Guariti"]],
-    body: params.perCategoria.map(({ cat, totale, attivi: a }) => [cat, totale, a, totale - a]),
+    body: [...params.perCategoria.map(({ cat, totale, attivi: a }) => [cat, totale, a, totale - a]), totRowPan2],
     headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize" },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
     columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {}, 3: {} },
+    didParseCell: (data: any) => {
+      if (data.section === "body" && data.row.index === params.perCategoria.length) {
+        data.cell.styles.fillColor = [220, 220, 220];
+        data.cell.styles.textColor = dark;
+        data.cell.styles.fontStyle = "bolditalic";
+      }
+    },
   });
   y = (doc as any).lastAutoTable.finalY + 8;
 
