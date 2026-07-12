@@ -21,6 +21,8 @@ create table if not exists atleti (
   email               text default '',
   note                text default '',
   storico_infortuni   jsonb default '[]'::jsonb,
+  referti_clinici     jsonb default '[]'::jsonb,
+  progresso_manuale   integer,
   created_at          timestamptz default now()
 );
 
