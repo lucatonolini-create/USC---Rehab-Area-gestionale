@@ -8,7 +8,6 @@ import {
   subscribeToAtleti, subscribeToProgrammi,
   CATEGORIE, type Atleta, type Programma, type Stato,
 } from "@/lib/store";
-import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import AtletaModal from "@/components/AtletaModal";
 
@@ -21,8 +20,6 @@ export default function Dashboard() {
   const router = useRouter();
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [programmi, setProgrammi] = useState<Programma[]>([]);
-  const [programmiDebug, setProgrammiDebug] = useState<string>("");
-  const [rawDebug, setRawDebug] = useState<string>("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("Tutti");
   const [atletaSelezionato, setAtletaSelezionato] = useState<Atleta | null>(null);
   const [mostraModifica, setMostraModifica] = useState(false);
@@ -32,22 +29,13 @@ export default function Dashboard() {
       const atletiData = await loadAtleti();
       setAtleti(atletiData);
       if (atletiData.length > 0) {
-        const results = await Promise.all(atletiData.map((a) => loadProgrammi(a.id)));
-        const all = results.flat();
+        const all = (await Promise.all(atletiData.map((a) => loadProgrammi(a.id)))).flat();
         setProgrammi(all);
-        setProgrammiDebug(`atleti:${atletiData.length} risultati:[${results.map(r=>r.length).join(",")}] totale:${all.length}`);
       } else {
         setProgrammi([]);
-        setProgrammiDebug("nessun atleta");
       }
     };
     reload();
-    // Temporary raw debug
-    supabase.from("programmi").select("id, atleta_id", { count: "exact", head: false }).limit(5)
-      .then(({ data, error, count }) => {
-        if (error) setRawDebug(`supabase ERR: ${error.code} ${error.message}`);
-        else setRawDebug(`supabase OK: count=${count} sample=${JSON.stringify(data?.slice(0,2).map(r=>r.atleta_id))}`);
-      });
     const unsubAtleti = subscribeToAtleti(reload);
     const unsubProgrammi = subscribeToProgrammi(reload);
     const onVisible = () => { if (document.visibilityState === "visible") reload(); };
@@ -115,14 +103,6 @@ export default function Dashboard() {
           );
         })}
       </div>
-
-      {/* Debug temporaneo */}
-      {(programmiDebug || rawDebug) && (
-        <div className="mb-4 space-y-1">
-          {programmiDebug && <p className="text-xs text-gray-400 font-mono">{programmiDebug}</p>}
-          {rawDebug && <p className="text-xs text-blue-500 font-mono">{rawDebug}</p>}
-        </div>
-      )}
 
       {/* Filtro per categoria */}
       <div className="mb-5">
