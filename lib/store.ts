@@ -4,87 +4,87 @@ import { syncInfortunioAPI, pullPerformanceAthletesMap } from "./performance-syn
 
 export type Stato = "Infortunato" | "Disponibile";
 
-export const CATEGORIE = ["U19", "U17", "U16", "U15", "U14"] as const;
+export const CATEGORIE = ["U14", "U15", "U16", "U17", "U19"] as const;
 export type Categoria = (typeof CATEGORIE)[number];
 
-export const PIEDI = ["Destro", "Sinistro", "Ambidestro"] as const;
+export const PIEDI = ["Ambidestro", "Destro", "Sinistro"] as const;
 export type Piede = (typeof PIEDI)[number];
 
 export const TIPI_INFORTUNIO = [
-  "Frattura",
+  "Abrasione",
+  "Altri infortuni",
   "Altro Infortunio Osseo",
+  "Concussion (with or without loss of consciousness)",
   "Dislocazione/Sublussazione",
   "Distorsione/Lesione Legamentosa",
+  "Ematoma/Contusione",
+  "Frattura",
+  "Infortunio Dentale",
+  "Infortunio Nervoso",
+  "Lacerazione/Taglio",
   "Lesione meniscale o cartilaginea",
+  "Malattia",
   "Muscolare: Strappo/Stiramento/Crampo",
   "Tendineo: Tendinopatia/Lesione/Borsite",
-  "Ematoma/Contusione",
-  "Abrasione",
   "Vescica",
-  "Lacerazione/Taglio",
-  "Concussion (with or without loss of consciousness)",
-  "Infortunio Nervoso",
-  "Infortunio Dentale",
-  "Altri infortuni",
-  "Malattia",
 ] as const;
 export type TipoInfortunio = (typeof TIPI_INFORTUNIO)[number];
 
-export const EVENTI_INFORTUNIO = ["Partita", "Allenamento"] as const;
+export const EVENTI_INFORTUNIO = ["Allenamento", "Partita"] as const;
 export type EventoInfortunio = (typeof EVENTI_INFORTUNIO)[number];
 
 export const MECCANISMI_INFORTUNIO = [
-  "Corsa/Sprint",
-  "Cambio direzione/Pivot",
-  "Tiro",
-  "Passaggio/Cross",
-  "Dribbling",
-  "Salto/atterraggio",
   "Caduta/Tuffo",
-  "Stretching",
-  "Scivolata",
+  "Calciato",
+  "Cambio direzione/Pivot",
+  "Colpo di testa",
+  "Contrasto effettuato",
+  "Contrasto subito",
+  "Corsa/Sprint",
+  "Dribbling",
+  "Other acute",
   "Overuse",
   "Pallonata",
-  "Scontro",
-  "Colpo di testa",
-  "Contrasto subito",
-  "Contrasto effettuato",
-  "Calciato",
+  "Passaggio/Cross",
   "Placcato",
+  "Salto/atterraggio",
   "Sbracciata/Gomitata",
-  "Other acute",
+  "Scivolata",
+  "Scontro",
+  "Stretching",
+  "Tiro",
 ] as const;
 export type MeccanismoInfortunio = (typeof MECCANISMI_INFORTUNIO)[number];
 
 export const CONTATTI_INFORTUNIO = [
-  "Non contatto",
-  "Contatto con giocatore",
   "Contatto con attrezzo",
+  "Contatto con giocatore",
+  "Non contatto",
 ] as const;
 export type ContattoInfortunio = (typeof CONTATTI_INFORTUNIO)[number];
 
-export const LATI_INFORTUNIO = ["Destro", "Sinistro", "Bilaterale", "Non applicabile"] as const;
+export const LATI_INFORTUNIO = ["Bilaterale", "Destro", "Non applicabile", "Sinistro"] as const;
 export type LatoInfortunio = (typeof LATI_INFORTUNIO)[number];
 
 export const POSIZIONI_INFORTUNIO = [
-  "Testa/Faccia",
-  "Collo/Rachide Cervicale",
-  "Spalla/Clavicola",
-  "Braccio Superiore",
-  "Gomito",
-  "Avambraccio",
-  "Polso",
-  "Mano/Dita",
-  "Sterno/Coste/Rachide Toracico",
   "Addome",
-  "Rachide Lombare/Pelvi/Sacro",
   "Anca/Groin",
-  "Coscia",
-  "Ginocchio",
-  "Gamba inferiore/T.Achille",
+  "Avambraccio",
+  "Braccio Superiore",
   "Caviglia",
+  "Collo/Rachide Cervicale",
+  "Coscia",
+  "Gamba inferiore/T.Achille",
+  "Ginocchio",
+  "Gomito",
+  "Mano/Dita",
   "Piede/Dita Piede",
+  "Polso",
+  "Rachide Lombare/Pelvi/Sacro",
   "Sistemico",
+  "Spalla/Clavicola",
+  "Sterno/Coste/Rachide Toracico",
+  "Testa/Faccia",
 ] as const;
 export type PosizioneInfortunio = (typeof POSIZIONI_INFORTUNIO)[number];
 
@@ -108,8 +108,8 @@ export interface QuestionarioKinesiofobia {
 
 export type TipoReferto = "Ecografia" | "Risonanza Magnetica" | "TAC" | "Radiografia" | "Visita clinica" | "Altro";
 export type EsitoReferto = "Positivo" | "In miglioramento" | "Negativo";
-export const TIPI_REFERTO: TipoReferto[] = ["Ecografia", "Risonanza Magnetica", "TAC", "Radiografia", "Visita clinica", "Altro"];
-export const ESITI_REFERTO: EsitoReferto[] = ["Positivo", "In miglioramento", "Negativo"];
+export const TIPI_REFERTO: TipoReferto[] = ["Altro", "Ecografia", "Radiografia", "Risonanza Magnetica", "TAC", "Visita clinica"];
+export const ESITI_REFERTO: EsitoReferto[] = ["In miglioramento", "Negativo", "Positivo"];
 
 export interface RefertoClinico {
   id: string;
