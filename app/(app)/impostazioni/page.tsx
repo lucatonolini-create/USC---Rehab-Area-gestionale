@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Plus, Trash2, Check } from "lucide-react";
-import { loadImpostazioni, saveImpostazioni, type Impostazioni } from "@/lib/store";
+import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle } from "lucide-react";
+import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni } from "@/lib/store";
 
 function ListaPersonale({
   titolo,
@@ -53,6 +53,8 @@ export default function ImpostazioniPage() {
     nomeClub: "", nomeStruttura: "", indirizzo: "", fisioterapisti: [], preparatori: [],
   });
   const [salvato, setSalvato] = useState(false);
+  const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [syncMsg, setSyncMsg] = useState("");
 
   useEffect(() => { loadImpostazioni().then(setForm); }, []);
 
@@ -60,6 +62,20 @@ export default function ImpostazioniPage() {
     await saveImpostazioni(form);
     setSalvato(true);
     setTimeout(() => setSalvato(false), 2000);
+  };
+
+  const sincronizza = async () => {
+    setSyncState("loading");
+    setSyncMsg("");
+    const { ok, fail } = await pushAllLocalToSupabase();
+    if (fail === 0) {
+      setSyncState("ok");
+      setSyncMsg(`Sincronizzati ${ok} elementi con successo.`);
+    } else {
+      setSyncState("error");
+      setSyncMsg(`${ok} ok, ${fail} falliti. Controlla la connessione.`);
+    }
+    setTimeout(() => setSyncState("idle"), 5000);
   };
 
   return (
@@ -119,6 +135,33 @@ export default function ImpostazioniPage() {
               onRimuovi={(i) => setForm({ ...form, preparatori: form.preparatori.filter((_, idx) => idx !== i) })}
             />
           </div>
+        </div>
+
+        {/* Sincronizzazione */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <h2 className="font-bold text-gray-900 mb-1">Sincronizzazione dati</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Se i dati non compaiono su altri dispositivi, usa questo pulsante per forzare l&apos;upload di tutto il contenuto locale verso il server.
+          </p>
+          <button onClick={sincronizza} disabled={syncState === "loading"}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${
+              syncState === "ok" ? "bg-green-500 text-white" :
+              syncState === "error" ? "bg-orange-500 text-white" :
+              "bg-[#2B2B2B] text-white hover:bg-black"
+            }`}>
+            {syncState === "loading"
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Sincronizzazione in corso…</>
+              : syncState === "ok"
+              ? <><Check className="w-4 h-4" /> Sincronizzato!</>
+              : syncState === "error"
+              ? <><AlertCircle className="w-4 h-4" /> Errore parziale</>
+              : <><RefreshCw className="w-4 h-4" /> Sincronizza ora</>}
+          </button>
+          {syncMsg && (
+            <p className={`mt-3 text-xs font-medium ${syncState === "error" ? "text-orange-600" : "text-green-600"}`}>
+              {syncMsg}
+            </p>
+          )}
         </div>
 
         <p className="text-xs text-gray-400 text-center">

@@ -459,6 +459,37 @@ export async function syncFlush(): Promise<void> {
   }
 }
 
+// ─── Force-push all local data to Supabase ──────────────────────────────────
+
+export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: number }> {
+  if (!isOnline()) return { ok: 0, fail: 0 };
+  const db = getDB();
+  let ok = 0; let fail = 0;
+
+  // Atleti
+  const atleti = await db.atleti.toArray();
+  for (const a of atleti) {
+    try {
+      const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
+      if (!error) ok++; else { console.error("[pushAll] atleta", a.id, error.message); fail++; }
+    } catch (e) { console.error("[pushAll] atleta exception", e); fail++; }
+  }
+
+  // Programmi
+  const programmi = await db.programmi.toArray();
+  for (const p of programmi) {
+    try {
+      const { error } = await supabase.from("programmi").upsert(programmaToRow(p));
+      if (!error) ok++; else { console.error("[pushAll] programma", p.id, error.message); fail++; }
+    } catch (e) { console.error("[pushAll] programma exception", e); fail++; }
+  }
+
+  // Clear pendingOps after successful push
+  if (fail === 0) await db.pendingOps.clear();
+
+  return { ok, fail };
+}
+
 // ─── Atleti ─────────────────────────────────────────────────────────────────
 
 export async function loadAtleti(): Promise<Atleta[]> {
