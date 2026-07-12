@@ -370,10 +370,13 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
 
 function rowToProgramma(r: Record<string, unknown>): Programma {
   const noteRaw = r.note_assenza as string | null;
-  // riposo encoded in note_assenza with prefix (no separate DB column needed)
-  const isRiposo = typeof noteRaw === "string" && noteRaw.startsWith("__riposo__");
+  // riposo and assente encoded in note_assenza with prefix (no separate DB columns needed)
+  const isRiposo  = typeof noteRaw === "string" && noteRaw.startsWith("__riposo__");
+  const isAssente = !isRiposo && typeof noteRaw === "string" && noteRaw.startsWith("__assente__");
   const noteAssenza = isRiposo
     ? (noteRaw.slice("__riposo__".length) || undefined)
+    : isAssente
+    ? (noteRaw.slice("__assente__".length) || undefined)
     : (noteRaw ?? undefined);
   // Optional fields encoded inside carico JSONB (no separate DB columns needed)
   const caricoRaw = (r.carico as Record<string, unknown>) ?? {};
@@ -391,16 +394,18 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     esercizicampo: (_esercizicampo as EsercizioCampo[]) ?? (r.esercizicampo as EsercizioCampo[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
     carico: caricoClean as unknown as Carico,
-    assente: !isRiposo && ((r.assente as boolean) ?? false),
+    assente: isAssente || (!isRiposo && !isAssente && ((r.assente as boolean) ?? false)),
     riposo: isRiposo,
     noteAssenza,
   };
 }
 
 function programmaToRow(p: Programma): Record<string, unknown> {
-  // riposo encoded in note_assenza with prefix (no separate DB column needed)
+  // riposo and assente encoded in note_assenza with prefix (no separate DB columns needed)
   const note_assenza = p.riposo
     ? "__riposo__" + (p.noteAssenza ?? "")
+    : p.assente
+    ? "__assente__" + (p.noteAssenza ?? "")
     : (p.noteAssenza ?? null);
   // Optional fields encoded inside carico JSONB to avoid schema dependency
   const caricoExtended: Record<string, unknown> = { ...(p.carico as unknown as Record<string, unknown>) };
@@ -418,7 +423,6 @@ function programmaToRow(p: Programma): Record<string, unknown> {
     esercizi: p.esercizi,
     tests: p.tests,
     carico: caricoExtended,
-    assente: p.assente ?? false,
     note_assenza,
   };
 }
