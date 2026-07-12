@@ -442,9 +442,9 @@ export async function syncFlush(): Promise<void> {
         }
       } else if (op.table === "programmi") {
         if (op.op === "upsert") {
-          // Re-encode via rowToProgramma→programmaToRow to ensure safe column set
           const safePayload = programmaToRow(rowToProgramma(op.payload as Record<string, unknown>));
           const { error } = await supabase.from("programmi").upsert(safePayload);
+          if (error) console.error("[syncFlush] programmi upsert", error.code, error.message);
           ok = !error;
         } else {
           await supabase.from("programmi").delete().eq("id", (op.payload as { id: string }).id);
@@ -528,28 +528,15 @@ export async function loadAtleti(): Promise<Atleta[]> {
 export async function upsertAtleta(a: Atleta): Promise<void> {
   const db = getDB();
   await db.atleti.put(a);
-  if (isOnline()) {
-    try {
-      const { error } = await supabase.from("atleti").upsert(atletaToRow(a));
-      if (!error) {
-        syncInfortunioAPI(a).catch(() => {});
-        return;
-      }
-    } catch {}
-  }
   await db.pendingOps.add({ table: "atleti", op: "upsert", payload: atletaToRow(a), createdAt: Date.now() });
+  if (isOnline()) syncFlush().then(() => syncInfortunioAPI(a)).catch(() => {});
 }
 
 export async function deleteAtleta(id: string): Promise<void> {
   const db = getDB();
   await db.atleti.delete(id);
-  if (isOnline()) {
-    try {
-      await supabase.from("atleti").delete().eq("id", id);
-      return;
-    } catch {}
-  }
   await db.pendingOps.add({ table: "atleti", op: "delete", payload: { id }, createdAt: Date.now() });
+  if (isOnline()) syncFlush().catch(() => {});
 }
 
 // ─── Programmi ──────────────────────────────────────────────────────────────
@@ -589,28 +576,15 @@ export async function loadProgrammi(atletaId?: string): Promise<Programma[]> {
 export async function upsertProgramma(p: Programma): Promise<void> {
   const db = getDB();
   await db.programmi.put(p);
-  if (isOnline()) {
-    try {
-      const { error } = await supabase.from("programmi").upsert(programmaToRow(p));
-      if (!error) return;
-      console.error("[sync] programmi upsert error:", error.message, error.details);
-    } catch (e) {
-      console.error("[sync] programmi upsert exception:", e);
-    }
-  }
   await db.pendingOps.add({ table: "programmi", op: "upsert", payload: programmaToRow(p), createdAt: Date.now() });
+  if (isOnline()) syncFlush().catch(() => {});
 }
 
 export async function deleteProgramma(id: string): Promise<void> {
   const db = getDB();
   await db.programmi.delete(id);
-  if (isOnline()) {
-    try {
-      await supabase.from("programmi").delete().eq("id", id);
-      return;
-    } catch {}
-  }
   await db.pendingOps.add({ table: "programmi", op: "delete", payload: { id }, createdAt: Date.now() });
+  if (isOnline()) syncFlush().catch(() => {});
 }
 
 // ─── Realtime subscriptions ──────────────────────────────────────────────────

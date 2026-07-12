@@ -26,14 +26,22 @@ export default function OfflineBanner() {
       setJustSynced(false);
     };
 
+    const onVisible = () => {
+      if (document.visibilityState === "visible" && navigator.onLine) {
+        syncFlush().catch(() => {});
+      }
+    };
+
     window.addEventListener("online", goOnline);
     window.addEventListener("offline", goOffline);
+    document.addEventListener("visibilitychange", onVisible);
 
     if (navigator.onLine) syncFlush().catch(() => {});
 
     return () => {
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
 
