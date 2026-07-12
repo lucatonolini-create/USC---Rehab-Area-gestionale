@@ -583,7 +583,7 @@ export async function deleteProgramma(id: string): Promise<void> {
 
 export function subscribeToAtleti(onChange: () => void): () => void {
   const channel = supabase
-    .channel("atleti-realtime")
+    .channel(`atleti-rt-${Date.now()}-${Math.random().toString(36).slice(2)}`)
     .on("postgres_changes", { event: "*", schema: "public", table: "atleti" }, onChange)
     .subscribe();
   return () => { supabase.removeChannel(channel); };
@@ -591,7 +591,7 @@ export function subscribeToAtleti(onChange: () => void): () => void {
 
 export function subscribeToProgrammi(onChange: (atletaId?: string) => void): () => void {
   const channel = supabase
-    .channel("programmi-realtime")
+    .channel(`programmi-rt-${Date.now()}-${Math.random().toString(36).slice(2)}`)
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "programmi" },

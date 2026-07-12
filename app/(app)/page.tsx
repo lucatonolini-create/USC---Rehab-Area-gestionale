@@ -25,11 +25,23 @@ export default function Dashboard() {
   const [mostraModifica, setMostraModifica] = useState(false);
 
   useEffect(() => {
-    loadAtleti().then(setAtleti);
-    loadProgrammi().then(setProgrammi);
+    const reload = () => {
+      loadAtleti().then(setAtleti);
+      loadProgrammi().then(setProgrammi);
+    };
+    reload();
     const unsubAtleti = subscribeToAtleti(() => loadAtleti().then(setAtleti));
     const unsubProgrammi = subscribeToProgrammi(() => loadProgrammi().then(setProgrammi));
-    return () => { unsubAtleti(); unsubProgrammi(); };
+    const onVisible = () => { if (document.visibilityState === "visible") reload(); };
+    const onOnline = () => reload();
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("online", onOnline);
+    return () => {
+      unsubAtleti();
+      unsubProgrammi();
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("online", onOnline);
+    };
   }, []);
 
   const aggiornaDopo = () => {
