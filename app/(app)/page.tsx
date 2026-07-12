@@ -20,6 +20,7 @@ export default function Dashboard() {
   const router = useRouter();
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [programmi, setProgrammi] = useState<Programma[]>([]);
+  const [programmiDebug, setProgrammiDebug] = useState<string>("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("Tutti");
   const [atletaSelezionato, setAtletaSelezionato] = useState<Atleta | null>(null);
   const [mostraModifica, setMostraModifica] = useState(false);
@@ -29,10 +30,13 @@ export default function Dashboard() {
       const atletiData = await loadAtleti();
       setAtleti(atletiData);
       if (atletiData.length > 0) {
-        const all = (await Promise.all(atletiData.map((a) => loadProgrammi(a.id)))).flat();
+        const results = await Promise.all(atletiData.map((a) => loadProgrammi(a.id)));
+        const all = results.flat();
         setProgrammi(all);
+        setProgrammiDebug(`atleti:${atletiData.length} risultati:[${results.map(r=>r.length).join(",")}] totale:${all.length}`);
       } else {
         setProgrammi([]);
+        setProgrammiDebug("nessun atleta");
       }
     };
     reload();
@@ -103,6 +107,11 @@ export default function Dashboard() {
           );
         })}
       </div>
+
+      {/* Debug temporaneo */}
+      {programmiDebug && (
+        <p className="text-xs text-gray-400 mb-4 font-mono">{programmiDebug}</p>
+      )}
 
       {/* Filtro per categoria */}
       <div className="mb-5">

@@ -532,7 +532,9 @@ export async function loadProgrammi(atletaId?: string): Promise<Programma[]> {
         .select("*");
       if (atletaId) q = q.eq("atleta_id", atletaId);
       const { data, error } = await q;
-      if (!error && data) {
+      if (error) {
+        console.error("[loadProgrammi] supabase error", atletaId, error.message, error.code, error.details);
+      } else if (data) {
         const fromSupabase = data.map(rowToProgramma);
         await db.programmi.bulkPut(fromSupabase);
         // Merge with local-only records not yet synced to Supabase
@@ -543,7 +545,9 @@ export async function loadProgrammi(atletaId?: string): Promise<Programma[]> {
         const localOnly = allLocal.filter(p => !supabaseIds.has(p.id));
         return [...fromSupabase, ...localOnly].sort((a, b) => a.data.localeCompare(b.data));
       }
-    } catch {}
+    } catch (e) {
+      console.error("[loadProgrammi] exception", atletaId, e);
+    }
   }
   if (atletaId) {
     return db.programmi.where("atletaId").equals(atletaId).toArray();
