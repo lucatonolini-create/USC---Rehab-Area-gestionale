@@ -996,45 +996,44 @@ export default function AtletiPage() {
                     </div>
 
                     {nuovoReferto && (
-                      <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 space-y-2 mt-2">
-                        <div className="grid grid-cols-2 gap-2">
-                          <div>
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Data</p>
-                            <input type="date" value={nuovoReferto.data}
-                              onChange={(e) => setNuovoReferto((r) => r && ({ ...r, data: e.target.value }))}
-                              className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
-                          </div>
-                          <div>
-                            <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Tipo</p>
-                            <select value={nuovoReferto.tipo}
-                              onChange={(e) => setNuovoReferto((r) => r && ({ ...r, tipo: e.target.value as TipoReferto }))}
-                              className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
-                              {TIPI_REFERTO.map((t) => <option key={t}>{t}</option>)}
-                            </select>
-                          </div>
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2">
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Data</p>
+                          <input type="date" value={nuovoReferto.data}
+                            onChange={(e) => setNuovoReferto((r) => r && ({ ...r, data: e.target.value }))}
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Esito</p>
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Tipo esame</p>
+                          <select value={nuovoReferto.tipo}
+                            onChange={(e) => setNuovoReferto((r) => r && ({ ...r, tipo: e.target.value as TipoReferto }))}
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]">
+                            {TIPI_REFERTO.map((t) => <option key={t}>{t}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Esito</p>
                           <select value={nuovoReferto.esito}
                             onChange={(e) => setNuovoReferto((r) => r && ({ ...r, esito: e.target.value as EsitoReferto }))}
-                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]">
                             {ESITI_REFERTO.map((e) => <option key={e}>{e}</option>)}
                           </select>
                         </div>
                         <div>
-                          <p className="text-[10px] font-semibold text-gray-500 uppercase mb-1">Note (opzionale)</p>
-                          <input value={nuovoReferto.note}
+                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Note <span className="font-normal normal-case text-gray-400">(opzionale)</span></p>
+                          <textarea value={nuovoReferto.note}
                             onChange={(e) => setNuovoReferto((r) => r && ({ ...r, note: e.target.value }))}
-                            placeholder="Dettagli referto..."
-                            className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
+                            placeholder="Dettagli referto, osservazioni cliniche..."
+                            rows={3}
+                            className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]" />
                         </div>
-                        <div className="flex gap-2 pt-1">
+                        <div className="flex gap-2 pt-0.5">
                           <button onClick={() => setNuovoReferto(null)}
-                            className="flex-1 text-xs border border-gray-200 rounded-lg py-1.5 text-gray-500 bg-white">
+                            className="flex-1 text-sm border border-gray-200 rounded-lg py-2 text-gray-500 bg-white font-medium hover:bg-gray-100 transition-colors">
                             Annulla
                           </button>
                           <button onClick={aggiungiReferto}
-                            className="flex-1 text-xs bg-[#C8102E] text-white rounded-lg py-1.5 font-medium">
+                            className="flex-1 text-sm bg-[#C8102E] text-white rounded-lg py-2 font-semibold hover:bg-red-700 transition-colors">
                             Aggiungi
                           </button>
                         </div>
@@ -1134,8 +1133,11 @@ export default function AtletiPage() {
                   onSalva={salvaQuestionnaire}
                 />
                 <div className="border-t border-gray-100 pt-4">
-                  <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Documenti</p>
-                  <CartellaClinaca atletaId={selected.id} />
+                  <CartellaClinaca
+                    atletaId={selected.id}
+                    refertiClinici={selected.refertiClinici ?? []}
+                    onVaiADati={() => setTab("dati")}
+                  />
                 </div>
               </div>
             ) : (
