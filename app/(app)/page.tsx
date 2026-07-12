@@ -64,7 +64,7 @@ export default function Dashboard() {
     : atleti.filter((a) => a.categoria === filtroCategoria);
 
   const infortunatiIds = new Set(atleti.filter((a) => a.stato === "Infortunato").map((a) => a.id));
-  const programmiReali = programmi.filter((p) => !p.riposo && !p.assente);
+  const programmiReali = programmi.filter((p) => !p.riposo);
   const programmiAttivi = programmiReali.filter((p) => infortunatiIds.has(p.atletaId)).length;
 
   const stats = [
