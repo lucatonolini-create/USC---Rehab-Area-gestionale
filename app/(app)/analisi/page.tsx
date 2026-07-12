@@ -683,7 +683,7 @@ async function esportaPDFPanoramica(params: {
       columnStyles: { 0: { halign: "left", cellWidth: 35 }, 1: { cellWidth: 18, fontStyle: "bold" } },
       didParseCell: (data: any) => {
         if (data.section === "body" && data.row.index === crossPan.length) {
-          data.cell.styles.fillColor = [220, 220, 220]; data.cell.styles.textColor = dark; data.cell.styles.fontStyle = "italic";
+          data.cell.styles.fillColor = [220, 220, 220]; data.cell.styles.textColor = dark; data.cell.styles.fontStyle = "bolditalic";
         } else if (data.section === "body" && data.row.index % 2 === 1) {
           data.cell.styles.fillColor = [248, 248, 248];
         }
@@ -1013,7 +1013,7 @@ async function esportaPDFReport(
         if (data.section === "body" && data.row.index === crossBody.length) {
           data.cell.styles.fillColor = [220, 220, 220];
           data.cell.styles.textColor = dark;
-          data.cell.styles.fontStyle = "italic";
+          data.cell.styles.fontStyle = "bolditalic";
         } else if (data.section === "body" && data.row.index % 2 === 1) {
           data.cell.styles.fillColor = [248, 248, 248];
         }
