@@ -529,8 +529,7 @@ export async function loadProgrammi(atletaId?: string): Promise<Programma[]> {
     try {
       let q = supabase
         .from("programmi")
-        .select("*")
-        .order("created_at", { ascending: true });
+        .select("*");
       if (atletaId) q = q.eq("atleta_id", atletaId);
       const { data, error } = await q;
       if (!error && data) {
