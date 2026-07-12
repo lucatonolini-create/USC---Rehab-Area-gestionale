@@ -20,6 +20,8 @@ module.exports = withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   reloadOnOnline: false,
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
+  cacheOnFrontEndNav: false,
+  aggressiveFrontEndNavCaching: false,
+  skipWaiting: true,
+  clientsClaim: true,
 })(nextConfig);
