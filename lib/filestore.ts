@@ -46,6 +46,15 @@ export async function caricaDocs(atletaId: string): Promise<DocMedico[]> {
   });
 }
 
+export async function caricaDoc(id: string): Promise<DocMedico | null> {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const req = db.transaction(STORE, "readonly").objectStore(STORE).get(id);
+    req.onsuccess = () => resolve((req.result as DocMedico) ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
 export async function eliminaDoc(id: string): Promise<void> {
   const db = await openDB();
   return new Promise((resolve, reject) => {

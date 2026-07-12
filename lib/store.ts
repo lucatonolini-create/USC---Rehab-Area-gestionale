@@ -117,6 +117,8 @@ export interface RefertoClinico {
   tipo: TipoReferto;
   esito: EsitoReferto;
   note?: string;
+  fileId?: string;
+  fileNome?: string;
 }
 
 export interface Atleta {
