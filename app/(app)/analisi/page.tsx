@@ -1571,7 +1571,17 @@ export default function AnalisiPage() {
                             {trendCombinato.catPresenti.map((cat) => {
                               const cnt = perCat[cat] ?? 0;
                               if (!cnt) return null;
-                              return <div key={cat} style={{ height: `${(cnt / trendCombinato.maxVal) * 56}px`, backgroundColor: trendCombinato.catColorMap[cat], flexShrink: 0 }} />;
+                              const segH = (cnt / trendCombinato.maxVal) * 56;
+                              return (
+                                <div key={cat} className="flex items-center justify-center overflow-hidden"
+                                  style={{ height: `${segH}px`, backgroundColor: trendCombinato.catColorMap[cat], flexShrink: 0 }}>
+                                  {segH >= 12 && (
+                                    <span style={{ fontSize: "6px", fontWeight: 700, color: "white", lineHeight: 1, whiteSpace: "nowrap" }}>
+                                      {cat} {cnt}
+                                    </span>
+                                  )}
+                                </div>
+                              );
                             })}
                           </div>
                         </div>
@@ -1590,7 +1600,17 @@ export default function AnalisiPage() {
                             {trendCombinato.tipiPresenti.map((tipo) => {
                               const cnt = perTipo[tipo] ?? 0;
                               if (!cnt) return null;
-                              return <div key={tipo} style={{ height: `${(cnt / trendCombinato.maxVal) * 56}px`, backgroundColor: trendCombinato.tipoColorMap[tipo], flexShrink: 0 }} />;
+                              const segH = (cnt / trendCombinato.maxVal) * 56;
+                              return (
+                                <div key={tipo} className="flex items-center justify-center overflow-hidden"
+                                  style={{ height: `${segH}px`, backgroundColor: trendCombinato.tipoColorMap[tipo], flexShrink: 0 }}>
+                                  {segH >= 12 && (
+                                    <span style={{ fontSize: "6px", fontWeight: 700, color: "white", lineHeight: 1 }}>
+                                      {cnt}
+                                    </span>
+                                  )}
+                                </div>
+                              );
                             })}
                           </div>
                         </div>
