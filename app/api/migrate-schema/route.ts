@@ -10,6 +10,15 @@ const COLONNE_ATLETI: { nome: string; tipo: string; default?: string }[] = [
   { nome: "nome_completo", tipo: "text" },
 ];
 
+const COLONNE_PROGRAMMI: { nome: string; tipo: string }[] = [
+  { nome: "nome", tipo: "text" },
+  { nome: "fase", tipo: "text" },
+  { nome: "data", tipo: "text" },
+  { nome: "esercizi", tipo: "jsonb" },
+  { nome: "tests", tipo: "jsonb" },
+  { nome: "carico", tipo: "jsonb" },
+];
+
 export async function GET() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -18,18 +27,41 @@ export async function GET() {
   }
   const sb = createClient(url, key);
 
-  const mancanti: string[] = [];
+  const mancantiAtleti: string[] = [];
   for (const col of COLONNE_ATLETI) {
     const { error } = await sb.from("atleti").select(col.nome).limit(0);
-    if (error?.code === "42703") {
-      mancanti.push(col.nome);
-    }
+    if (error?.code === "42703") mancantiAtleti.push(col.nome);
   }
 
-  const sql = COLONNE_ATLETI
-    .filter((c) => mancanti.includes(c.nome))
+  const mancantiProgrammi: string[] = [];
+  for (const col of COLONNE_PROGRAMMI) {
+    const { error } = await sb.from("programmi").select(col.nome).limit(0);
+    if (error?.code === "42703") mancantiProgrammi.push(col.nome);
+  }
+
+  // Also try a test upsert with a dummy record to detect RLS or other errors
+  const { error: rlsTest } = await sb.from("programmi").select("id").limit(1);
+  const programmiAccessible = !rlsTest;
+  const rlsError = rlsTest ? `${rlsTest.code}: ${rlsTest.message}` : null;
+
+  const sqlAtleti = COLONNE_ATLETI
+    .filter((c) => mancantiAtleti.includes(c.nome))
     .map((c) => `ALTER TABLE atleti ADD COLUMN IF NOT EXISTS ${c.nome} ${c.tipo}${c.default ? ` DEFAULT ${c.default}` : ""};`)
     .join("\n");
 
-  return NextResponse.json({ mancanti, sql: sql || null, ok: mancanti.length === 0 });
+  const sqlProgrammi = COLONNE_PROGRAMMI
+    .filter((c) => mancantiProgrammi.includes(c.nome))
+    .map((c) => `ALTER TABLE programmi ADD COLUMN IF NOT EXISTS ${c.nome} ${c.tipo};`)
+    .join("\n");
+
+  const sql = [sqlAtleti, sqlProgrammi].filter(Boolean).join("\n") || null;
+  const mancanti = [...mancantiAtleti.map(c => `atleti.${c}`), ...mancantiProgrammi.map(c => `programmi.${c}`)];
+
+  return NextResponse.json({
+    mancanti,
+    sql,
+    ok: mancanti.length === 0,
+    programmiAccessible,
+    rlsError,
+  });
 }

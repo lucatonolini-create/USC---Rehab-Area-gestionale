@@ -56,7 +56,7 @@ export default function ImpostazioniPage() {
   const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [syncMsg, setSyncMsg] = useState("");
   const [schemaState, setSchemaState] = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [schemaInfo, setSchemaInfo] = useState<{ mancanti: string[]; sql: string | null } | null>(null);
+  const [schemaInfo, setSchemaInfo] = useState<{ mancanti: string[]; sql: string | null; rlsError: string | null } | null>(null);
   const sqlRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => { loadImpostazioni().then(setForm); }, []);
@@ -70,15 +70,15 @@ export default function ImpostazioniPage() {
   const sincronizza = async () => {
     setSyncState("loading");
     setSyncMsg("");
-    const { ok, fail } = await pushAllLocalToSupabase();
+    const { ok, fail, lastError } = await pushAllLocalToSupabase();
     if (fail === 0) {
       setSyncState("ok");
       setSyncMsg(`Sincronizzati ${ok} elementi con successo.`);
     } else {
       setSyncState("error");
-      setSyncMsg(`${ok} elementi sincronizzati, ${fail} falliti. Riprova o controlla la connessione.`);
+      setSyncMsg(`${ok} sincronizzati, ${fail} falliti.${lastError ? ` Errore: ${lastError}` : ""}`);
     }
-    setTimeout(() => setSyncState("idle"), 5000);
+    setTimeout(() => setSyncState("idle"), 8000);
   };
 
   const verificaSchema = async () => {
@@ -87,7 +87,7 @@ export default function ImpostazioniPage() {
     try {
       const res = await fetch("/api/migrate-schema");
       const data = await res.json();
-      setSchemaInfo({ mancanti: data.mancanti ?? [], sql: data.sql ?? null });
+      setSchemaInfo({ mancanti: data.mancanti ?? [], sql: data.sql ?? null, rlsError: data.rlsError ?? null });
       setSchemaState(data.ok ? "ok" : "error");
     } catch {
       setSchemaState("error");
@@ -205,6 +205,12 @@ export default function ImpostazioniPage() {
           {schemaState === "ok" && (
             <p className="mt-3 text-xs font-medium text-green-600">
               Tutte le colonne sono presenti. La sincronizzazione è completa.
+            </p>
+          )}
+
+          {schemaState === "ok" && schemaInfo?.rlsError && (
+            <p className="mt-3 text-xs font-medium text-orange-600">
+              Attenzione — errore accesso tabella programmi: <span className="font-mono">{schemaInfo.rlsError}</span>
             </p>
           )}
 
