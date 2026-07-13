@@ -509,13 +509,14 @@ export async function syncFlush(): Promise<void> {
         if (op.op === "upsert") {
           const row = op.payload as Record<string, unknown>;
           const { error } = await supabase.from("atleti").upsert(row);
-          if (error?.code === "PGRST204") {
-            // Some newer columns may not exist in Supabase yet; retry stripping all optional ones
+          if (!error) {
+            ok = true;
+          } else if (error.code === "PGRST204") {
             const { referti_clinici, progresso_manuale, peso, altezza, altezza_da_seduto, nome_completo, ...safeRow } = row;
             const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
-            ok = !e2;
+            ok = !e2 || isExpectedSyncError(e2.code);
           } else {
-            ok = !error;
+            ok = isExpectedSyncError(error.code);
           }
         } else {
           await supabase.from("atleti").delete().eq("id", (op.payload as { id: string }).id);
@@ -525,8 +526,8 @@ export async function syncFlush(): Promise<void> {
         if (op.op === "upsert") {
           const safePayload = programmaToRow(rowToProgramma(op.payload as Record<string, unknown>));
           const { error } = await supabase.from("programmi").upsert(safePayload);
-          if (error) console.error("[syncFlush] programmi upsert", error.code, error.message);
-          ok = !error;
+          if (error && !isExpectedSyncError(error.code)) console.error("[syncFlush] programmi upsert", error.code, error.message);
+          ok = !error || isExpectedSyncError(error.code);
         } else {
           await supabase.from("programmi").delete().eq("id", (op.payload as { id: string }).id);
           ok = true;
@@ -542,6 +543,13 @@ export async function syncFlush(): Promise<void> {
 
 // ─── Force-push all local data to Supabase ──────────────────────────────────
 
+// Error codes that are "expected" and should not count as failures
+function isExpectedSyncError(code: string | undefined): boolean {
+  return code === "23503" // FK violation (orphaned record)
+    || code === "23505"   // duplicate key (already synced)
+    || code === "PGRST116"; // row not found on delete
+}
+
 export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: number; lastError: string }> {
   if (!isOnline()) return { ok: 0, fail: 0, lastError: "Dispositivo offline" };
   const db = getDB();
@@ -553,30 +561,41 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
     try {
       const row = atletaToRow(a);
       const { error } = await supabase.from("atleti").upsert(row);
-      if (error?.code === "PGRST204") {
+      if (!error) {
+        ok++;
+      } else if (error.code === "PGRST204") {
+        // Some optional columns may not exist yet — retry without them
         const { referti_clinici, progresso_manuale, peso, altezza, altezza_da_seduto, nome_completo, ...safeRow } = row;
         const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
-        if (!e2) ok++;
+        if (!e2 || isExpectedSyncError(e2.code)) ok++;
         else { lastError = `atleti: ${e2.code} ${e2.message}`; fail++; }
-      } else if (!error) {
-        ok++;
+      } else if (isExpectedSyncError(error.code)) {
+        ok++; // treat expected errors as success
       } else {
         lastError = `atleti: ${error.code} ${error.message}`; console.error("[pushAll] atleta", error); fail++;
       }
     } catch (e) { lastError = `atleti exception: ${e}`; fail++; }
   }
 
-  // Programmi — fetch valid atleta IDs from Supabase first to avoid FK violations
+  // Fetch valid atleta IDs from Supabase to avoid FK violations on programmi
   const { data: atletiSb } = await supabase.from("atleti").select("id");
   const atletiSbIds = new Set((atletiSb ?? []).map((r: { id: string }) => r.id));
 
+  // Clean up local orphaned programmi (athlete deleted everywhere)
+  const localAtletiIds = new Set(atleti.map(a => a.id));
   const programmi = await db.programmi.toArray();
+  const orfani = programmi.filter(p => !localAtletiIds.has(p.atletaId));
+  if (orfani.length > 0) {
+    await db.programmi.bulkDelete(orfani.map(p => p.id));
+  }
+
+  // Sync only programmi whose athlete exists in Supabase
   for (const p of programmi) {
-    if (!atletiSbIds.has(p.atletaId)) continue; // skip orphaned programmes
+    if (!atletiSbIds.has(p.atletaId)) continue;
     try {
       const { error } = await supabase.from("programmi").upsert(programmaToRow(p));
-      if (!error) ok++;
-      else { lastError = `programmi: ${error.code} ${error.message} ${error.details ?? ""}`; console.error("[pushAll] programma", error); fail++; }
+      if (!error || isExpectedSyncError(error.code)) ok++;
+      else { lastError = `programmi: ${error.code} ${error.message}`; console.error("[pushAll] programma", error); fail++; }
     } catch (e) { lastError = `programmi exception: ${e}`; fail++; }
   }
 
