@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Database, Copy } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle } from "lucide-react";
 import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni } from "@/lib/store";
 
 function ListaPersonale({
@@ -55,10 +55,6 @@ export default function ImpostazioniPage() {
   const [salvato, setSalvato] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [syncMsg, setSyncMsg] = useState("");
-  const [schemaState, setSchemaState] = useState<"idle" | "loading" | "ok" | "error">("idle");
-  const [schemaInfo, setSchemaInfo] = useState<{ mancanti: string[]; sql: string | null; rlsError: string | null } | null>(null);
-  const sqlRef = useRef<HTMLTextAreaElement>(null);
-
   useEffect(() => { loadImpostazioni().then(setForm); }, []);
 
   const salva = async () => {
@@ -79,20 +75,6 @@ export default function ImpostazioniPage() {
       setSyncMsg(`${ok} sincronizzati, ${fail} falliti.${lastError ? ` Errore: ${lastError}` : ""}`);
     }
     setTimeout(() => setSyncState("idle"), 8000);
-  };
-
-  const verificaSchema = async () => {
-    setSchemaState("loading");
-    setSchemaInfo(null);
-    try {
-      const res = await fetch("/api/migrate-schema");
-      const data = await res.json();
-      setSchemaInfo({ mancanti: data.mancanti ?? [], sql: data.sql ?? null, rlsError: data.rlsError ?? null });
-      setSchemaState(data.ok ? "ok" : "error");
-    } catch {
-      setSchemaState("error");
-      setSchemaInfo({ mancanti: [], sql: null, rlsError: null });
-    }
   };
 
   return (
@@ -181,74 +163,7 @@ export default function ImpostazioniPage() {
           )}
         </div>
 
-        {/* Schema database */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-          <h2 className="font-bold text-gray-900 mb-1">Schema database</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Verifica che tutte le colonne necessarie siano presenti su Supabase. Se mancano, copia il SQL generato e incollalo nell&apos;editor SQL del dashboard Supabase.
-          </p>
-          <button onClick={verificaSchema} disabled={schemaState === "loading"}
-            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${
-              schemaState === "ok" ? "bg-green-500 text-white" :
-              schemaState === "error" ? "bg-orange-500 text-white" :
-              "bg-[#2B2B2B] text-white hover:bg-black"
-            }`}>
-            {schemaState === "loading"
-              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Verifica in corso…</>
-              : schemaState === "ok"
-              ? <><Check className="w-4 h-4" /> Tutto sincronizzato!</>
-              : schemaState === "error" && schemaInfo?.mancanti.length
-              ? <><AlertCircle className="w-4 h-4" /> Colonne mancanti</>
-              : <><Database className="w-4 h-4" /> Verifica schema</>}
-          </button>
-
-          {schemaState === "ok" && (
-            <p className="mt-3 text-xs font-medium text-green-600">
-              Tutte le colonne sono presenti. La sincronizzazione è completa.
-            </p>
-          )}
-
-          {schemaState === "ok" && schemaInfo?.rlsError && (
-            <p className="mt-3 text-xs font-medium text-orange-600">
-              Attenzione — errore accesso tabella programmi: <span className="font-mono">{schemaInfo.rlsError}</span>
-            </p>
-          )}
-
-          {schemaState === "error" && schemaInfo && schemaInfo.mancanti.length > 0 && (
-            <div className="mt-4 space-y-3">
-              <p className="text-xs text-orange-700 font-medium">
-                Colonne mancanti in Supabase: <span className="font-mono">{schemaInfo.mancanti.join(", ")}</span>
-              </p>
-              {schemaInfo.sql && (
-                <>
-                  <p className="text-xs text-gray-500">
-                    Copia questo SQL e incollalo in <strong>Supabase → SQL Editor → New query</strong>:
-                  </p>
-                  <div className="relative">
-                    <textarea
-                      ref={sqlRef}
-                      readOnly
-                      value={schemaInfo.sql}
-                      rows={schemaInfo.mancanti.length + 1}
-                      className="w-full font-mono text-xs bg-gray-900 text-green-400 rounded-xl p-4 resize-none focus:outline-none"
-                    />
-                    <button
-                      onClick={() => { navigator.clipboard.writeText(schemaInfo.sql!); }}
-                      className="absolute top-2 right-2 flex items-center gap-1 bg-gray-700 hover:bg-gray-600 text-white text-xs px-2 py-1 rounded-lg"
-                    >
-                      <Copy className="w-3 h-3" /> Copia
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-400">
-                    Dopo aver eseguito il SQL, premi di nuovo "Verifica schema" per confermare, poi "Sincronizza ora" per caricare tutti i dati.
-                  </p>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        <p className="text-xs text-gray-400 text-center">
+<p className="text-xs text-gray-400 text-center">
           Premi "Salva" per confermare le modifiche.
         </p>
       </div>
