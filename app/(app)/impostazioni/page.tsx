@@ -91,7 +91,7 @@ export default function ImpostazioniPage() {
       setSchemaState(data.ok ? "ok" : "error");
     } catch {
       setSchemaState("error");
-      setSchemaInfo({ mancanti: [], sql: null });
+      setSchemaInfo({ mancanti: [], sql: null, rlsError: null });
     }
   };
 
