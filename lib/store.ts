@@ -566,9 +566,13 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
     } catch (e) { lastError = `atleti exception: ${e}`; fail++; }
   }
 
-  // Programmi
+  // Programmi — fetch valid atleta IDs from Supabase first to avoid FK violations
+  const { data: atletiSb } = await supabase.from("atleti").select("id");
+  const atletiSbIds = new Set((atletiSb ?? []).map((r: { id: string }) => r.id));
+
   const programmi = await db.programmi.toArray();
   for (const p of programmi) {
+    if (!atletiSbIds.has(p.atletaId)) continue; // skip orphaned programmes
     try {
       const { error } = await supabase.from("programmi").upsert(programmaToRow(p));
       if (!error) ok++;
