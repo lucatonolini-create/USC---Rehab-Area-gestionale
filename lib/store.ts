@@ -510,8 +510,8 @@ export async function syncFlush(): Promise<void> {
           const row = op.payload as Record<string, unknown>;
           const { error } = await supabase.from("atleti").upsert(row);
           if (error?.code === "PGRST204") {
-            // New columns (referti_clinici, progresso_manuale) don't exist in Supabase yet; retry without them
-            const { referti_clinici, progresso_manuale, ...safeRow } = row;
+            // Some newer columns may not exist in Supabase yet; retry stripping all optional ones
+            const { referti_clinici, progresso_manuale, peso, altezza, altezza_da_seduto, nome_completo, ...safeRow } = row;
             const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
             ok = !e2;
           } else {
@@ -554,7 +554,7 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
       const row = atletaToRow(a);
       const { error } = await supabase.from("atleti").upsert(row);
       if (error?.code === "PGRST204") {
-        const { referti_clinici, progresso_manuale, ...safeRow } = row;
+        const { referti_clinici, progresso_manuale, peso, altezza, altezza_da_seduto, nome_completo, ...safeRow } = row;
         const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
         if (!e2) ok++;
         else { lastError = `atleti: ${e2.code} ${e2.message}`; fail++; }
