@@ -17,6 +17,213 @@ const statoColor: Record<Stato, string> = {
   "Disponibile": "bg-green-100 text-green-700",
 };
 
+async function getLogoBuffer(): Promise<ArrayBuffer | null> {
+  try { const r = await fetch("/logo.png"); return r.ok ? r.arrayBuffer() : null; } catch { return null; }
+}
+
+async function esportaExcel(atleta: Atleta, programmi: Programma[]) {
+  const { Workbook } = await import("exceljs");
+  const wb = new Workbook();
+  wb.creator = "U.S. Cremonese Rehab Area";
+  const oggi = new Date().toLocaleDateString("it-IT");
+
+  const XL_RED  = "FFC8102E";
+  const XL_DARK = "FF2B2B2B";
+  const XL_LIGHT = "FFF5F5F5";
+  const redFill  = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_RED } };
+  const darkFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_DARK } };
+  const lightFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_LIGHT } };
+  const whiteFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFFFFF" } };
+  const border = { top: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, bottom: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, left: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, right: { style: "thin" as const, color: { argb: "FFE0E0E0" } } };
+
+  const logoBuf = await getLogoBuffer();
+  const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
+
+  const addHeader = (ws: any, subtitle: string) => {
+    ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
+    if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 }, br: { col: 0.92, row: 3.8 }, editAs: "oneCell" });
+    const r1 = ws.getRow(1); r1.getCell(2).value = "U.S. CREMONESE – REHAB AREA"; r1.getCell(2).font = { bold: true, size: 13, color: { argb: XL_RED } };
+    const r2 = ws.getRow(2); r2.getCell(2).value = "SCHEDA RIABILITATIVA"; r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_RED } };
+    const r3 = ws.getRow(3); r3.getCell(2).value = subtitle; r3.getCell(2).font = { size: 9, italic: true, color: { argb: "FF999999" } };
+    ws.getRow(3).getCell(3).value = `Generato il ${oggi}`; ws.getRow(3).getCell(3).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(3).alignment = { horizontal: "right" };
+  };
+
+  const addSectionTitle = (ws: any, text: string, fill = darkFill) => {
+    const row = ws.addRow([text]);
+    row.height = 20;
+    row.getCell(1).fill = fill;
+    row.getCell(1).font = { bold: true, size: 10, color: { argb: "FFFFFFFF" } };
+    row.getCell(1).border = border;
+    ws.mergeCells(row.number, 1, row.number, 8);
+    return row;
+  };
+
+  const addDataRow = (ws: any, label: string, value: string, odd: boolean) => {
+    const row = ws.addRow([label, value]);
+    row.height = 18;
+    [1, 2].forEach((col) => { row.getCell(col).fill = odd ? lightFill : whiteFill; row.getCell(col).border = border; row.getCell(col).alignment = { vertical: "middle" }; });
+    row.getCell(1).font = { bold: true, size: 9, color: { argb: XL_DARK } };
+    row.getCell(2).font = { size: 9, color: { argb: XL_DARK } };
+  };
+
+  const ws1 = wb.addWorksheet("Atleta");
+  ws1.columns = [{ width: 28 }, { width: 40 }, { width: 20 }];
+  addHeader(ws1, nd(atleta));
+  ws1.addRow([]);
+  addSectionTitle(ws1, "DATI PERSONALI", redFill);
+  [
+    ["Nome", nd(atleta)],
+    ["Categoria", atleta.categoria ?? "—"],
+    ["Ruolo", atleta.posizione ?? "—"],
+    ["Piede dominante", atleta.piedeDominante ?? "—"],
+    ["Infortunio", atleta.infortunio || "—"],
+    ["Inizio riabilitazione", atleta.inizioRehab ? new Date(atleta.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+    ["Fine riabilitazione", atleta.fineRehab ? new Date(atleta.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+    ["Stato attuale", atleta.stato],
+    ["Progresso recupero", `${atleta.progresso}%`],
+    ["Note", atleta.note || "—"],
+  ].forEach(([l, v], i) => addDataRow(ws1, l, v, i % 2 !== 0));
+
+  programmi.forEach((prog, idx) => {
+    const ws = wb.addWorksheet(`Prog ${idx + 1}`.slice(0, 31));
+    ws.columns = [{ width: 6 }, { width: 32 }, { width: 10 }, { width: 14 }, { width: 14 }, { width: 8 }, { width: 10 }, { width: 24 }];
+    addHeader(ws, `${prog.nome}${prog.fase ? ` – ${prog.fase}` : ""}`);
+    ws.getRow(3).getCell(2).value = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "";
+    ws.addRow([]);
+
+    addSectionTitle(ws, "PALESTRA", darkFill);
+    const hRow = ws.addRow(["#", "Esercizio", "Serie", "Reps/Durata", "Carico", "RIR", "VAS", "Note"]);
+    hRow.height = 20;
+    hRow.eachCell((cell: any) => { cell.fill = redFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
+    hRow.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
+
+    prog.esercizi.forEach((e, i) => {
+      const row = ws.addRow([i + 1, e.nome, e.serie || "—", e.reps || "—", e.carico || "—", e.rir || "—", e.vas ? `${e.vas}/10` : "—", e.note || ""]);
+      row.height = 18;
+      row.eachCell({ includeEmpty: true }, (cell: any, col: number) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle", horizontal: col === 2 ? "left" : "center" }; });
+    });
+
+    if (prog.esercizicampo?.length) {
+      ws.addRow([]);
+      addSectionTitle(ws, "ESERCIZI IN CAMPO", darkFill);
+      const hCampo = ws.addRow(["#", "Tipo", "Serie", "Durata", "Descrizione"]);
+      hCampo.height = 20;
+      const grayFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF646464" } };
+      hCampo.eachCell((cell: any) => { cell.fill = grayFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle", horizontal: "center" }; });
+      hCampo.getCell(2).alignment = { vertical: "middle", horizontal: "left" };
+      hCampo.getCell(5).alignment = { vertical: "middle", horizontal: "left" };
+      prog.esercizicampo.forEach((c, i) => {
+        const row = ws.addRow([i + 1, c.tipo || "—", c.serie || "—", c.durata || "—", c.descrizione || ""]);
+        row.height = 18;
+        row.eachCell({ includeEmpty: true }, (cell: any, col: number) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle", horizontal: col === 2 || col === 5 ? "left" : "center" }; });
+      });
+    }
+
+    if (prog.tests?.length) {
+      ws.addRow([]);
+      addSectionTitle(ws, "TEST FISIOTERAPICI E DI PERFORMANCE", darkFill);
+      prog.tests.forEach((t, i) => {
+        const row = ws.addRow([i + 1, t.nome, t.risultato, t.unita, t.note]);
+        row.height = 18;
+        row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; });
+      });
+    }
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `${nd(atleta).replace(/ /g, "_")}_rehab.xlsx`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function esportaExcelReportMensile(
+  atletiMese: Atleta[], mese: number, anno: number, filtroCat: string,
+  mesiP?: { anno: number; mese: number }[], periodoLbl?: string
+) {
+  const { Workbook } = await import("exceljs");
+  const wb = new Workbook();
+  wb.creator = "U.S. Cremonese Rehab Area";
+  const oggi = new Date().toLocaleDateString("it-IT");
+  const nomeP = periodoLbl ?? `${MESI[mese]} ${anno}`;
+  const subtitle = `${nomeP}${filtroCat !== "Tutte" ? ` – ${filtroCat}` : ""}`;
+
+  const XL_RED  = "FFC8102E"; const XL_DARK = "FF2B2B2B"; const XL_LIGHT = "FFF5F5F5";
+  const redFill  = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_RED } };
+  const darkFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_DARK } };
+  const lightFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_LIGHT } };
+  const whiteFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFFFFF" } };
+  const border = { top: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, bottom: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, left: { style: "thin" as const, color: { argb: "FFE0E0E0" } }, right: { style: "thin" as const, color: { argb: "FFE0E0E0" } } };
+
+  const logoBuf = await getLogoBuffer();
+  const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
+
+  const ws = wb.addWorksheet("Report");
+  ws.columns = [{ width: 28 }, { width: 14 }, { width: 38 }, { width: 18 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 16 }, { width: 10 }];
+
+  ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
+  if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 } as any, br: { col: 0.92, row: 3.8 } as any, editAs: "oneCell" });
+  const r1 = ws.getRow(1); r1.getCell(2).value = "U.S. CREMONESE – REHAB AREA"; r1.getCell(2).font = { bold: true, size: 13, color: { argb: XL_RED } };
+  const r2 = ws.getRow(2); r2.getCell(2).value = "REPORT"; r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_RED } };
+  const r3 = ws.getRow(3); r3.getCell(2).value = subtitle; r3.getCell(2).font = { size: 9, italic: true, color: { argb: "FF999999" } };
+  ws.getRow(3).getCell(4).value = `Generato il ${oggi}`; ws.getRow(3).getCell(4).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(4).alignment = { horizontal: "right" };
+
+  ws.addRow([]);
+  const hRow = ws.addRow(["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "Progresso"]);
+  hRow.height = 20;
+  hRow.eachCell((cell: any) => { cell.fill = darkFill; cell.font = { bold: true, size: 9, color: { argb: "FFFFFFFF" } }; cell.border = border; cell.alignment = { vertical: "middle" }; });
+
+  const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT");
+  const gg = (inizio: string, fine?: string) => fine
+    ? String(Math.round((new Date(fine + "T12:00").getTime() - new Date(inizio + "T12:00").getTime()) / 86400000))
+    : "—";
+
+  atletiMese.forEach((a, athleteIdx) => {
+    const infortuni = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
+    const count = Math.max(infortuni.length, 1);
+    const bg = athleteIdx % 2 !== 0 ? lightFill : whiteFill;
+    const startRowNum = ws.rowCount + 1;
+
+    const addXlRow = (values: any[]) => {
+      const row = ws.addRow(values);
+      row.height = 18;
+      row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = bg; cell.border = border; cell.font = { size: 9 }; cell.alignment = { vertical: "middle" }; });
+    };
+    if (infortuni.length === 0) {
+      addXlRow([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+    } else {
+      infortuni.forEach((inf) => {
+        addXlRow([nd(a), a.categoria, inf.diagnosi, inf.tipo ?? "—", inf.inizio ? fmtD(inf.inizio) : "—", inf.fine ? fmtD(inf.fine) : "—", inf.inizio ? gg(inf.inizio, inf.fine) : "—", a.stato, `${a.progresso}%`]);
+      });
+    }
+    if (count > 1) {
+      const endRowNum = startRowNum + count - 1;
+      ws.mergeCells(startRowNum, 1, endRowNum, 1);
+      ws.mergeCells(startRowNum, 2, endRowNum, 2);
+      ws.getRow(startRowNum).getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+      ws.getRow(startRowNum).getCell(2).alignment = { vertical: "middle", horizontal: "left" };
+    }
+  });
+
+  ws.addRow([]);
+  const rRiep = ws.addRow(["Riepilogo per categoria", "", `Totale: ${atletiMese.length} atleti`]);
+  rRiep.getCell(1).font = { bold: true, size: 9, color: { argb: XL_RED } };
+  rRiep.getCell(3).font = { bold: true, size: 9, color: { argb: XL_DARK } };
+  CATEGORIE.forEach((cat, i) => {
+    const n = atletiMese.filter((a) => a.categoria === cat).length;
+    if (!n) return;
+    const row = ws.addRow([cat, `${n} atleti`]);
+    row.height = 16;
+    row.eachCell({ includeEmpty: true }, (cell: any) => { cell.fill = i % 2 !== 0 ? lightFill : whiteFill; cell.border = border; cell.font = { size: 9 }; });
+  });
+
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = `USC_Report_${nomeP.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function csvDownload(rows: string[][], filename: string) {
   const content = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const blob = new Blob(["﻿" + content], { type: "text/csv;charset=utf-8;" });
@@ -159,7 +366,7 @@ export default function ProgressiPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
   const [programmi, setProgrammi] = useState<Programma[]>([]);
   const [esportando, setEsportando] = useState<string | null>(null);
-  const [esportandoReport, setEsportandoReport] = useState(false);
+  const [esportandoReport, setEsportandoReport] = useState<"excel" | null>(null);
   const [pageTab, setPageTab] = useState<PageTab>("progressi");
 
   const oggi = new Date();
@@ -235,11 +442,12 @@ export default function ProgressiPage() {
     if (updatedAtleta) upsertAtleta(updatedAtleta);
   };
 
-  const handleExport = (atleta: Atleta) => {
-    setEsportando(atleta.id);
+  const handleExport = async (atleta: Atleta, tipo: "excel" | "csv") => {
+    setEsportando(atleta.id + tipo);
     const prog = programmi.filter((p) => p.atletaId === atleta.id);
     try {
-      esportaCSV(atleta, prog);
+      if (tipo === "excel") await esportaExcel(atleta, prog);
+      else esportaCSV(atleta, prog);
     } finally {
       setEsportando(null);
     }
@@ -307,10 +515,15 @@ export default function ProgressiPage() {
                       </div>
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <button onClick={() => handleExport(atleta)} disabled={!!esportando}
+                      <button onClick={() => handleExport(atleta, "excel")} disabled={!!esportando}
                         className="flex items-center gap-1.5 border border-green-300 text-green-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-50 disabled:opacity-50">
                         <Download className="w-3.5 h-3.5" />
-                        {esportando === atleta.id ? "..." : "CSV"}
+                        {esportando === atleta.id + "excel" ? "..." : "Excel"}
+                      </button>
+                      <button onClick={() => handleExport(atleta, "csv")} disabled={!!esportando}
+                        className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
+                        <Download className="w-3.5 h-3.5" />
+                        {esportando === atleta.id + "csv" ? "..." : "CSV"}
                       </button>
                     </div>
                   </div>
@@ -439,11 +652,18 @@ export default function ProgressiPage() {
               </h2>
               <div className="flex gap-2">
                 <button
-                  onClick={() => { setEsportandoReport(true); try { esportaCSVReportMensile(atletiMese, reportMese, reportAnno, filtroCat, mesiPeriodo, periodoLabel); } finally { setEsportandoReport(false); } }}
-                  disabled={esportandoReport || atletiMese.length === 0}
+                  onClick={async () => { setEsportandoReport("excel"); try { await esportaExcelReportMensile(atletiMese, reportMese, reportAnno, filtroCat, mesiPeriodo, periodoLabel); } finally { setEsportandoReport(null); } }}
+                  disabled={!!esportandoReport || atletiMese.length === 0}
                   className="flex items-center gap-1.5 border border-green-300 text-green-700 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-green-50 disabled:opacity-50">
                   <Download className="w-3.5 h-3.5" />
-                  {esportandoReport ? "..." : "CSV"}
+                  {esportandoReport === "excel" ? "..." : "Excel"}
+                </button>
+                <button
+                  onClick={() => { try { esportaCSVReportMensile(atletiMese, reportMese, reportAnno, filtroCat, mesiPeriodo, periodoLabel); } catch {} }}
+                  disabled={atletiMese.length === 0}
+                  className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
+                  <Download className="w-3.5 h-3.5" />
+                  CSV
                 </button>
               </div>
             </div>

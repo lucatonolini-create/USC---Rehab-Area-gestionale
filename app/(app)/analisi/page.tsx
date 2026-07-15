@@ -103,6 +103,201 @@ function infortunitNelMese(a: Atleta, anno: number, mese: number): InfortunioNel
 
 // ─── Logo helpers ─────────────────────────────────────────────────────────────
 
+async function getLogoArrayBuffer(): Promise<ArrayBuffer | null> {
+  try {
+    const resp = await fetch("/logo.png");
+    if (!resp.ok) return null;
+    return await resp.arrayBuffer();
+  } catch { return null; }
+}
+
+// ─── Excel helpers ────────────────────────────────────────────────────────────
+
+const XL_RED   = "FFC8102E";
+const XL_DARK  = "FF2B2B2B";
+const XL_WHITE = "FFFFFFFF";
+const XL_LIGHT = "FFF5F5F5";
+
+const xlRedFill  = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_RED } };
+const xlDarkFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_DARK } };
+const xlLightFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_LIGHT } };
+const xlWhiteFill = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: XL_WHITE } };
+const xlHeaderFont = { bold: true, color: { argb: XL_WHITE }, size: 10 };
+const xlThinBorder = {
+  top:    { style: "thin" as const, color: { argb: "FFE0E0E0" } },
+  bottom: { style: "thin" as const, color: { argb: "FFE0E0E0" } },
+  left:   { style: "thin" as const, color: { argb: "FFE0E0E0" } },
+  right:  { style: "thin" as const, color: { argb: "FFE0E0E0" } },
+};
+
+function xlAddSheetHeader(ws: any, wb: any, logoId: number | undefined, title: string, subtitle: string, oggi: string) {
+  ws.getRow(1).height = 26; ws.getRow(2).height = 18; ws.getRow(3).height = 15; ws.getRow(4).height = 8;
+  if (logoId !== undefined) ws.addImage(logoId, { tl: { col: 0, row: 0 }, br: { col: 0.92, row: 3.8 }, editAs: "oneCell" });
+  const r1 = ws.getRow(1); r1.getCell(2).value = "U.S. CREMONESE – REHAB AREA"; r1.getCell(2).font = { bold: true, size: 13, color: { argb: XL_RED } };
+  const r2 = ws.getRow(2); r2.getCell(2).value = title; r2.getCell(2).font = { bold: true, size: 10, color: { argb: XL_RED } };
+  const r3 = ws.getRow(3); r3.getCell(2).value = subtitle; r3.getCell(2).font = { size: 9, italic: true, color: { argb: "FF999999" } };
+  ws.getRow(3).getCell(3).value = `Generato il ${oggi}`; ws.getRow(3).getCell(3).font = { size: 9, color: { argb: "FF999999" } }; ws.getRow(3).getCell(3).alignment = { horizontal: "right" };
+}
+
+function xlAddColHeaders(ws: any, headers: string[], fill = xlRedFill) {
+  const row = ws.addRow(headers);
+  row.height = 22;
+  row.eachCell((cell: any, col: number) => {
+    cell.fill = fill; cell.font = xlHeaderFont;
+    cell.alignment = { vertical: "middle", horizontal: col === 1 ? "left" : "center" };
+    cell.border = xlThinBorder;
+  });
+  return row;
+}
+
+function xlAddDataRow(ws: any, data: any[], odd: boolean, redCols: number[] = []) {
+  const row = ws.addRow(data);
+  row.height = 18;
+  row.eachCell({ includeEmpty: true }, (cell: any, col: number) => {
+    cell.fill = odd ? xlLightFill : xlWhiteFill; cell.border = xlThinBorder;
+    cell.alignment = { vertical: "middle", horizontal: col === 1 ? "left" : "center" };
+    if (redCols.includes(col)) cell.font = { bold: true, color: { argb: XL_RED } };
+  });
+  return row;
+}
+
+async function xlSave(wb: any, filename: string) {
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function esportaExcelPanoramica(params: {
+  atleti: Atleta[];
+  programmi: Programma[];
+  perCategoria: { cat: string; totale: number; attivi: number }[];
+  perTipoInfortunio: { nome: string; count: number }[];
+  perInfortunio: { nome: string; count: number }[];
+  trendMensile: { label: string; count: number }[];
+}) {
+  const { Workbook } = await import("exceljs");
+  const wb = new Workbook();
+  wb.creator = "U.S. Cremonese Rehab Area";
+  const oggi = new Date().toLocaleDateString("it-IT");
+  const attivi = params.atleti.filter((a) => a.stato !== "Disponibile").length;
+  const guariti = params.atleti.filter((a) => a.stato === "Disponibile").length;
+
+  const logoBuf = await getLogoArrayBuffer();
+  const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
+
+  const ws1 = wb.addWorksheet("Riepilogo");
+  ws1.columns = [{ width: 38 }, { width: 22 }, { width: 20 }];
+  xlAddSheetHeader(ws1, wb, logoId, "ANALISI REHAB AREA", "Riepilogo generale", oggi);
+  ws1.addRow([]);
+  xlAddColHeaders(ws1, ["Indicatore", "Valore"], xlDarkFill);
+  [["Atleti totali in gestione", params.atleti.length], ["In riabilitazione", attivi], ["Guariti / Dimessi", guariti], ["Programmi riabilitativi creati", params.programmi.length]].forEach((r, i) => xlAddDataRow(ws1, r, i % 2 !== 0, [2]));
+
+  const ws2 = wb.addWorksheet("Per Categoria");
+  ws2.columns = [{ width: 20 }, { width: 14 }, { width: 22 }, { width: 14 }];
+  xlAddSheetHeader(ws2, wb, logoId, "ANALISI REHAB AREA", "Atleti per categoria", oggi);
+  ws2.addRow([]);
+  xlAddColHeaders(ws2, ["Categoria", "Totale", "In riabilitazione", "Guariti"]);
+  params.perCategoria.forEach(({ cat, totale, attivi: a }, i) => xlAddDataRow(ws2, [cat, totale, a, totale - a], i % 2 !== 0, [2, 3, 4]));
+
+  const ws3 = wb.addWorksheet("Tipi Infortunio");
+  ws3.columns = [{ width: 30 }, { width: 14 }, { width: 18 }];
+  xlAddSheetHeader(ws3, wb, logoId, "ANALISI REHAB AREA", "Categorie di infortunio", oggi);
+  ws3.addRow([]);
+  xlAddColHeaders(ws3, ["Tipo infortunio", "N° atleti", "% sul totale"]);
+  params.perTipoInfortunio.forEach(({ nome, count }, i) => {
+    const pct = params.atleti.length > 0 ? `${Math.round((count / params.atleti.length) * 100)}%` : "—";
+    xlAddDataRow(ws3, [nome, count, pct], i % 2 !== 0, [2]);
+  });
+
+  const ws4 = wb.addWorksheet("Diagnosi");
+  ws4.columns = [{ width: 40 }, { width: 14 }];
+  xlAddSheetHeader(ws4, wb, logoId, "ANALISI REHAB AREA", "Diagnosi specifiche più frequenti", oggi);
+  ws4.addRow([]);
+  xlAddColHeaders(ws4, ["Diagnosi", "N° atleti"]);
+  params.perInfortunio.forEach(({ nome, count }, i) => xlAddDataRow(ws4, [nome, count], i % 2 !== 0, [2]));
+
+  const ws5 = wb.addWorksheet("Trend Mensile");
+  ws5.columns = [{ width: 22 }, { width: 16 }];
+  xlAddSheetHeader(ws5, wb, logoId, "ANALISI REHAB AREA", "Trend mensile – ultimi 12 mesi", oggi);
+  ws5.addRow([]);
+  xlAddColHeaders(ws5, ["Mese", "Atleti attivi"]);
+  params.trendMensile.forEach(({ label, count }, i) => xlAddDataRow(ws5, [label, count], i % 2 !== 0, [2]));
+
+  const ws6 = wb.addWorksheet("Progressi");
+  ws6.columns = [{ width: 20 }, { width: 18 }, { width: 18 }];
+  xlAddSheetHeader(ws6, wb, logoId, "ANALISI REHAB AREA", "Progresso medio di recupero per categoria", oggi);
+  ws6.addRow([]);
+  xlAddColHeaders(ws6, ["Categoria", "Atleti (attivi / guariti)", "Progresso medio"]);
+  CATEGORIE.forEach((cat, i) => {
+    const lista = params.atleti.filter((a) => a.categoria === cat);
+    if (!lista.length) return;
+    const nAttivi = lista.filter((a) => a.stato !== "Disponibile").length;
+    const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
+    xlAddDataRow(ws6, [cat, `${nAttivi} attivi / ${lista.length - nAttivi} guariti`, `${media}%`], i % 2 !== 0, [3]);
+  });
+
+  await xlSave(wb, `USC_Analisi_${oggi.replace(/\//g, "-")}.xlsx`);
+}
+
+async function esportaExcelReport(
+  atletiMese: Atleta[], mese: number, anno: number, filtroCat: string, filtroTipoInf: string,
+  _atleti: Atleta[], mesiP?: { anno: number; mese: number }[], periodoLbl?: string,
+) {
+  const { Workbook } = await import("exceljs");
+  const wb = new Workbook();
+  wb.creator = "U.S. Cremonese Rehab Area";
+  const oggi = new Date().toLocaleDateString("it-IT");
+  const nomeP = periodoLbl ?? `${MESI_LUNGHI[mese]} ${anno}`;
+  const subtitle = [nomeP, filtroCat !== "Tutte" ? filtroCat : "", filtroTipoInf || ""].filter(Boolean).join(" – ");
+
+  const logoBuf = await getLogoArrayBuffer();
+  const logoId = logoBuf ? wb.addImage({ buffer: logoBuf, extension: "png" }) : undefined;
+
+  const ws = wb.addWorksheet("Report");
+  ws.columns = [{ width: 28 }, { width: 14 }, { width: 38 }, { width: 18 }, { width: 12 }, { width: 12 }, { width: 10 }, { width: 16 }, { width: 10 }];
+  xlAddSheetHeader(ws, wb, logoId, "REPORT", subtitle, oggi);
+  ws.getRow(2).getCell(4).value = `Totale atleti: ${atletiMese.length}`;
+  ws.getRow(2).getCell(4).font = { bold: true, size: 10, color: { argb: XL_DARK } };
+  ws.addRow([]);
+  xlAddColHeaders(ws, ["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "Progresso %"], xlDarkFill);
+
+  const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT");
+  const ggD = (inizio: string, fine?: string) => fine
+    ? String(Math.round((new Date(fine + "T12:00").getTime() - new Date(inizio + "T12:00").getTime()) / 86400000)) : "—";
+
+  atletiMese.forEach((a, athleteIdx) => {
+    const infortuni = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
+    const count = Math.max(infortuni.length, 1);
+    const startRowNum = ws.rowCount + 1;
+    const addRow = (values: any[]) => xlAddDataRow(ws, values, athleteIdx % 2 !== 0, [9]);
+    if (infortuni.length === 0) {
+      addRow([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+    } else {
+      infortuni.forEach((inf) => {
+        addRow([nd(a), a.categoria, inf.diagnosi, inf.tipo ?? "—", inf.inizio ? fmtD(inf.inizio) : "—", inf.fine ? fmtD(inf.fine) : "—", inf.inizio ? ggD(inf.inizio, inf.fine) : "—", a.stato, `${a.progresso}%`]);
+      });
+    }
+    if (count > 1) {
+      const endRowNum = startRowNum + count - 1;
+      ws.mergeCells(startRowNum, 1, endRowNum, 1); ws.mergeCells(startRowNum, 2, endRowNum, 2);
+      ws.getRow(startRowNum).getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+      ws.getRow(startRowNum).getCell(2).alignment = { vertical: "middle", horizontal: "left" };
+    }
+  });
+
+  ws.addRow([]);
+  xlAddColHeaders(ws, ["Riepilogo per categoria", "", "N° atleti"]);
+  CATEGORIE.forEach((cat, i) => {
+    const n = atletiMese.filter((a) => a.categoria === cat).length;
+    if (!n) return;
+    xlAddDataRow(ws, [cat, "", n], i % 2 !== 0, [3]);
+  });
+
+  await xlSave(wb, `USC_Report_${nomeP.replace(/[^a-zA-Z0-9]/g, "_")}.xlsx`);
+}
+
 // ─── CSV helpers ──────────────────────────────────────────────────────────────
 
 function csvDownload(rows: string[][], filename: string) {
@@ -385,14 +580,17 @@ export default function AnalisiPage() {
     "Disponibile": "bg-green-100 text-green-700",
   };
 
-  const handleExport = () => {
-    setEsportando("csv");
+  const handleExport = async (tipo: "excel" | "csv") => {
+    const key = tab + tipo;
+    setEsportando(key);
     try {
       if (tab === "overview") {
         const params = { atleti, programmi: programmiReali, perCategoria, perTipoInfortunio, perInfortunio, trendMensile };
-        esportaCSVPanoramica(params);
+        if (tipo === "excel") await esportaExcelPanoramica(params);
+        else esportaCSVPanoramica(params);
       } else {
-        esportaCSVReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "", mesiPeriodo, periodoLabel);
+        if (tipo === "excel") await esportaExcelReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "", atleti, mesiPeriodo, periodoLabel);
+        else esportaCSVReport(atletiMese, reportMese, reportAnno, filtroCat, filtroTipoInf !== "Tutti" ? filtroTipoInf : "", mesiPeriodo, periodoLabel);
       }
     } finally {
       setEsportando(null);
@@ -409,10 +607,15 @@ export default function AnalisiPage() {
         <div className="flex items-center gap-3 flex-wrap">
           {/* Export buttons */}
           <div className="flex gap-2">
-            <button onClick={handleExport} disabled={!!esportando}
+            <button onClick={() => handleExport("excel")} disabled={!!esportando}
               className="flex items-center gap-1.5 border border-green-300 text-green-700 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-green-50 disabled:opacity-50 transition-colors">
               <Download className="w-3.5 h-3.5" />
-              {esportando ? "..." : "CSV"}
+              {esportando?.endsWith("excel") ? "..." : "Excel"}
+            </button>
+            <button onClick={() => handleExport("csv")} disabled={!!esportando}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-600 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-gray-50 disabled:opacity-50 transition-colors">
+              <Download className="w-3.5 h-3.5" />
+              {esportando?.endsWith("csv") ? "..." : "CSV"}
             </button>
           </div>
           {/* Tab switcher */}
