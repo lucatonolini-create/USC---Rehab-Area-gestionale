@@ -1252,7 +1252,7 @@ export default function AtletiPage() {
                   </div>
                 )}
 
-                {(selected.peso || selected.altezza || selected.altezzaDaSeduto) && (
+                {(selected.peso || selected.altezza) && (
                   <div className="pt-2 border-t border-gray-100">
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Dati antropometrici</p>
                     <div className="grid grid-cols-3 gap-2">
@@ -1266,12 +1266,6 @@ export default function AtletiPage() {
                         <div className="bg-gray-50 rounded-xl p-3 text-center">
                           <p className="text-xs text-gray-400">Altezza</p>
                           <p className="font-semibold text-gray-900">{selected.altezza} cm</p>
-                        </div>
-                      )}
-                      {selected.altezzaDaSeduto && (
-                        <div className="bg-gray-50 rounded-xl p-3 text-center">
-                          <p className="text-xs text-gray-400">Alt. seduto</p>
-                          <p className="font-semibold text-gray-900">{selected.altezzaDaSeduto} cm</p>
                         </div>
                       )}
                     </div>

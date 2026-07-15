@@ -151,7 +151,6 @@ export interface Atleta {
   // Antropometria
   peso?: string;
   altezza?: string;
-  altezzaDaSeduto?: string;
 }
 
 // Tempi di recupero standard per tipo di infortunio (in giorni)
@@ -372,7 +371,6 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
       ? (r.progresso_manuale as number) : undefined,
     peso: (r.peso as string) ?? "",
     altezza: (r.altezza as string) ?? "",
-    altezzaDaSeduto: (r.altezza_da_seduto as string) ?? "",
   };
 }
 
@@ -405,7 +403,6 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
     progresso_manuale: a.progressoManuale ?? null,
     peso: a.peso ?? null,
     altezza: a.altezza ?? null,
-    altezza_da_seduto: a.altezzaDaSeduto ?? null,
     nome_completo: a.nomeCompleto ?? null,
   };
 }
@@ -490,7 +487,7 @@ export async function syncFlush(): Promise<void> {
           if (!error) {
             ok = true;
           } else if (error.code === "PGRST204") {
-            const { referti_clinici, progresso_manuale, peso, altezza, altezza_da_seduto, nome_completo, ...safeRow } = row;
+            const { referti_clinici, progresso_manuale, peso, altezza, nome_completo, ...safeRow } = row;
             const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
             ok = !e2 || isExpectedSyncError(e2.code);
           } else {
@@ -543,7 +540,7 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
         ok++;
       } else if (error.code === "PGRST204") {
         // Some optional columns may not exist yet — retry without them
-        const { referti_clinici, progresso_manuale, peso, altezza, altezza_da_seduto, nome_completo, ...safeRow } = row;
+        const { referti_clinici, progresso_manuale, peso, altezza, nome_completo, ...safeRow } = row;
         const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
         if (!e2 || isExpectedSyncError(e2.code)) ok++;
         else { lastError = `atleti: ${e2.code} ${e2.message}`; fail++; }

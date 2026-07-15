@@ -24,7 +24,7 @@ const atletaVuoto: Omit<Atleta, "id"> = {
   stato: "Infortunato", progresso: 0,
   fisioterapista: "", preparatoreAtletico: "",
   telefono: "", email: "", note: "",
-  peso: "", altezza: "", altezzaDaSeduto: "",
+  peso: "", altezza: "",
 };
 
 interface Props {
@@ -310,12 +310,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
                 <Input className="mt-1" type="number" min="0" step="0.1"
                   value={form.altezza ?? ""} onChange={(e) => f("altezza", e.target.value)}
                   placeholder="es. 175" />
-              </div>
-              <div>
-                <Label>Seduto (cm)</Label>
-                <Input className="mt-1" type="number" min="0" step="0.1"
-                  value={form.altezzaDaSeduto ?? ""} onChange={(e) => f("altezzaDaSeduto", e.target.value)}
-                  placeholder="es. 90" />
               </div>
             </div>
 

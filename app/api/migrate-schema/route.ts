@@ -6,7 +6,6 @@ const COLONNE_ATLETI: { nome: string; tipo: string; default?: string }[] = [
   { nome: "progresso_manuale", tipo: "float4" },
   { nome: "peso", tipo: "text" },
   { nome: "altezza", tipo: "text" },
-  { nome: "altezza_da_seduto", tipo: "text" },
   { nome: "nome_completo", tipo: "text" },
 ];
 
