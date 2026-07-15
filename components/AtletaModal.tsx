@@ -126,7 +126,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
                 ))}
               </select>
               {perfAthletes.length > 0 && (
-                <p className="text-xs text-gray-400">Seleziona un giocatore per compilare automaticamente nome, posizione e data di nascita.</p>
+                <p className="text-xs text-gray-400">Seleziona un giocatore per compilare automaticamente nome e posizione.</p>
               )}
             </div>
           )}
