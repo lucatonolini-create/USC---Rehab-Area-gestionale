@@ -125,7 +125,6 @@ export interface Atleta {
   id: string;
   nome: string;          // nome completo "Cognome Nome" es. "Tonolini Luca" — usato come athlete_name
   nomeCompleto?: string; // legacy: se presente sovrascrive nome nella visualizzazione (rimosso gradualmente)
-  dataNascita: string;
   categoria: Categoria;
   posizione: string;
   piedeDominante: Piede;
@@ -153,25 +152,6 @@ export interface Atleta {
   peso?: string;
   altezza?: string;
   altezzaDaSeduto?: string;
-}
-
-// Mirwald et al. (2002) – formula maschi
-export function calcolaPHV(
-  altezza: string, altezzaDaSeduto: string, peso: string, dataNascita: string
-): { offset: number; etaPHV: number } | null {
-  const h = parseFloat(altezza);
-  const sh = parseFloat(altezzaDaSeduto);
-  const w = parseFloat(peso);
-  if (!dataNascita || isNaN(h) || isNaN(sh) || isNaN(w) || h <= 0 || sh <= 0 || w <= 0 || sh >= h) return null;
-  const eta = (Date.now() - new Date(dataNascita).getTime()) / (365.25 * 864e5);
-  const leg = h - sh;
-  const offset =
-    -9.236
-    + 0.0002708 * leg * sh
-    - 0.001663  * eta * leg
-    + 0.007216  * eta * sh
-    + 0.02292   * (w / h) * 100;
-  return { offset: Math.round(offset * 100) / 100, etaPHV: Math.round((eta - offset) * 10) / 10 };
 }
 
 // Tempi di recupero standard per tipo di infortunio (in giorni)
@@ -366,7 +346,6 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
     id: r.id as string,
     nome: r.nome as string,
     nomeCompleto: (r.nome_completo as string) || undefined,
-    dataNascita: (r.data_nascita as string) ?? "",
     categoria: r.categoria as Categoria,
     posizione: (r.posizione as string) ?? "",
     piedeDominante: (r.piede_dominante as Piede) ?? "Destro",
@@ -401,7 +380,6 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
   return {
     id: a.id,
     nome: a.nome,
-    data_nascita: a.dataNascita,
     categoria: a.categoria,
     posizione: a.posizione,
     piede_dominante: a.piedeDominante,
@@ -624,7 +602,6 @@ export async function loadAtleti(): Promise<Atleta[]> {
           const local = localMap.get(a.id);
           return {
             ...a,
-            dataNascita: a.dataNascita || perf?.birth_date || a.dataNascita,
             nomeCompleto: perf?.full_name || a.nomeCompleto,
             // Prefer Supabase values if present, else fall back to local
             refertiClinici: (a.refertiClinici && a.refertiClinici.length > 0)
@@ -633,13 +610,6 @@ export async function loadAtleti(): Promise<Atleta[]> {
           };
         }).map(a => ({ ...a, progresso: progrEffettivo(a) }));
         await db.atleti.bulkPut(atleti);
-        // Persisti data di nascita importata su Supabase (fire-and-forget)
-        for (const a of atleti) {
-          const orig = sbResult.data.find(r => r.id === a.id);
-          if (!orig?.data_nascita && a.dataNascita) {
-            supabase.from("atleti").update({ data_nascita: a.dataNascita }).eq("id", a.id).then(() => {});
-          }
-        }
         return atleti;
       }
     } catch {}

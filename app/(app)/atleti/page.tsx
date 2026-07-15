@@ -5,7 +5,7 @@ import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, C
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
-  CATEGORIE, TIPI_INFORTUNIO, calcolaPHV, calcolaProgressoAuto,
+  CATEGORIE, TIPI_INFORTUNIO, calcolaProgressoAuto,
   TIPI_REFERTO, ESITI_REFERTO,
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
   type RefertoClinico, type TipoReferto, type EsitoReferto,
@@ -1275,30 +1275,6 @@ export default function AtletiPage() {
                         </div>
                       )}
                     </div>
-                    {(() => {
-                      const phv = calcolaPHV(selected.altezza ?? "", selected.altezzaDaSeduto ?? "", selected.peso ?? "", selected.dataNascita);
-                      if (!phv) return null;
-                      const postPre = phv.offset >= 0 ? "post-PHV" : "pre-PHV";
-                      const colore = phv.offset >= 0 ? "bg-green-50 border-green-200 text-green-800" : "bg-blue-50 border-blue-200 text-blue-800";
-                      return (
-                        <div className={`mt-2 rounded-xl border p-3 ${colore}`}>
-                          <p className="text-xs font-bold uppercase tracking-wide mb-1">PHV – Peak Height Velocity</p>
-                          <div className="flex gap-4 text-sm">
-                            <div>
-                              <span className="text-xs opacity-70">Maturity Offset</span>
-                              <p className="font-bold text-sm">
-                                {phv.offset >= 0 ? "+" : ""}{phv.offset} anni
-                                <span className="text-xs font-normal ml-1 opacity-70">({postPre})</span>
-                              </p>
-                            </div>
-                            <div>
-                              <span className="text-xs opacity-70">Età al PHV</span>
-                              <p className="font-bold text-sm">{phv.etaPHV} anni</p>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 )}
               </div>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Zap } from "lucide-react";
-import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, calcolaPHV, calcolaProgressoAuto, RECOVERY_DAYS, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, calcolaProgressoAuto, RECOVERY_DAYS, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 
 interface PerfAthlete {
   id: string;
@@ -18,7 +18,7 @@ interface PerfAthlete {
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
 const atletaVuoto: Omit<Atleta, "id"> = {
-  nome: "", dataNascita: "", categoria: "" as Categoria,
+  nome: "", categoria: "" as Categoria,
   posizione: "", piedeDominante: "" as Piede,
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   stato: "Infortunato", progresso: 0,
@@ -59,15 +59,6 @@ function Label({ children }: { children: string }) {
   return <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{children}</label>;
 }
 
-function generaSigla(nome: string, dataNascita: string, categoria: string): string {
-  const parts = nome.trim().split(/\s+/);
-  const fn = parts[0] ?? "";
-  const ln = parts[1] ?? "";
-  const cap = (s: string) => s.length > 0 ? s[0].toUpperCase() + (s[1]?.toLowerCase() ?? "") : "";
-  const anno = dataNascita ? dataNascita.slice(2, 4) : "??";
-  return `${cap(fn)}.${cap(ln)}.${anno}${categoria ? "_" + categoria : ""}`;
-}
-
 export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props) {
   const isModifica = !!atletaIniziale;
   const [form, setForm] = useState<Omit<Atleta, "id">>(
@@ -98,7 +89,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
       ...prev,
       nome: p.name,
       posizione: p.position ?? "",
-      dataNascita: p.birth_date ?? "",
       categoria: "U17" as Categoria,
       ...(piede ? { piedeDominante: piede as Piede } : {}),
     }));
@@ -329,36 +319,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
               </div>
             </div>
 
-            {/* PHV calcolato */}
-            {(() => {
-              const phv = calcolaPHV(form.altezza ?? "", form.altezzaDaSeduto ?? "", form.peso ?? "", form.dataNascita);
-              if (!phv) return (
-                <p className="text-xs text-gray-400 mt-3 italic">
-                  Inserisci peso, altezza, altezza da seduto e data di nascita per calcolare il PHV.
-                </p>
-              );
-              const postPre = phv.offset >= 0 ? "post-PHV" : "pre-PHV";
-              const colore = phv.offset >= 0 ? "bg-green-50 border-green-200 text-green-800" : "bg-blue-50 border-blue-200 text-blue-800";
-              return (
-                <div className={`mt-3 rounded-xl border p-3 ${colore}`}>
-                  <p className="text-xs font-bold uppercase tracking-wide mb-1">PHV – Peak Height Velocity</p>
-                  <div className="flex gap-6 text-sm">
-                    <div>
-                      <span className="text-xs opacity-70">Maturity Offset</span>
-                      <p className="font-bold">
-                        {phv.offset >= 0 ? "+" : ""}{phv.offset} anni
-                        <span className="text-xs font-normal ml-1 opacity-70">({postPre})</span>
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-xs opacity-70">Età stimata al PHV</span>
-                      <p className="font-bold">{phv.etaPHV} anni</p>
-                    </div>
-                  </div>
-                  <p className="text-[10px] opacity-50 mt-1">Formula Mirwald et al. 2002 – sesso maschile</p>
-                </div>
-              );
-            })()}
           </div>
         </div>
 
