@@ -39,515 +39,64 @@ async function syncInjury(atleta: Atleta) {
   } catch { /* sync is best-effort */ }
 }
 
-async function getLogoDataUrl(): Promise<string | null> {
-  try {
-    const resp = await fetch("/logo.png");
-    if (!resp.ok) return null;
-    const blob = await resp.blob();
-    return new Promise((res) => {
-      const reader = new FileReader();
-      reader.onloadend = () => res(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  } catch { return null; }
+function csvDownload(rows: string[][], filename: string) {
+  const content = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob(["﻿" + content], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }
 
-async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[]) {
-  const { default: jsPDF } = await import("jspdf");
-  const { default: autoTable } = await import("jspdf-autotable");
-  const doc = new jsPDF();
-  const red: [number, number, number] = [200, 16, 46];
-  const dark: [number, number, number] = [43, 43, 43];
-  const gray: [number, number, number] = [130, 130, 130];
-  const logoDataUrl = await getLogoDataUrl();
-  const oggi = new Date().toLocaleDateString("it-IT");
-  const M = 14; const W = 210; const H = 297; const HDR = 30;
+function esportaCSVStorico(atleta: Atleta, programmi: Programma[]) {
+  const fmt = (d?: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT") : "—";
+  const rows: string[][] = [];
 
-  const addHeader = (subtitle?: string) => {
-    doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
-    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
-    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
-    const tx = logoDataUrl ? 30 : M;
-    doc.setTextColor(...red); doc.setFontSize(14); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese", tx, 15);
-    doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
-    doc.text("Scheda Completa Atleta", tx, 19);
-    if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 24); }
-    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 15, { align: "right" });
-  };
+  rows.push(["DATI PERSONALI"]);
+  rows.push(["Nome", nd(atleta)]);
+  rows.push(["Categoria", atleta.categoria ?? "—"]);
+  rows.push(["Ruolo", atleta.posizione ?? "—"]);
+  rows.push(["Piede dominante", atleta.piedeDominante ?? "—"]);
+  rows.push(["Infortunio attuale", atleta.infortunio || "—"]);
+  rows.push(["Inizio riabilitazione", fmt(atleta.inizioRehab)]);
+  rows.push(["Fine riabilitazione", fmt(atleta.fineRehab)]);
+  rows.push(["Stato attuale", atleta.stato]);
+  rows.push(["Progresso recupero", `${atleta.progresso}%`]);
+  if (atleta.note) rows.push(["Note", atleta.note]);
+  rows.push([]);
 
-  const secTitle = (text: string, y: number, fill?: [number, number, number]) => {
-    const bg = fill ?? [245, 245, 245] as [number, number, number];
-    const tc: [number, number, number] = fill ? [255, 255, 255] : dark;
-    doc.setFillColor(...bg); doc.rect(M, y - 4, W - M * 2, 8, "F");
-    if (!fill) { doc.setFillColor(...red); doc.rect(M, y - 4, 2.5, 8, "F"); }
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7.5); doc.setTextColor(...tc);
-    doc.text(text.toUpperCase(), M + 5, y + 0.8);
-    return y + 11;
-  };
-
-  const addFooter = () => {
-    const tot = doc.getNumberOfPages();
-    for (let i = 1; i <= tot; i++) {
-      doc.setPage(i);
-      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
-      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
-      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
-      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
-    }
-  };
-
-  const fmtD = (d: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
-  const ggPersi = (i: string, f: string) => { const ms = new Date(f).getTime() - new Date(i).getTime(); return Math.max(0, Math.round(ms / 864e5)); };
-
-  let y = 0;
-  const bS = { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize" as const, halign: "left" as const, valign: "middle" as const };
-  const aS = { fillColor: [250, 250, 250] as [number, number, number] };
-  const hS = (fill: [number, number, number]) => ({ fillColor: fill, textColor: [255, 255, 255] as [number, number, number], fontSize: 7.5, halign: "left" as const, valign: "middle" as const });
-  const checkPage = (need: number, sub?: string) => { if (y + need > H - 18) { doc.addPage(); addHeader(sub); y = HDR + 8; } };
-  const miniLabel = (text: string) => { doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); doc.setTextColor(...gray); doc.text(text, M, y); y += 3; };
-
-  const drawChart = (items: { data: string; punteggio: number }[], sub?: string) => {
-    if (items.length < 2) return;
-    checkPage(68, sub);
-    const sorted = [...items].sort((a, b) => a.data.localeCompare(b.data));
-    const n = sorted.length;
-    const yAxisW = 10; const cX = M + yAxisW; const cW = W - M - cX; const cH = 44; const cY = y + 7;
-    doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...dark);
-    doc.text("Andamento RTS Score nel tempo", M, y + 2);
-    doc.setFillColor(248, 248, 248); doc.setDrawColor(220, 220, 220); doc.setLineWidth(0.3); doc.rect(cX, cY, cW, cH, "FD");
-    ([
-      [100, [210, 210, 210] as [number, number, number], false], [75, [34, 139, 34] as [number, number, number], true],
-      [56, [210, 100, 0] as [number, number, number], true], [0, [210, 210, 210] as [number, number, number], false],
-    ] as [number, [number, number, number], boolean][]).forEach(([val, col, dash]) => {
-      const ly = cY + cH - (val / 100) * cH;
-      doc.setDrawColor(...col); doc.setLineWidth(dash ? 0.45 : 0.2);
-      if (dash) { let dx = cX; while (dx < cX + cW) { doc.line(dx, ly, Math.min(dx + 2.5, cX + cW), ly); dx += 4; } }
-      else { doc.line(cX, ly, cX + cW, ly); }
-      doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...col);
-      doc.text(`${val}`, cX - 1.5, ly + 1.5, { align: "right" });
-    });
-    const padX = 10;
-    const gX = (ii: number) => cX + padX + (n > 1 ? (ii / (n - 1)) * (cW - 2 * padX) : (cW - 2 * padX) / 2);
-    const gY = (s: number) => cY + cH - (s / 100) * cH;
-    doc.setDrawColor(100, 100, 100); doc.setLineWidth(0.7);
-    for (let ii = 0; ii < n - 1; ii++) doc.line(gX(ii), gY(sorted[ii].punteggio), gX(ii + 1), gY(sorted[ii + 1].punteggio));
-    sorted.forEach((q, ii) => {
-      const px = gX(ii); const py = gY(q.punteggio);
-      const col: [number, number, number] = q.punteggio >= 75 ? [34, 139, 34] : q.punteggio >= 56 ? [234, 88, 12] : red;
-      doc.setFillColor(...col); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.5); doc.circle(px, py, 2, "FD");
-      doc.setFontSize(7); doc.setFont("helvetica", "bold"); doc.setTextColor(...col);
-      doc.text(`${q.punteggio}`, px, q.punteggio > 90 ? py + 5 : py - 3.5, { align: "center" });
-      doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-      doc.text(fmtD(q.data), px, cY + cH + 4.5, { align: "center" });
-    });
-    const legY = cY + cH + 10;
-    ([{ col: [210, 100, 0] as [number, number, number], label: "Soglia moderata (56)" }, { col: [34, 139, 34] as [number, number, number], label: "Alta prontezza (75)" }])
-      .forEach(({ col, label }, idx) => {
-        const lx = M + idx * 72; doc.setDrawColor(...col); doc.setLineWidth(0.5);
-        let dx = lx; while (dx < lx + 9) { doc.line(dx, legY, Math.min(dx + 2.5, lx + 9), legY); dx += 4; }
-        doc.setFontSize(6); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(label, lx + 11, legY + 1);
-      });
-    y = legY + 10;
-  };
-
-  const getMonday = (dateStr: string): string => {
-    const d = new Date(dateStr + "T12:00");
-    const day = d.getDay();
-    const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-    const mon = new Date(d); mon.setDate(diff);
-    return mon.toISOString().slice(0, 10);
-  };
-
-  const renderWeeklyTable = (progs: Programma[], sub?: string) => {
-    const weekMap: Map<string, Programma[]> = new Map();
-    for (const prog of progs) {
-      const wk = prog.data ? getMonday(prog.data) : "__nodata__";
-      if (!weekMap.has(wk)) weekMap.set(wk, []);
-      weekMap.get(wk)!.push(prog);
-    }
-
-    const body: any[] = [];
-    const weekRowIndices = new Set<number>();
-    const subHeaderRowIndices = new Set<number>();
-    const altRowIndices = new Set<number>();
-    const absenteRowIndices = new Set<number>();
-    const riposoRowIndices = new Set<number>();
-
-    Array.from(weekMap.entries()).forEach(([wk, wkProgs]) => {
-      let weekLabel: string;
-      if (wk === "__nodata__") {
-        weekLabel = "SESSIONI SENZA DATA";
-      } else {
-        const mon = new Date(wk + "T12:00");
-        const sun = new Date(mon.getTime() + 6 * 864e5);
-        weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
-      }
-      weekRowIndices.add(body.length);
-      body.push([{ content: weekLabel, colSpan: 7 }]);
-      subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma / Fase", "Palestra", "VAS", "Campo", "Test", "RPE"]);
-
-      let dataRowCount = 0;
-      for (const prog of wkProgs) {
-        const isAlt = dataRowCount % 2 === 1;
-        const dataStr = prog.data ? fmtD(prog.data) : "—";
-        const progLabel = [prog.nome, prog.fase].filter(Boolean).join("\n");
-        const esercizi = prog.esercizi ?? [];
-
-        if (prog.assente) {
-          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
-          absenteRowIndices.add(body.length);
-          body.push([dataStr, label, { content: "ASSENTE", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
-          dataRowCount++;
-          continue;
-        }
-
-        if (prog.riposo) {
-          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
-          riposoRowIndices.add(body.length);
-          body.push([dataStr, label, { content: "RIPOSO", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
-          dataRowCount++;
-          continue;
-        }
-
-        const campoLines = (prog.esercizicampo ?? []).map((c) => {
-          const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
-          return parts.join(" ");
-        });
-        const campo = campoLines.join("\n") || "—";
-
-        const testLines = (prog.tests ?? []).map((t) => {
-          const val = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean).join(" / ");
-          return `${t.nome}${val ? `: ${val}` : ""}`;
-        });
-        const tests = testLines.join("\n") || "—";
-
-        const ca = prog.carico;
-        const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
-
-        if (esercizi.length <= 1) {
-          const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
-          const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
-          if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, progLabel, esLine, vas, campo, tests, rpe]);
-        } else {
-          esercizi.forEach((e, i) => {
-            const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
-            const vas = e.vas || "—";
-            if (isAlt) altRowIndices.add(body.length);
-            if (i === 0) {
-              body.push([
-                { content: dataStr, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: progLabel, rowSpan: esercizi.length, styles: { valign: "top" } },
-                esLine, vas,
-                { content: campo, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" } },
-              ]);
-            } else {
-              body.push([esLine, vas]);
-            }
-          });
-        }
-        dataRowCount++;
-      }
-    });
-
-    checkPage(30, sub);
-    autoTable(doc, {
-      startY: y,
-      body,
-      bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
-      margin: { left: M, right: M },
-      columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 12, halign: "center" as const },
-        4: { cellWidth: 28 },
-        5: { cellWidth: 27 },
-        6: { cellWidth: 15, halign: "center" as const },
-      },
-      didParseCell: (data: any) => {
-        if (data.section !== "body") return;
-        if (weekRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [200, 16, 46];
-          data.cell.styles.textColor = [255, 255, 255];
-          data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 7;
-          data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
-        } else if (subHeaderRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [110, 110, 110];
-          data.cell.styles.textColor = [255, 255, 255];
-          data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 6.5;
-          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 3, right: 2 };
-        } else if (absenteRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [255, 237, 213];
-          data.cell.styles.textColor = [154, 52, 18];
-        } else if (riposoRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [219, 234, 254];
-          data.cell.styles.textColor = [30, 64, 175];
-        } else if (altRowIndices.has(data.row.index)) {
-          data.cell.styles.fillColor = [243, 244, 246];
-        } else {
-          data.cell.styles.fillColor = [255, 255, 255];
-        }
-      },
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
-  };
-
-  // ── Pagina 1: dati atleta ──────────────────────────────────────────────────
-  addHeader();
-  doc.setTextColor(...dark); doc.setFontSize(17); doc.setFont("helvetica", "bold");
-  doc.text(nd(atleta), M, HDR + 13);
-  const info = [atleta.categoria, atleta.posizione, atleta.piedeDominante ? `Piede ${atleta.piedeDominante}` : ""].filter(Boolean).join("  ·  ");
-  doc.setFontSize(8.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-  doc.text(info, M, HDR + 21);
-  const badgeColor: [number, number, number] = atleta.stato === "Disponibile" ? [34, 139, 34] : red;
-  doc.setFillColor(...badgeColor); doc.roundedRect(W - M - 36, HDR + 7, 36, 10, 2, 2, "F");
-  doc.setTextColor(255, 255, 255); doc.setFontSize(7.5); doc.setFont("helvetica", "bold");
-  doc.text(atleta.stato, W - M - 18, HDR + 13.5, { align: "center" });
-  doc.setDrawColor(230, 230, 230); doc.setLineWidth(0.3); doc.line(M, HDR + 27, W - M, HDR + 27);
-
-  y = HDR + 34;
-  y = secTitle("Dati clinici", y);
-  autoTable(doc, {
-    startY: y,
-    body: [
-      ["Categoria / Ruolo", `${atleta.categoria}  ·  ${atleta.posizione || "—"}`],
-      ["Piede dominante", atleta.piedeDominante || "—"],
-      ["Stato attuale", atleta.stato],
-      ...(atleta.peso || atleta.altezza ? [["Peso / Altezza", `${atleta.peso || "—"} kg  ·  ${atleta.altezza || "—"} cm`]] : [] as any),
-      ...(atleta.tipoInfortunio ? [["Tipologia", atleta.tipoInfortunio]] : [] as any),
-      ...(atleta.evento ? [["Evento", atleta.evento]] : [] as any),
-      ...(atleta.meccanismo ? [["Meccanismo", atleta.meccanismo]] : [] as any),
-      ...(atleta.contatto ? [["Contatto", atleta.contatto]] : [] as any),
-      ...(atleta.lato ? [["Lato", atleta.lato]] : [] as any),
-      ...(atleta.posizioneInfortunio ? [["Posizione", atleta.posizioneInfortunio]] : [] as any),
-    ],
-    theme: "striped",
-    styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
-    columnStyles: { 0: { cellWidth: 58, fontStyle: "bold", textColor: dark }, 1: { textColor: dark } },
-    alternateRowStyles: { fillColor: [250, 250, 250] },
-    margin: { left: M, right: M },
-  });
-
-  y = (doc as any).lastAutoTable.finalY + 10;
-
-  // ── Referti clinici ───────────────────────────────────────────────────────
-  const referti = [...(atleta.refertiClinici ?? [])].sort((a, b) => b.data.localeCompare(a.data));
-  checkPage(20);
-  y = secTitle("Referti clinici", y);
-  if (referti.length === 0) {
-    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...gray);
-    doc.text("Nessun referto registrato.", M, y); y += 10;
-  } else {
-    const esitoColor = (esito: string): [number, number, number] => {
-      if (esito === "Negativo") return [34, 139, 34];
-      if (esito === "In miglioramento") return [180, 120, 0];
-      return [180, 30, 30]; // Positivo
-    };
-    autoTable(doc, {
-      startY: y,
-      head: [["Data", "Tipo esame", "Esito", "Note"]],
-      body: referti.map((r) => [
-        new Date(r.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" }),
-        r.tipo,
-        r.esito,
-        r.note || "—",
-      ]),
-      headStyles: hS(dark),
-      bodyStyles: { ...bS, fontSize: 8 },
-      alternateRowStyles: aS,
-      margin: { left: M, right: M },
-      columnStyles: {
-        0: { cellWidth: 26 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 36 },
-        3: { cellWidth: "auto" as any },
-      },
-      didDrawCell: (data: any) => {
-        if (data.section === "body" && data.column.index === 2) {
-          const esito = referti[data.row.index]?.esito ?? "";
-          data.cell.styles.textColor = esitoColor(esito);
-          data.cell.styles.fontStyle = "bold";
-        }
-      },
-    });
-    y = (doc as any).lastAutoTable.finalY + 10;
-  }
-
-  // ── Storico infortuni ──────────────────────────────────────────────────────
   const storico = atleta.storicoInfortuni ?? [];
-  // Giorni persi = numero di sessioni inserite per quell'infortunio (non giorni di calendario)
-  const isSessionePDF = (p: Programma) => !p.riposo;
-  const sessStoricoMap = new Map(storico.map((inf) => [inf.id, programmi.filter((p) => p.infortunioId === inf.id && isSessionePDF(p)).length]));
-  const giorniArchivio = storico.map((inf) => sessStoricoMap.get(inf.id) ?? 0);
-  const giorniCorrente = atleta.stato === "Infortunato" && atleta.inizioRehab
-    ? programmi.filter((p) => (
-        p.infortunioId === "__corrente__" ||
-        (!p.infortunioId && p.data >= atleta.inizioRehab)
-      ) && isSessionePDF(p)).length : 0;
-  const totaleStagionePDF = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
-
-  y = secTitle("Storico infortuni", y);
-
-  // Riquadro riepilogativo sessioni
-  {
-    const boxes: [string, string][] = [];
-    if (atleta.stato === "Infortunato") boxes.push(["Infortunio attuale", `${giorniCorrente} sess.`]);
-    boxes.push(["Totale stagione", `${totaleStagionePDF} sess.`]);
-    const bw = (W - 2 * M - (boxes.length - 1) * 4) / boxes.length;
-    boxes.forEach(([label, val], i) => {
-      const bx = M + i * (bw + 4);
-      doc.setFillColor(255, 247, 237); doc.roundedRect(bx, y, bw, 16, 2, 2, "F");
-      doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(234, 88, 12);
-      doc.text(label.toUpperCase(), bx + bw / 2, y + 5.5, { align: "center" });
-      doc.setFontSize(11);
-      doc.text(val, bx + bw / 2, y + 13, { align: "center" });
+  if (storico.length > 0) {
+    rows.push(["STORICO INFORTUNI"]);
+    rows.push(["Diagnosi", "Tipo", "Inizio", "Fine", "Giorni"]);
+    storico.forEach((s) => {
+      const gg = s.inizioRehab && s.fineRehab
+        ? String(Math.max(0, Math.round((new Date(s.fineRehab).getTime() - new Date(s.inizioRehab).getTime()) / 864e5)))
+        : "—";
+      rows.push([s.diagnosi ?? "—", s.tipo ?? "—", fmt(s.inizioRehab), fmt(s.fineRehab), gg]);
     });
-    y += 22;
+    rows.push([]);
   }
 
-  const storicoBody: any[] = [];
-  // Infortunio corrente se in corso
-  if (atleta.stato === "Infortunato" && (atleta.infortunio || atleta.inizioRehab)) {
-    storicoBody.push([`${atleta.infortunio || "—"}${atleta.tipoInfortunio ? ` (${atleta.tipoInfortunio})` : ""}`, fmtD(atleta.inizioRehab), "In corso", `${giorniCorrente} sess.`]);
-  }
-  // Infortuni archiviati (più recente prima)
-  [...storico].reverse().forEach((inf, i) => {
-    storicoBody.push([`${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""}`, fmtD(inf.inizioRehab), fmtD(inf.fineRehab), `${giorniArchivio[storico.length - 1 - i]} sess.`]);
-  });
-
-  if (storicoBody.length) {
-    autoTable(doc, {
-      startY: y,
-      head: [["Diagnosi / Infortunio", "Inizio", "Fine", "Sessioni"]],
-      body: storicoBody,
-      headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [250, 250, 250] },
-      margin: { left: M, right: M },
-      columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 } },
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
-  } else {
-    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...gray);
-    doc.text("Nessun infortunio registrato.", M, y); y += 10;
-  }
-
-  // ── PER-INJURY SECTIONS ──────────────────────────────────────────────────
-  const interpretaRTS = (p: number) =>
-    p >= 75 ? "Alta prontezza psicologica — Pronto per il ritorno"
-    : p >= 56 ? "Prontezza moderata — Valutare con attenzione"
-    : "Bassa prontezza psicologica — Ritorno non raccomandato";
-
-  const today = new Date().toISOString().slice(0, 10);
-
-  const allInjuries: { id: string; diagnosi: string; tipo?: string; inizio: string; fine: string | null; attivo: boolean }[] = [
-    ...(atleta.storicoInfortuni ?? []).map((inf) => ({
-      id: inf.id,
-      diagnosi: inf.diagnosi,
-      tipo: inf.tipo,
-      inizio: inf.inizioRehab,
-      fine: inf.fineRehab,
-      attivo: false,
-    })),
-    ...(atleta.stato === "Infortunato" && (atleta.infortunio || atleta.inizioRehab)
-      ? [{ id: "__corrente__", diagnosi: atleta.infortunio || "—", tipo: atleta.tipoInfortunio as string | undefined, inizio: atleta.inizioRehab, fine: null as string | null, attivo: true }]
-      : []),
-  ];
-
-  const usedProgIds = new Set<string>();
-
-  for (const inj of allInjuries) {
-    const injProgs = programmi
-      .filter((p) => {
-        if (p.infortunioId) return p.infortunioId === inj.id;
-        if (!p.data || !inj.inizio) return false;
-        if (p.data < inj.inizio) return false;
-        if (inj.fine && p.data > inj.fine) return false;
-        return true;
-      })
-      .sort((a, b) => a.data.localeCompare(b.data));
-    injProgs.forEach((p) => usedProgIds.add(p.id));
-
-    const injQRTS = (atleta.questionariKinesiofobia ?? []).filter((q) => q.infortunioId === inj.id);
-    const giorni = inj.fine ? ggPersi(inj.inizio, inj.fine) : ggPersi(inj.inizio, today);
-    const injLabel = `${inj.diagnosi}${inj.tipo ? ` (${inj.tipo})` : ""}`;
-    const sub = `${nd(atleta)}  ·  ${injLabel}`;
-
-    doc.addPage();
-    addHeader(sub);
-    y = HDR + 8;
-
-    // Injury info bar (white bg, red text + underline, dates below)
-    doc.setFillColor(255, 255, 255); doc.rect(M, y, W - 2 * M, 22, "F");
-    doc.setFont("helvetica", "bolditalic"); doc.setFontSize(9.5); doc.setTextColor(...red);
-    doc.text(injLabel, M, y + 9);
-    const injLabelW = doc.getTextWidth(injLabel);
-    doc.setDrawColor(...red); doc.setLineWidth(0.5);
-    doc.line(M, y + 10.5, M + injLabelW, y + 10.5);
-    const periodStr = inj.attivo
-      ? `Dal ${fmtD(inj.inizio)} - In corso (${giorni} giorni)`
-      : `${fmtD(inj.inizio)} - ${fmtD(inj.fine ?? "")}  (${giorni} giorni)`;
-    doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
-    doc.text(periodStr, M, y + 17);
-    y += 28;
-
-    // RTS evaluations for this injury
-    if (injQRTS.length > 0) {
-      checkPage(20, sub);
-      y = secTitle("Valutazione psicologica – RTS Score (ACL-RSI adattato)", y);
-      autoTable(doc, {
-        startY: y,
-        head: [["Data", "Punteggio", "Interpretazione"]],
-        body: [...injQRTS].sort((a, b) => a.data.localeCompare(b.data)).map((q) => [
-          new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
-          `${q.punteggio} / 100`,
-          interpretaRTS(q.punteggio),
-        ]),
-        headStyles: hS(dark),
-        bodyStyles: bS,
-        alternateRowStyles: aS,
-        margin: { left: M, right: M },
-        columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 28, fontStyle: "bold" } },
+  if (programmi.length > 0) {
+    rows.push(["SESSIONI DI LAVORO"]);
+    rows.push(["Data", "Programma", "Fase", "Tipo", "#", "Esercizio/Descrizione", "Serie", "Reps/Durata", "Carico", "RIR", "VAS", "Note"]);
+    programmi.forEach(prog => {
+      const dataProg = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "—";
+      prog.esercizi.forEach((e, i) => {
+        rows.push([dataProg, prog.nome ?? "—", prog.fase ?? "—", "Palestra", String(i + 1), e.nome, e.serie ?? "—", e.reps ?? "—", e.carico ?? "—", e.rir ?? "—", e.vas ? `${e.vas}/10` : "—", e.note ?? ""]);
       });
-      y = (doc as any).lastAutoTable.finalY + 6;
-      if (injQRTS.length >= 2) drawChart(injQRTS, sub);
-    }
-
-    // Programs for this injury
-    if (injProgs.length > 0) {
-      checkPage(20, sub);
-      y = secTitle(`Sessioni di lavoro — ${injProgs.filter(isSessionePDF).length} sessioni`, y);
-      renderWeeklyTable(injProgs, sub);
-    } else {
-      checkPage(12, sub);
-      doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...gray);
-      doc.text("Nessuna sessione registrata per questo infortunio.", M, y); y += 10;
-    }
+      (prog.esercizicampo ?? []).forEach((c, i) => {
+        rows.push([dataProg, prog.nome ?? "—", prog.fase ?? "—", "Campo", String(i + 1), c.descrizione ?? c.tipo ?? "—", c.serie ?? "—", c.durata ?? "—", "", "", "", ""]);
+      });
+      if (prog.tests?.length) {
+        prog.tests.forEach((t, i) => {
+          rows.push([dataProg, prog.nome ?? "—", prog.fase ?? "—", "Test", String(i + 1), t.nome, "", t.risultato ? `${t.risultato} ${t.unita ?? ""}`.trim() : "—", "", "", "", t.note ?? ""]);
+        });
+      }
+    });
   }
 
-  // ── Sessioni non associate ────────────────────────────────────────────────
-  const unassigned = programmi
-    .filter((p) => !usedProgIds.has(p.id))
-    .sort((a, b) => a.data.localeCompare(b.data));
-
-  if (unassigned.length > 0) {
-    doc.addPage();
-    addHeader(`${nd(atleta)}  ·  Sessioni non associate`);
-    y = HDR + 8;
-    y = secTitle(`Sessioni non associate a nessun infortunio — ${unassigned.filter(isSessionePDF).length} sessioni`, y);
-    renderWeeklyTable(unassigned, `${nd(atleta)}  ·  Sessioni non associate`);
-  }
-
-  addFooter();
-  doc.save(`${nd(atleta).replace(/ /g, "_")}_storico_completo.pdf`);
+  csvDownload(rows, `${nd(atleta).replace(/ /g, "_")}_storico.csv`);
 }
 
 const statoColor: Record<Stato, string> = {
@@ -787,10 +336,10 @@ export default function AtletiPage() {
     await upsertAtleta(aggiornato);
   };
 
-  const scaricaPDFStorico = async () => {
+  const scaricaCSVStorico = async () => {
     if (!selected) return;
     const programmi = await loadProgrammi(selected.id);
-    await esportaStoricoCompletoPDF(selected, programmi);
+    esportaCSVStorico(selected, programmi);
   };
 
   const salvaQuestionnaire = async (questionari: QuestionarioKinesiofobia[]) => {
@@ -1332,10 +881,10 @@ export default function AtletiPage() {
                       </div>
                     </div>
 
-                    {/* PDF download */}
-                    <button onClick={scaricaPDFStorico}
-                      className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 text-xs font-semibold py-2.5 rounded-xl hover:bg-gray-50 transition-colors">
-                      <FileDown className="w-3.5 h-3.5" /> Scarica PDF completo
+                    {/* CSV download */}
+                    <button onClick={scaricaCSVStorico}
+                      className="w-full flex items-center justify-center gap-2 border border-green-300 text-green-700 text-xs font-semibold py-2.5 rounded-xl hover:bg-green-50 transition-colors">
+                      <FileDown className="w-3.5 h-3.5" /> Scarica CSV completo
                     </button>
 
                     {/* Infortunio corrente */}
