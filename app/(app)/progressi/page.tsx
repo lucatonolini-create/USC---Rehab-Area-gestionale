@@ -40,7 +40,6 @@ function esportaCSV(atleta: Atleta, programmi: Programma[]) {
 
   rows.push(["DATI PERSONALI"]);
   rows.push(["Nome", nd(atleta)]);
-  rows.push(["Data di nascita", fmt(atleta.dataNascita)]);
   rows.push(["Categoria", atleta.categoria ?? "—"]);
   rows.push(["Ruolo", atleta.posizione ?? "—"]);
   rows.push(["Piede dominante", atleta.piedeDominante ?? "—"]);
@@ -149,7 +148,6 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   autoTable(doc, {
     startY: y,
     body: [
-      ["Data di nascita", atleta.dataNascita ? fmtDCl(atleta.dataNascita) : "—"],
       ["Piede dominante", atleta.piedeDominante || "—"],
       ["Stato attuale", atleta.stato],
     ],

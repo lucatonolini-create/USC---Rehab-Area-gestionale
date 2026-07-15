@@ -169,11 +169,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
           </div>
 
           <div>
-            <Label>Data di nascita</Label>
-            <Input className="mt-1" type="date" value={form.dataNascita} onChange={(e) => f("dataNascita", e.target.value)} />
-          </div>
-
-          <div>
             <Label>Tipologia</Label>
             <Sel className="mt-1" value={form.tipoInfortunio ?? ""} onChange={(e) => f("tipoInfortunio", e.target.value as TipoInfortunio)}>
               <option value="">—</option>

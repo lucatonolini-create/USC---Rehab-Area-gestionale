@@ -225,7 +225,6 @@ export default function Dashboard() {
 
             <div className="space-y-2.5 text-sm">
               {[
-                ["Data di nascita", atletaSelezionato.dataNascita ? new Date(atletaSelezionato.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
                 ["Piede dominante", atletaSelezionato.piedeDominante || "—"],
                 ["Infortunio", atletaSelezionato.infortunio || "—"],
                 ["Inizio riabilitazione", atletaSelezionato.inizioRehab ? new Date(atletaSelezionato.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],

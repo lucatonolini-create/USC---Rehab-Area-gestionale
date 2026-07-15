@@ -318,7 +318,6 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   autoTable(doc, {
     startY: y,
     body: [
-      ["Data di nascita", atleta.dataNascita ? new Date(atleta.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
       ["Categoria / Ruolo", `${atleta.categoria}  ·  ${atleta.posizione || "—"}`],
       ["Piede dominante", atleta.piedeDominante || "—"],
       ["Stato attuale", atleta.stato],
@@ -1004,7 +1003,6 @@ export default function AtletiPage() {
             {tab === "dati" ? (
               <div className="space-y-2.5 text-sm">
                 {[
-                  ["Data di nascita", selected.dataNascita ? new Date(selected.dataNascita + "T12:00").toLocaleDateString("it-IT") : "—"],
                   ["Piede dominante", selected.piedeDominante || "—"],
                   ["Diagnosi / Infortunio", selected.infortunio || "—"],
                   ["Inizio riabilitazione", selected.inizioRehab ? new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
