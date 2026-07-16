@@ -185,53 +185,53 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
       }
       weekRowIndices.add(body.length);
-      body.push([{ content: weekLabel, colSpan: 7 }]);
+      body.push([{ content: weekLabel, colSpan: 11 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma / Fase", "Palestra", "VAS", "Campo", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Esercizi Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
         const isAlt = dataRowCount % 2 === 1;
         const dataStr = prog.data ? fmtD(prog.data) : "—";
-        const progLabel = [prog.nome, prog.fase].filter(Boolean).join("\n");
         const esercizi = prog.esercizi ?? [];
 
         if (prog.assente) {
-          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
           absenteRowIndices.add(body.length);
-          body.push([dataStr, label, { content: "ASSENTE", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
         if (prog.riposo) {
-          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
           riposoRowIndices.add(body.length);
-          body.push([dataStr, label, { content: "RIPOSO", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
-        const campoLines = (prog.esercizicampo ?? []).map((c) => {
+        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
+        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+
+        const campoEsLines = (prog.esercizicampo ?? []).map((c) => {
           const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
           return parts.join(" ");
         });
-        const campo = campoLines.join("\n") || "—";
+        const esC = campoEsLines.join("\n") || "—";
+        const vasC = (prog.esercizicampo ?? []).map((c) => c.vas || "—").join("\n") || "—";
 
         const testLines = (prog.tests ?? []).map((t) => {
           const val = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean).join(" / ");
           return `${t.nome}${val ? `: ${val}` : ""}`;
         });
         const tests = testLines.join("\n") || "—";
-
-        const ca = prog.carico;
-        const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
+        const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
 
         if (esercizi.length <= 1) {
-          const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
-          const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
+          const e = esercizi[0];
+          const esLine = e ? (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
+          const vas = e ? (e.vas || "—") : "—";
           if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, progLabel, esLine, vas, campo, tests, rpe]);
+          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, vasC, tests, rpe]);
         } else {
           esercizi.forEach((e, i) => {
             const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
@@ -239,12 +239,16 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
             if (isAlt) altRowIndices.add(body.length);
             if (i === 0) {
               body.push([
-                { content: dataStr, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: progLabel, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: dataStr,       rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: prog.nome ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: prog.fase ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: obP,           rowSpan: esercizi.length, styles: { valign: "top" } },
                 esLine, vas,
-                { content: campo, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" } },
+                { content: obCampo,       rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: esC,           rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: vasC,          rowSpan: esercizi.length, styles: { valign: "top", halign: "center" as const } },
+                { content: tests,         rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: rpe,           rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
               ]);
             } else {
               body.push([esLine, vas]);
@@ -262,13 +266,17 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 12, halign: "center" as const },
-        4: { cellWidth: 28 },
-        5: { cellWidth: 27 },
-        6: { cellWidth: 15, halign: "center" as const },
+        0:  { cellWidth: 13 },
+        1:  { cellWidth: 22 },
+        2:  { cellWidth: 13 },
+        3:  { cellWidth: 17 },
+        4:  { cellWidth: 28 },
+        5:  { cellWidth: 11, halign: "center" as const },
+        6:  { cellWidth: 17 },
+        7:  { cellWidth: 22 },
+        8:  { cellWidth: 11, halign: "center" as const },
+        9:  { cellWidth: 18 },
+        10: { cellWidth: 10, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
@@ -282,8 +290,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 6.5;
-          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 3, right: 2 };
+          data.cell.styles.fontSize = 5.8;
+          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1.5, right: 1 };
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];
           data.cell.styles.textColor = [154, 52, 18];
