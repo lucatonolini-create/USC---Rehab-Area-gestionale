@@ -320,7 +320,7 @@ export default function EserciziPage() {
                         {/* Esercizi */}
                         {prog.esercizi.length > 0 && (
                           <div className="mb-4">
-                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Esercizi</p>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1"><Dumbbell className="w-3.5 h-3.5" /> Esercizi in Palestra</p>
                             <div className="space-y-3">
                               {prog.esercizi.map((es, i) => (
                                 <div key={i} className="bg-gray-50 rounded-xl p-4">
