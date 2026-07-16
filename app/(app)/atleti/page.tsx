@@ -263,7 +263,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 6.5, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
         0:  { cellWidth: 15 },
