@@ -187,7 +187,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 11 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Esercizi Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
@@ -263,7 +263,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 6.5, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 6.5, cellPadding: 1.5, overflow: "ellipsize" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
         0:  { cellWidth: 15 },
