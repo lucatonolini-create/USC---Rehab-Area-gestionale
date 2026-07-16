@@ -1,5 +1,5 @@
 import Dexie, { type Table } from "dexie";
-import type { Atleta, Programma, Impostazioni } from "./store";
+import type { Atleta, Programma, Impostazioni, EpiMonthlyRecord } from "./store";
 
 export type PendingOp = {
   id?: number;
@@ -14,6 +14,7 @@ class RehabDB extends Dexie {
   programmi!: Table<Programma, string>;
   impostazioni!: Table<Impostazioni & { id: number }, number>;
   pendingOps!: Table<PendingOp, number>;
+  epiMonthly!: Table<EpiMonthlyRecord, string>;
 
   constructor() {
     super("rehabDB");
@@ -22,6 +23,9 @@ class RehabDB extends Dexie {
       programmi: "id, atletaId",
       impostazioni: "id",
       pendingOps: "++id, table",
+    });
+    this.version(2).stores({
+      epiMonthly: "id, categoria, anno, mese",
     });
   }
 }

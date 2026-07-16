@@ -5,7 +5,7 @@ import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upl
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
-  TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO, OBIETTIVI_PALESTRA, OBIETTIVI_CAMPO,
+  TESTS_PREDEFINITI, OBIETTIVI_PALESTRA, OBIETTIVI_CAMPO,
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo,
 } from "@/lib/store";
 
@@ -763,16 +763,14 @@ export default function EserciziPage() {
                           <div key={i} className="bg-gray-50 rounded-xl p-4 space-y-3">
                             <div className="flex items-center gap-2">
                               <span className="w-6 h-6 bg-white border border-gray-200 rounded-lg flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{i + 1}</span>
-                              <select value={c.tipo} onChange={(e) => aggiornaCampo(i, "tipo", e.target.value)}
-                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
-                                <option value="">Seleziona tipo...</option>
-                                {TIPI_ESERCIZIO_CAMPO.map((t) => <option key={t} value={t}>{t}</option>)}
-                              </select>
+                              <input value={c.tipo} onChange={(e) => aggiornaCampo(i, "tipo", e.target.value)}
+                                placeholder="Nome esercizio (es. Sprint, RSA, Metabolico...)"
+                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                               <button onClick={() => rimuoviCampo(i)} className="text-gray-300 hover:text-red-400 shrink-0">
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-2 gap-3">
                               <div>
                                 <p className="text-xs text-gray-500 mb-1">Serie</p>
                                 <input value={c.serie} onChange={(e) => aggiornaCampo(i, "serie", e.target.value)} placeholder="Es. 4" className={inp} />
@@ -781,11 +779,8 @@ export default function EserciziPage() {
                                 <p className="text-xs text-gray-500 mb-1">Durata</p>
                                 <input value={c.durata} onChange={(e) => aggiornaCampo(i, "durata", e.target.value)} placeholder="Es. 30'' / 5'" className={inp} />
                               </div>
-                              <div>
-                                <p className="text-xs text-gray-500 mb-1">VAS</p>
-                                <input value={c.vas} onChange={(e) => aggiornaCampo(i, "vas", e.target.value)} placeholder="0–10" className={inp} />
-                              </div>
                             </div>
+                            <ScaleInput label={`VAS: ${c.vas || 0}/10`} value={c.vas} max={10} onChange={(v) => aggiornaCampo(i, "vas", v)} color="text-red-500" />
                             <div>
                               <p className="text-xs text-gray-500 mb-1">Descrizione</p>
                               <input value={c.descrizione} onChange={(e) => aggiornaCampo(i, "descrizione", e.target.value)}

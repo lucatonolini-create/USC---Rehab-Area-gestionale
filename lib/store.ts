@@ -244,7 +244,7 @@ export const TIPI_ESERCIZIO_CAMPO = [
 export type TipoEsercizioCampo = (typeof TIPI_ESERCIZIO_CAMPO)[number];
 
 export interface EsercizioCampo {
-  tipo: TipoEsercizioCampo | "";
+  tipo: string;
   serie: string;
   durata: string;
   descrizione: string;
@@ -803,4 +803,38 @@ export function nd(a: Pick<Atleta, "nome" | "nomeCompleto">): string {
 
 export function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+// ─── Epidemiologia Mensile ────────────────────────────────────────────────────
+
+export interface EpiMonthlyEntry {
+  data: string;        // YYYY-MM-DD
+  atleta: string;
+  presente: boolean;
+  minutaggio?: number; // training minutes
+  rpe?: number;        // 1-10
+}
+
+export interface EpiMonthlyRecord {
+  id: string;          // `${categoria}-${anno}-${mese}`
+  categoria: Categoria;
+  anno: number;
+  mese: number;        // 1-12
+  uploadedAt: string;
+  entries: EpiMonthlyEntry[];
+}
+
+export async function loadEpiMonthly(): Promise<EpiMonthlyRecord[]> {
+  const db = getDB();
+  return db.epiMonthly.toArray();
+}
+
+export async function upsertEpiMonthly(record: EpiMonthlyRecord): Promise<void> {
+  const db = getDB();
+  await db.epiMonthly.put(record);
+}
+
+export async function deleteEpiMonthly(id: string): Promise<void> {
+  const db = getDB();
+  await db.epiMonthly.delete(id);
 }
