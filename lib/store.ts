@@ -8,6 +8,30 @@ export const CATEGORIE = ["U19", "U17", "U16", "U15", "U14"] as const;
 export type Categoria = (typeof CATEGORIE)[number];
 
 export const PIEDI = ["Ambidestro", "Destro", "Sinistro"] as const;
+
+export const OBIETTIVI_PALESTRA = [
+  "Accessori",
+  "Compound",
+  "Controllo motorio",
+  "Core",
+  "Forza esplosiva",
+  "Forza massima",
+  "Forza strutturale",
+  "Isometrie",
+  "Pliometria estensiva",
+  "Pliometria intensiva",
+  "Potenza",
+] as const;
+
+export const OBIETTIVI_CAMPO = [
+  "Accelerazioni/Decelerazioni",
+  "HSR",
+  "Lavoro tecnico",
+  "Metabolico",
+  "Neuromuscolare",
+  "RSA",
+  "Sprint",
+] as const;
 export type Piede = (typeof PIEDI)[number];
 
 export const TIPI_INFORTUNIO = [
@@ -312,6 +336,8 @@ export interface Programma {
   infortunioLabel?: string;
   esercizi: Esercizio[];
   esercizicampo?: EsercizioCampo[];
+  obiettiviPalestra?: string[];
+  obiettiviCampo?: string[];
   tests: TestFisiometrico[];
   carico: Carico;
   assente?: boolean;
@@ -413,6 +439,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
   const {
     _esercizicampo, _infortunio_id, _infortunio_label,
     _riposo, _assente, _note_assenza,
+    _obiettivi_palestra, _obiettivi_campo,
     ...caricoClean
   } = caricoRaw;
 
@@ -440,6 +467,8 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     infortunioLabel: (_infortunio_label as string) ?? (r.infortunio_label as string) ?? undefined,
     esercizi: (r.esercizi as Esercizio[]) ?? [],
     esercizicampo: (_esercizicampo as EsercizioCampo[]) ?? (r.esercizicampo as EsercizioCampo[]) ?? [],
+    obiettiviPalestra: (_obiettivi_palestra as string[]) ?? [],
+    obiettiviCampo: (_obiettivi_campo as string[]) ?? [],
     tests: (r.tests as TestFisiometrico[]) ?? [],
     carico: caricoClean as unknown as Carico,
     assente: isAssente,
@@ -452,6 +481,8 @@ function programmaToRow(p: Programma): Record<string, unknown> {
   // All optional fields encoded in carico JSONB to avoid schema dependency
   const caricoExtended: Record<string, unknown> = { ...(p.carico as unknown as Record<string, unknown>) };
   if (p.esercizicampo?.length) caricoExtended._esercizicampo = p.esercizicampo;
+  if (p.obiettiviPalestra?.length) caricoExtended._obiettivi_palestra = p.obiettiviPalestra;
+  if (p.obiettiviCampo?.length) caricoExtended._obiettivi_campo = p.obiettiviCampo;
   if (p.infortunioId) {
     caricoExtended._infortunio_id = p.infortunioId;
     if (p.infortunioLabel) caricoExtended._infortunio_label = p.infortunioLabel;

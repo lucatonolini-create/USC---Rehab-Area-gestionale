@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Activity, Download, Clock, Shield, RotateCcw } from "lucide-react";
+import { Activity, Download, Clock, Shield, RotateCcw, FileText } from "lucide-react";
 import { loadAtleti, loadProgrammi, nd, CATEGORIE, type Atleta, type Programma } from "@/lib/store";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -78,6 +78,179 @@ function contaMap(items: string[]): Map<string, number> {
   return m;
 }
 
+async function esportaPDFEpi(params: {
+  filtroCat: string; filtroAnno: string;
+  totEpisodi: number; totGiorni: number; mediaGiorni: number; reRate: number;
+  sevCount: Record<string, number>;
+  tipoRows: [string, number][]; posRows: [string, number][]; catRows: [string, number][];
+  eventoRows: [string, number][]; latoRows: [string, number][]; mechRows: [string, number][];
+  burdenRows: [string, number][]; monthCounts: number[];
+}) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+  const doc = new jsPDF();
+  const red: [number, number, number] = [200, 16, 46];
+  const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const HDR = 22;
+
+  function addHeader() {
+    doc.setFillColor(...red); doc.rect(0, 0, W, HDR, "F");
+    doc.setFontSize(11); doc.setFont("helvetica", "bold"); doc.setTextColor(255, 255, 255);
+    doc.text("U.S. Cremonese – Epidemiologia Infortuni", 14, 14);
+    const sub = [params.filtroCat !== "Tutte" ? params.filtroCat : "Tutte le categorie", params.filtroAnno !== "Tutti" ? params.filtroAnno : "Tutti gli anni"].join("  •  ");
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
+    doc.text(sub, W - 14, 14, { align: "right" });
+    doc.setTextColor(...dark);
+  }
+
+  function secTitle(title: string, y: number) {
+    doc.setFontSize(9); doc.setFont("helvetica", "bold"); doc.setTextColor(...gray);
+    doc.text(title.toUpperCase(), 14, y);
+    doc.setDrawColor(...gray); doc.setLineWidth(0.3);
+    doc.line(14, y + 1.5, W - 14, y + 1.5);
+    doc.setTextColor(...dark);
+    return y + 8;
+  }
+
+  addHeader();
+  let y = HDR + 10;
+
+  // KPI row
+  y = secTitle("Riepilogo", y);
+  autoTable(doc, {
+    startY: y,
+    body: [
+      ["Episodi totali", String(params.totEpisodi), "Giorni persi totali", String(params.totGiorni)],
+      ["Durata media", `${params.mediaGiorni} gg`, "Tasso re-infortunio", `${params.reRate}%`],
+    ],
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 3, halign: "left", valign: "middle" },
+    columnStyles: {
+      0: { fontStyle: "bold", textColor: gray, cellWidth: 45 },
+      1: { cellWidth: 35 },
+      2: { fontStyle: "bold", textColor: gray, cellWidth: 45 },
+      3: { cellWidth: 35 },
+    },
+    margin: { left: 14, right: 14 },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Severity
+  y = secTitle("Distribuzione Severità (UEFA)", y);
+  const sevLabels: Record<string, string> = { Minima: "1–3 gg", Lieve: "4–7 gg", Moderata: "8–28 gg", Grave: "> 28 gg" };
+  autoTable(doc, {
+    startY: y,
+    head: [["Livello", "N°", "Soglia", "%"]],
+    body: (["Minima","Lieve","Moderata","Grave"] as const).map(s => [
+      s, params.sevCount[s] ?? 0, sevLabels[s],
+      params.totEpisodi > 0 ? `${Math.round(((params.sevCount[s] ?? 0) / params.totEpisodi) * 100)}%` : "—",
+    ]),
+    theme: "striped",
+    styles: { fontSize: 8.5, cellPadding: 2.5, halign: "left", valign: "middle" },
+    columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: { halign: "center" }, 3: { halign: "center" } },
+    margin: { left: 14, right: 14 },
+  });
+  y = (doc as any).lastAutoTable.finalY + 10;
+
+  // Two-column tables
+  const midW = (W - 14 - 14 - 6) / 2;
+  const colL = 14;
+  const colR = 14 + midW + 6;
+
+  function miniTable(title: string, rows: [string, number][], x: number, startY: number, labelW: number, color: string): number {
+    const [r, g, b] = color.match(/\d+/g)!.map(Number) as [number, number, number];
+    doc.setFontSize(8); doc.setFont("helvetica", "bold"); doc.setTextColor(...(gray as [number,number,number]));
+    doc.text(title.toUpperCase(), x, startY);
+    doc.setDrawColor(...(gray as [number,number,number])); doc.setLineWidth(0.25);
+    doc.line(x, startY + 1, x + midW, startY + 1);
+    doc.setTextColor(...(dark as [number,number,number]));
+    autoTable(doc, {
+      startY: startY + 5,
+      head: [["Tipo", "N°"]],
+      body: rows.map(([k, n]) => [k, n]),
+      theme: "striped",
+      styles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
+      headStyles: { fillColor: [r, g, b], textColor: [255, 255, 255], fontSize: 7.5 },
+      columnStyles: { 0: { cellWidth: labelW }, 1: { halign: "center" } },
+      tableWidth: midW,
+      margin: { left: x, right: W - x - midW },
+    });
+    return (doc as any).lastAutoTable.finalY;
+  }
+
+  // Row: tipo | categoria
+  if (y > 160) { doc.addPage(); addHeader(); y = HDR + 12; }
+  const endTipo = miniTable("Tipi di Infortunio", params.tipoRows, colL, y, 80, "rgb(200,16,46)");
+  const endCat = miniTable("Incidenza per Categoria", params.catRows, colR, y, 60, "rgb(200,16,46)");
+  y = Math.max(endTipo, endCat) + 10;
+
+  // Row: evento | lato
+  if (y > 200) { doc.addPage(); addHeader(); y = HDR + 12; }
+  const endEvento = params.eventoRows.length > 0
+    ? miniTable("Contesto Infortunio", params.eventoRows, colL, y, 70, "rgb(30,64,175)")
+    : y;
+  const endLato = params.latoRows.length > 0
+    ? miniTable("Lato Colpito", params.latoRows, colR, y, 60, "rgb(124,58,237)")
+    : y;
+  y = Math.max(endEvento, endLato) + 10;
+
+  // Row: pos | meccanismo
+  if (y > 200) { doc.addPage(); addHeader(); y = HDR + 12; }
+  const endPos = params.posRows.length > 0
+    ? miniTable("Distribuzione Anatomica", params.posRows, colL, y, 70, "rgb(4,120,87)")
+    : y;
+  const endMech = params.mechRows.length > 0
+    ? miniTable("Meccanismo", params.mechRows, colR, y, 60, "rgb(14,116,144)")
+    : y;
+  y = Math.max(endPos, endMech) + 10;
+
+  // Burden
+  if (params.burdenRows.length > 0) {
+    if (y > 200) { doc.addPage(); addHeader(); y = HDR + 12; }
+    y = secTitle("Burden – Giorni Persi per Tipo", y);
+    autoTable(doc, {
+      startY: y,
+      head: [["Tipo di Infortunio", "Giorni Persi"]],
+      body: params.burdenRows.map(([tipo, gg]) => [tipo, `${gg} gg`]),
+      theme: "striped",
+      styles: { fontSize: 8.5, cellPadding: 2.5, halign: "left", valign: "middle" },
+      headStyles: { fillColor: [180, 83, 9], textColor: [255, 255, 255] },
+      columnStyles: { 1: { halign: "center" } },
+      margin: { left: 14, right: 14 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 10;
+  }
+
+  // Trend stagionale
+  if (y > 210) { doc.addPage(); addHeader(); y = HDR + 12; }
+  y = secTitle("Trend Stagionale", y);
+  const MESI_FULL = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
+  autoTable(doc, {
+    startY: y,
+    head: [["Mese", "Infortuni"]],
+    body: params.monthCounts.map((n, i) => [MESI_FULL[i], n > 0 ? n : "—"]),
+    theme: "striped",
+    styles: { fontSize: 8, cellPadding: 2, halign: "left", valign: "middle" },
+    columnStyles: { 1: { halign: "center" } },
+    margin: { left: 14, right: 14 },
+    tableWidth: 80,
+  });
+
+  // Footer on all pages
+  const totalPages = (doc as any).internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(`Pagina ${i} di ${totalPages}`, W - 14, H - 8, { align: "right" });
+    doc.text(`Generato il ${new Date().toLocaleDateString("it-IT")}`, 14, H - 8);
+  }
+
+  doc.save(`USC_Epidemiologia_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
 function csvDownload(rows: string[][], name: string) {
   const c = rows.map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
   const b = new Blob(["﻿" + c], { type: "text/csv;charset=utf-8;" });
@@ -135,6 +308,7 @@ export default function EpidemiologiaPage() {
   const [, setProgrammi] = useState<Programma[]>([]);
   const [filtroCat, setFiltroCat] = useState("Tutte");
   const [filtroAnno, setFiltroAnno] = useState("Tutti");
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -182,6 +356,19 @@ export default function EpidemiologiaPage() {
   infortuni.forEach(i => { const m = parseInt(i.inizioRehab.slice(5,7)) - 1; if (m >= 0 && m < 12) monthCounts[m]++; });
   const maxMonth = Math.max(...monthCounts, 1);
 
+  const esportaPDF = async () => {
+    setPdfLoading(true);
+    try {
+      await esportaPDFEpi({
+        filtroCat, filtroAnno,
+        totEpisodi, totGiorni, mediaGiorni, reRate,
+        sevCount,
+        tipoRows, posRows, catRows, eventoRows, latoRows, mechRows, burdenRows,
+        monthCounts,
+      });
+    } finally { setPdfLoading(false); }
+  };
+
   const esportaCSV = () => {
     const rows: string[][] = [["Atleta","Categoria","Tipo","Posizione","Lato","Evento","Meccanismo","Inizio","Fine","Giorni","Severità","Re-infortunio"]];
     infortuni.forEach(i => rows.push([i.nomeAtleta, i.categoria, i.tipoInfortunio, i.posizione, i.lato, i.evento, i.meccanismo, i.inizioRehab, i.fineRehab ?? "—", String(i.giorni), i.severita, i.reInf ? "Sì" : "No"]));
@@ -198,10 +385,16 @@ export default function EpidemiologiaPage() {
           <h1 className="text-3xl font-bold text-gray-900">Epidemiologia</h1>
           <p className="text-gray-500 mt-1">Incidenza, severità e distribuzione degli infortuni</p>
         </div>
-        <button onClick={esportaCSV} disabled={vuoto}
-          className="flex items-center gap-1.5 border border-green-300 text-green-700 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-green-50 disabled:opacity-40 transition-colors">
-          <Download className="w-3.5 h-3.5" /> CSV
-        </button>
+        <div className="flex gap-2">
+          <button onClick={esportaPDF} disabled={vuoto || pdfLoading}
+            className="flex items-center gap-1.5 border border-red-300 text-red-700 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-red-50 disabled:opacity-40 transition-colors">
+            <FileText className="w-3.5 h-3.5" /> {pdfLoading ? "..." : "PDF"}
+          </button>
+          <button onClick={esportaCSV} disabled={vuoto}
+            className="flex items-center gap-1.5 border border-green-300 text-green-700 px-3 py-2 rounded-xl text-xs font-semibold hover:bg-green-50 disabled:opacity-40 transition-colors">
+            <Download className="w-3.5 h-3.5" /> CSV
+          </button>
+        </div>
       </div>
 
       {/* Filtri */}

@@ -5,7 +5,7 @@ import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upl
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
-  TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO,
+  TESTS_PREDEFINITI, TIPI_ESERCIZIO_CAMPO, OBIETTIVI_PALESTRA, OBIETTIVI_CAMPO,
   type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo,
 } from "@/lib/store";
 
@@ -19,6 +19,8 @@ const progVuoto: Omit<Programma, "id"> = {
   data: new Date().toISOString().slice(0, 10),
   esercizi: [],
   esercizicampo: [],
+  obiettiviPalestra: [],
+  obiettiviCampo: [],
   tests: [],
   carico: { ...caricoVuoto },
   assente: false,
@@ -648,6 +650,27 @@ export default function EserciziPage() {
               {/* Sezione Esercizi */}
               {sezioneAttiva === "esercizi" && (
                 <div>
+                  {/* Obiettivi palestra */}
+                  <div className="mb-4">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Obiettivi</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {OBIETTIVI_PALESTRA.map((ob) => {
+                        const sel = (form.obiettiviPalestra ?? []).includes(ob);
+                        return (
+                          <button key={ob} type="button"
+                            onClick={() => {
+                              const cur = form.obiettiviPalestra ?? [];
+                              setForm({ ...form, obiettiviPalestra: sel ? cur.filter(x => x !== ob) : [...cur, ob] });
+                            }}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                              sel ? "bg-[#C8102E] text-white border-[#C8102E]" : "bg-white text-gray-500 border-gray-200 hover:border-[#C8102E] hover:text-[#C8102E]"
+                            }`}>
+                            {ob}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi</label>
                     <button onClick={aggiungiEs} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
@@ -701,6 +724,27 @@ export default function EserciziPage() {
               {/* Sezione Campo */}
               {sezioneAttiva === "campo" && (
                 <div>
+                  {/* Obiettivi campo */}
+                  <div className="mb-4">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide block mb-2">Obiettivi</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {OBIETTIVI_CAMPO.map((ob) => {
+                        const sel = (form.obiettiviCampo ?? []).includes(ob);
+                        return (
+                          <button key={ob} type="button"
+                            onClick={() => {
+                              const cur = form.obiettiviCampo ?? [];
+                              setForm({ ...form, obiettiviCampo: sel ? cur.filter(x => x !== ob) : [...cur, ob] });
+                            }}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold border transition-colors ${
+                              sel ? "bg-[#C8102E] text-white border-[#C8102E]" : "bg-white text-gray-500 border-gray-200 hover:border-[#C8102E] hover:text-[#C8102E]"
+                            }`}>
+                            {ob}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi in campo</label>
                     <button onClick={aggiungiCampo} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
