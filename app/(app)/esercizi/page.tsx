@@ -876,7 +876,9 @@ export default function EserciziPage() {
                               <select value={t.nome} onChange={(e) => aggiornaTest(i, "nome", e.target.value)}
                                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
                                 <option value="">Seleziona test...</option>
-                                {TESTS_PREDEFINITI.map((tp) => <option key={tp} value={tp}>{tp}</option>)}
+                                {[...TESTS_PREDEFINITI]
+                  .sort((a, b) => a === "Personalizzato" ? 1 : b === "Personalizzato" ? -1 : a.localeCompare(b, "it", { sensitivity: "base" }))
+                  .map((tp) => <option key={tp} value={tp}>{tp}</option>)}
                               </select>
                               <button onClick={() => rimuoviTest(i)} className="text-gray-300 hover:text-red-400 shrink-0">
                                 <Trash2 className="w-4 h-4" />

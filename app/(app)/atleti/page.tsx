@@ -8,7 +8,7 @@ import {
   CATEGORIE, TIPI_INFORTUNIO, calcolaProgressoAuto,
   TIPI_REFERTO, ESITI_REFERTO,
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
-  type RefertoClinico, type TipoReferto, type EsitoReferto,
+  type RefertoClinico, type TipoReferto, type EsitoReferto, type TestFisiometrico,
 } from "@/lib/store";
 import { salvaDoc, caricaDoc, eliminaDoc } from "@/lib/filestore";
 import AtletaModal from "@/components/AtletaModal";
@@ -50,6 +50,36 @@ async function getLogoDataUrl(): Promise<string | null> {
       reader.readAsDataURL(blob);
     });
   } catch { return null; }
+}
+
+function _calcolaAsimmetria(sx: string, dx: string): number | null {
+  const a = parseFloat(sx), b = parseFloat(dx);
+  if (isNaN(a) || isNaN(b) || a <= 0 || b <= 0) return null;
+  return Math.abs(a - b) / Math.max(a, b) * 100;
+}
+function _superioreTest(sx: string, dx: string): "Dx" | "Sx" | null {
+  const a = parseFloat(sx), b = parseFloat(dx);
+  if (isNaN(a) || isNaN(b) || a === b) return null;
+  return b > a ? "Dx" : "Sx";
+}
+function _trovaPrecedenteTest(lista: Programma[], currentId: string, nomeTest: string): TestFisiometrico | null {
+  const sorted = [...lista].filter(p => !p.assente && !p.riposo && p.tests?.length).sort((a, b) => a.data.localeCompare(b.data));
+  const idx = sorted.findIndex(p => p.id === currentId);
+  if (idx <= 0) return null;
+  for (let k = idx - 1; k >= 0; k--) {
+    const found = (sorted[k].tests ?? []).find(tt => tt.nome === nomeTest);
+    if (found) return found;
+  }
+  return null;
+}
+function _calcolaDelta(curr: TestFisiometrico, prev: TestFisiometrico | null): number | null {
+  if (!prev) return null;
+  const avg = (vals: (string | undefined)[]) => { const ns = vals.map(v => parseFloat(v ?? "")).filter(v => !isNaN(v) && v > 0); return ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : NaN; };
+  if (curr.rsiSx || curr.rsiDx) { const c = avg([curr.rsiSx, curr.rsiDx]), p = avg([prev.rsiSx, prev.rsiDx]); if (isNaN(c) || isNaN(p) || p <= 0) return null; return ((c - p) / p) * 100; }
+  if (curr.rsi && prev.rsi) { const c = parseFloat(curr.rsi), p = parseFloat(prev.rsi); if (isNaN(c) || isNaN(p) || p <= 0) return null; return ((c - p) / p) * 100; }
+  if (curr.risultatoSx || curr.risultatoDx) { const c = avg([curr.risultatoSx, curr.risultatoDx]), p = avg([prev.risultatoSx, prev.risultatoDx]); if (isNaN(c) || isNaN(p) || p <= 0) return null; return ((c - p) / p) * 100; }
+  if (curr.risultato && prev.risultato) { const c = parseFloat(curr.risultato), p = parseFloat(prev.risultato); if (isNaN(c) || isNaN(p) || p <= 0) return null; return ((c - p) / p) * 100; }
+  return null;
 }
 
 async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[]) {
@@ -220,8 +250,18 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         const vasC = (prog.esercizicampo ?? []).map((c) => c.vas || "—").join("\n") || "—";
 
         const testLines = (prog.tests ?? []).map((t) => {
+          const isSL = t.nome === "SL Drop Jump";
           const val = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean).join(" / ");
-          return `${t.nome}${val ? `: ${val}` : ""}`;
+          const extras: string[] = [];
+          const sxV = isSL ? (t.rsiSx ?? "") : (t.risultatoSx ?? "");
+          const dxV = isSL ? (t.rsiDx ?? "") : (t.risultatoDx ?? "");
+          const asim = _calcolaAsimmetria(sxV, dxV);
+          const sup = _superioreTest(sxV, dxV);
+          if (asim !== null && sup !== null) extras.push(`${sup} +${asim.toFixed(1)}%`);
+          const prev = _trovaPrecedenteTest(programmi, prog.id, t.nome);
+          const delta = _calcolaDelta(t, prev);
+          if (delta !== null) extras.push(`${delta >= 0 ? "↑" : "↓"} ${delta >= 0 ? "+" : ""}${delta.toFixed(1)}%`);
+          return `${t.nome}${val ? `: ${val}` : ""}${extras.length ? ` [${extras.join(", ")}]` : ""}`;
         });
         const tests = testLines.join("\n") || "—";
         const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
