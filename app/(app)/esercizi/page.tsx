@@ -12,7 +12,7 @@ import {
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
 const caricoVuoto: Carico = { rpe: "", interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
-const campoVuoto: EsercizioCampo = { tipo: "", serie: "", durata: "", descrizione: "" };
+const campoVuoto: EsercizioCampo = { tipo: "", serie: "", durata: "", descrizione: "", vas: "" };
 
 const progVuoto: Omit<Programma, "id"> = {
   atletaId: "", nome: "", fase: "",
@@ -370,6 +370,7 @@ export default function EserciziPage() {
                                     <div className="flex items-center gap-2 text-xs text-gray-500">
                                       {c.serie && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{c.serie} serie</span>}
                                       {c.durata && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{c.durata}</span>}
+                                      {c.vas && <span className="bg-white border border-red-200 text-red-600 px-2 py-0.5 rounded-full">VAS {c.vas}/10</span>}
                                     </div>
                                   </div>
                                   {c.descrizione && <p className="text-xs text-gray-500 mt-1.5 italic">{c.descrizione}</p>}
@@ -771,7 +772,7 @@ export default function EserciziPage() {
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-3 gap-3">
                               <div>
                                 <p className="text-xs text-gray-500 mb-1">Serie</p>
                                 <input value={c.serie} onChange={(e) => aggiornaCampo(i, "serie", e.target.value)} placeholder="Es. 4" className={inp} />
@@ -779,6 +780,10 @@ export default function EserciziPage() {
                               <div>
                                 <p className="text-xs text-gray-500 mb-1">Durata</p>
                                 <input value={c.durata} onChange={(e) => aggiornaCampo(i, "durata", e.target.value)} placeholder="Es. 30'' / 5'" className={inp} />
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500 mb-1">VAS</p>
+                                <input value={c.vas} onChange={(e) => aggiornaCampo(i, "vas", e.target.value)} placeholder="0–10" className={inp} />
                               </div>
                             </div>
                             <div>

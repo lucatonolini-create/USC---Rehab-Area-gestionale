@@ -248,6 +248,7 @@ export interface EsercizioCampo {
   serie: string;
   durata: string;
   descrizione: string;
+  vas: string;
 }
 
 export const TESTS_PREDEFINITI = [

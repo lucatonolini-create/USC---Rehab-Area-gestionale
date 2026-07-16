@@ -231,26 +231,23 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
       }
       weekRowIndices.add(body.length);
-      body.push([{ content: weekLabel, colSpan: 9 }]);
+      body.push([{ content: weekLabel, colSpan: 11 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Esercizi Palestra", "VAS", "Campo", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Esercizi Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
         const isAlt = dataRowCount % 2 === 1;
         const dataStr = prog.data ? fmtDCl(prog.data) : "—";
-        const obC = prog.obiettiviCampo?.length ? `◎ ${prog.obiettiviCampo.join(", ")}` : "";
         const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
+        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+        const campoEsLines = (prog.esercizicampo ?? []).map((c) => {
+          const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
+          return parts.join(" ");
+        });
+        const esC = campoEsLines.join("\n") || "—";
+        const vasC = (prog.esercizicampo ?? []).map((c) => c.vas || "—").join("\n") || "—";
         const esercizi = prog.esercizi ?? [];
-
-        const campoLines = [
-          ...(obC ? [obC] : []),
-          ...(prog.esercizicampo ?? []).map((c) => {
-            const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
-            return parts.join(" ");
-          }),
-        ];
-        const campo = campoLines.join("\n") || "—";
 
         const testLines = (prog.tests ?? []).map((t) => {
           const val = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean).join(" / ");
@@ -260,14 +257,14 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
 
         if (prog.assente) {
           absenteRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 7, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
         if (prog.riposo) {
           riposoRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 7, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
@@ -279,7 +276,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
           const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
           if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, campo, tests, rpe]);
+          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, vasC, tests, rpe]);
         } else {
           esercizi.forEach((e, i) => {
             const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
@@ -292,9 +289,11 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
                 { content: prog.fase ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: obP, rowSpan: esercizi.length, styles: { valign: "top" } },
                 esLine, vas,
-                { content: campo, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: obCampo, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: esC, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: vasC, rowSpan: esercizi.length, styles: { valign: "top", halign: "center" as const } },
                 { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" } },
+                { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
               ]);
             } else {
               body.push([esLine, vas]);
@@ -311,15 +310,17 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 16 },
-        1: { cellWidth: 25 },
-        2: { cellWidth: 18 },
-        3: { cellWidth: 22 },
-        4: { cellWidth: 36 },
-        5: { cellWidth: 10, halign: "center" as const },
-        6: { cellWidth: 24 },
-        7: { cellWidth: 21 },
-        8: { cellWidth: 10, halign: "center" as const },
+        0:  { cellWidth: 14 },
+        1:  { cellWidth: 22 },
+        2:  { cellWidth: 14 },
+        3:  { cellWidth: 16 },
+        4:  { cellWidth: 28 },
+        5:  { cellWidth: 8,  halign: "center" as const },
+        6:  { cellWidth: 16 },
+        7:  { cellWidth: 22 },
+        8:  { cellWidth: 8,  halign: "center" as const },
+        9:  { cellWidth: 18 },
+        10: { cellWidth: 8,  halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
