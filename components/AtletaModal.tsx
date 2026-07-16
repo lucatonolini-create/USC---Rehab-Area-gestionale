@@ -13,6 +13,7 @@ interface PerfAthlete {
   jersey_number: number;
   vmax_kmh: number;
   preferred_foot?: string;
+  _source?: string;
 }
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
@@ -80,8 +81,9 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
 
-  const importaDaPerf = (perfId: string) => {
-    const p = perfAthletes.find((a) => a.id === perfId);
+  const importaDaPerf = (compositeId: string) => {
+    const [source, id] = compositeId.includes("|") ? compositeId.split("|") : ["", compositeId];
+    const p = perfAthletes.find((a) => (source ? a._source === source : true) && a.id === id);
     if (!p) return;
     const footMap: Record<string, Piede> = { destro: "Destro", sinistro: "Sinistro", ambidestro: "Ambidestro" };
     const piede = p.preferred_foot ? (footMap[p.preferred_foot.toLowerCase()] ?? "") : "";
@@ -120,8 +122,8 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
               >
                 <option value="">{perfLoading ? "Caricamento giocatori..." : perfAthletes.length === 0 ? "Nessun giocatore disponibile" : "— Seleziona giocatore —"}</option>
                 {perfAthletes.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}{p.jersey_number ? ` · #${p.jersey_number}` : ""}{p.position ? ` · ${p.position}` : ""}
+                  <option key={p._source + p.id} value={p._source + "|" + p.id}>
+                    {p.name}{p.jersey_number ? ` · #${p.jersey_number}` : ""}{p.position ? ` · ${p.position}` : ""}{p._source ? ` [${p._source}]` : ""}
                   </option>
                 ))}
               </select>

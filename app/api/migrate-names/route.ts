@@ -19,8 +19,7 @@ export async function GET() {
     const sb = createClient(url, key);
 
     // 1. Sostituisce la sigla (nome con punti) con il nome completo da Performance
-    const data = await perfGetAthletes();
-    const perfAthletes: { name: string; code?: string }[] = data.athletes ?? [];
+    const perfAthletes: { name: string; code?: string }[] = await perfGetAthletes();
 
     const fromPerformance: { code: string; name: string; updated: number; error?: string }[] = [];
     for (const a of perfAthletes) {
