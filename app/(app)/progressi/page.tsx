@@ -310,8 +310,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 13 },
-        1:  { cellWidth: 22 },
+        0:  { cellWidth: 15 },
+        1:  { cellWidth: 20 },
         2:  { cellWidth: 13 },
         3:  { cellWidth: 17 },
         4:  { cellWidth: 28 },
