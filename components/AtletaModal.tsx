@@ -123,7 +123,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
                 <option value="">{perfLoading ? "Caricamento giocatori..." : perfAthletes.length === 0 ? "Nessun giocatore disponibile" : "— Seleziona giocatore —"}</option>
                 {perfAthletes.map((p) => (
                   <option key={p._source + p.id} value={p._source + "|" + p.id}>
-                    {p.name}{p.jersey_number ? ` · #${p.jersey_number}` : ""}{p.position ? ` · ${p.position}` : ""}{p._source ? ` [${p._source}]` : ""}
+                    {p.name}{p.jersey_number ? ` · #${p.jersey_number}` : ""}{p.position ? ` · ${p.position}` : ""}
                   </option>
                 ))}
               </select>
