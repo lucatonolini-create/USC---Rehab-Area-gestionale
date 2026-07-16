@@ -1,5 +1,5 @@
 // SERVER-SIDE ONLY — non importare da componenti client
-const BASE = "https://cremonese-app.vercel.app/api/v1";
+const BASE = "https://u19-player-portal.onrender.com/api/v1";
 
 async function perfFetch(path: string, init?: RequestInit) {
   const key = process.env.CREMONESE_API_KEY;
