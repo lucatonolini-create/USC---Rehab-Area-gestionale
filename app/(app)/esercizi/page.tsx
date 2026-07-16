@@ -673,7 +673,7 @@ export default function EserciziPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between mb-3">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Esercizi in Palestra</label>
                     <button onClick={aggiungiEs} className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
                   </div>
                   <div className="space-y-3">
