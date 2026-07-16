@@ -307,7 +307,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 6.5, cellPadding: 1.5, overflow: "ellipsize" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 6.5, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
         0:  { cellWidth: 15 },
