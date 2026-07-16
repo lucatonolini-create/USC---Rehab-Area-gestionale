@@ -321,35 +321,20 @@ export default function EserciziPage() {
                         {prog.esercizi.length > 0 && (
                           <div className="mb-4">
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1"><Dumbbell className="w-3.5 h-3.5" /> Esercizi in Palestra</p>
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                               {prog.esercizi.map((es, i) => (
-                                <div key={i} className="bg-gray-50 rounded-xl p-4">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <p className="font-semibold text-gray-900 text-sm">{i + 1}. {es.nome}</p>
-                                    <div className="flex items-center gap-2">
-                                      {(es.serie || es.reps) && (
-                                        <span className="text-xs text-gray-500">{es.serie && `${es.serie}×`}{es.reps}</span>
-                                      )}
-                                      {es.carico && (
-                                        <span className="text-xs bg-blue-50 text-blue-600 font-medium px-2 py-0.5 rounded-full">{es.carico}</span>
-                                      )}
-                                      {es.rir && (
-                                        <span className="text-xs bg-gray-100 text-gray-600 font-medium px-2 py-0.5 rounded-full">RIR {es.rir}</span>
-                                      )}
+                                <div key={i} className="bg-gray-100 border border-gray-300 rounded-xl p-3">
+                                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                                    <p className="font-semibold text-gray-900 text-sm">{es.nome}</p>
+                                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                                      {es.serie && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{es.serie} serie</span>}
+                                      {es.reps && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{es.reps}</span>}
+                                      {es.carico && <span className="bg-white border border-blue-200 text-blue-600 px-2 py-0.5 rounded-full">{es.carico}</span>}
+                                      {es.rir && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">RIR {es.rir}</span>}
+                                      {es.vas && <span className="bg-white border border-red-200 text-red-600 px-2 py-0.5 rounded-full">VAS {es.vas}/10</span>}
                                     </div>
                                   </div>
-                                  {es.vas && (
-                                    <div className="mt-2">
-                                      <p className="text-xs text-gray-400 mb-1">VAS</p>
-                                      <div className="flex items-center gap-2">
-                                        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                                          <div className="h-full bg-red-400 rounded-full" style={{ width: `${(Number(es.vas) / 10) * 100}%` }} />
-                                        </div>
-                                        <span className="text-xs font-bold text-red-500">{es.vas}/10</span>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {es.note && <p className="text-xs text-gray-500 mt-2 italic">{es.note}</p>}
+                                  {es.note && <p className="text-xs text-gray-500 mt-1.5 italic">{es.note}</p>}
                                 </div>
                               ))}
                             </div>
