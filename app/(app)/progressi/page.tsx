@@ -231,17 +231,16 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
       }
       weekRowIndices.add(body.length);
-      body.push([{ content: weekLabel, colSpan: 7 }]);
+      body.push([{ content: weekLabel, colSpan: 9 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma / Fase", "Palestra", "VAS", "Campo", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Esercizi Palestra", "VAS", "Campo", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
         const isAlt = dataRowCount % 2 === 1;
         const dataStr = prog.data ? fmtDCl(prog.data) : "—";
         const obC = prog.obiettiviCampo?.length ? `◎ ${prog.obiettiviCampo.join(", ")}` : "";
-        const obP = prog.obiettiviPalestra?.length ? `◎ ${prog.obiettiviPalestra.join(", ")}` : "";
-        const progLabel = [prog.nome, prog.fase, obP].filter(Boolean).join("\n");
+        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
         const esercizi = prog.esercizi ?? [];
 
         const campoLines = [
@@ -260,17 +259,15 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         const tests = testLines.join("\n") || "—";
 
         if (prog.assente) {
-          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
           absenteRowIndices.add(body.length);
-          body.push([dataStr, label, { content: "ASSENTE", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 7, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
         if (prog.riposo) {
-          const label = [prog.nome, prog.noteAssenza].filter(Boolean).join("\n");
           riposoRowIndices.add(body.length);
-          body.push([dataStr, label, { content: "RIPOSO", colSpan: 5, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 7, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
@@ -282,7 +279,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
           const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
           if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, progLabel, esLine, vas, campo, tests, rpe]);
+          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, campo, tests, rpe]);
         } else {
           esercizi.forEach((e, i) => {
             const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
@@ -291,7 +288,9 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
             if (i === 0) {
               body.push([
                 { content: dataStr, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: progLabel, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: prog.nome ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: prog.fase ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: obP, rowSpan: esercizi.length, styles: { valign: "top" } },
                 esLine, vas,
                 { content: campo, rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
@@ -312,13 +311,15 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 20 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 12, halign: "center" as const },
-        4: { cellWidth: 28 },
-        5: { cellWidth: 27 },
-        6: { cellWidth: 15, halign: "center" as const },
+        0: { cellWidth: 16 },
+        1: { cellWidth: 25 },
+        2: { cellWidth: 18 },
+        3: { cellWidth: 22 },
+        4: { cellWidth: 36 },
+        5: { cellWidth: 10, halign: "center" as const },
+        6: { cellWidth: 24 },
+        7: { cellWidth: 21 },
+        8: { cellWidth: 10, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
