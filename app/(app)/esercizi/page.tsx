@@ -53,6 +53,59 @@ function calcolaAsimmetria(sx: string, dx: string): number | null {
   return Math.abs(a - b) / Math.max(a, b) * 100;
 }
 
+function superioreTest(sx: string, dx: string): "Dx" | "Sx" | null {
+  const a = parseFloat(sx), b = parseFloat(dx);
+  if (isNaN(a) || isNaN(b) || a === b) return null;
+  return b > a ? "Dx" : "Sx";
+}
+
+function trovaPrecedenteTest(lista: Programma[], currentId: string, nomeTest: string): import("@/lib/store").TestFisiometrico | null {
+  const sorted = [...lista]
+    .filter(p => !p.assente && !p.riposo && p.tests?.length)
+    .sort((a, b) => a.data.localeCompare(b.data));
+  const idx = sorted.findIndex(p => p.id === currentId);
+  if (idx <= 0) return null;
+  for (let k = idx - 1; k >= 0; k--) {
+    const found = (sorted[k].tests ?? []).find(tt => tt.nome === nomeTest);
+    if (found) return found;
+  }
+  return null;
+}
+
+function calcolaDelta(curr: import("@/lib/store").TestFisiometrico, prev: import("@/lib/store").TestFisiometrico | null): number | null {
+  if (!prev) return null;
+  const avg = (vals: (string | undefined)[]) => {
+    const ns = vals.map(v => parseFloat(v ?? "")).filter(v => !isNaN(v) && v > 0);
+    return ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : NaN;
+  };
+  // SL Drop Jump: RSI per limb average
+  if (curr.rsiSx || curr.rsiDx) {
+    const c = avg([curr.rsiSx, curr.rsiDx]), p = avg([prev.rsiSx, prev.rsiDx]);
+    if (isNaN(c) || isNaN(p) || p <= 0) return null;
+    return ((c - p) / p) * 100;
+  }
+  // Drop Jump: RSI
+  if (curr.rsi && prev.rsi) {
+    const c = parseFloat(curr.rsi), p = parseFloat(prev.rsi);
+    if (isNaN(c) || isNaN(p) || p <= 0) return null;
+    return ((c - p) / p) * 100;
+  }
+  // Bilateral (Sx + Dx)
+  if (curr.risultatoSx || curr.risultatoDx) {
+    const c = avg([curr.risultatoSx, curr.risultatoDx]);
+    const p = avg([prev.risultatoSx, prev.risultatoDx]);
+    if (isNaN(c) || isNaN(p) || p <= 0) return null;
+    return ((c - p) / p) * 100;
+  }
+  // Single value
+  if (curr.risultato && prev.risultato) {
+    const c = parseFloat(curr.risultato), p = parseFloat(prev.risultato);
+    if (isNaN(c) || isNaN(p) || p <= 0) return null;
+    return ((c - p) / p) * 100;
+  }
+  return null;
+}
+
 function parseGpsCsv(text: string): Partial<Carico> {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return {};
@@ -378,16 +431,28 @@ export default function EserciziPage() {
                                 const asim = isSLDropJump
                                   ? calcolaAsimmetria(t.rsiSx ?? "", t.rsiDx ?? "")
                                   : calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
+                                const sup = isSLDropJump
+                                  ? superioreTest(t.rsiSx ?? "", t.rsiDx ?? "")
+                                  : superioreTest(t.risultatoSx, t.risultatoDx);
+                                const prevTest = trovaPrecedenteTest(lista, prog.id, t.nome);
+                                const delta = calcolaDelta(t, prevTest);
                                 return (
                                   <div key={i} className={`rounded-xl p-3 border ${asim !== null && asim > 10 ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-100"}`}>
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
                                       <p className="font-semibold text-gray-900 text-sm">{t.nome === "Personalizzato" ? t.risultato : t.nome}</p>
-                                      {asim !== null && (
-                                        <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-                                          {asim > 10 && <AlertTriangle className="w-3 h-3" />}
-                                          {asim.toFixed(1)}% asim.
-                                        </span>
-                                      )}
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        {asim !== null && sup !== null && (
+                                          <span className={`flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                                            {asim > 10 && <AlertTriangle className="w-3 h-3" />}
+                                            {sup} +{asim.toFixed(1)}%
+                                          </span>
+                                        )}
+                                        {delta !== null && (
+                                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${delta >= 0 ? "bg-blue-50 text-blue-700" : "bg-orange-50 text-orange-700"}`}>
+                                            {delta >= 0 ? "↑" : "↓"} {delta >= 0 ? "+" : ""}{delta.toFixed(1)}%
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
                                     {isDropJump ? (
                                       <div className="flex gap-4 mt-1.5 text-xs text-gray-600">
@@ -800,6 +865,9 @@ export default function EserciziPage() {
                         const asim = isSLDropJump
                           ? calcolaAsimmetria(t.rsiSx ?? "", t.rsiDx ?? "")
                           : calcolaAsimmetria(t.risultatoSx, t.risultatoDx);
+                        const formSup = isSLDropJump
+                          ? superioreTest(t.rsiSx ?? "", t.rsiDx ?? "")
+                          : superioreTest(t.risultatoSx, t.risultatoDx);
                         const inp = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white";
                         return (
                           <div key={i} className={`rounded-xl p-4 space-y-3 ${asim !== null && asim > 10 ? "bg-red-50 border border-red-200" : "bg-gray-50"}`}>
@@ -873,10 +941,10 @@ export default function EserciziPage() {
                                     </div>
                                   </div>
                                 </div>
-                                {asim !== null && (
+                                {asim !== null && formSup !== null && (
                                   <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
                                     {asim > 10 && <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
-                                    Asimmetria RSI: {asim.toFixed(1)}%{asim > 10 ? " — superiore al 10%, attenzione!" : " — nella norma"}
+                                    RSI: {formSup} superiore del {asim.toFixed(1)}%{asim > 10 ? " — attenzione!" : " — nella norma"}
                                   </div>
                                 )}
                               </div>
@@ -898,10 +966,10 @@ export default function EserciziPage() {
                                     <input value={t.unita} onChange={(e) => aggiornaTest(i, "unita", e.target.value)} placeholder="cm / Nm / %" className={inp} />
                                   </div>
                                 </div>
-                                {asim !== null && (
+                                {asim !== null && formSup !== null && (
                                   <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${asim > 10 ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
                                     {asim > 10 && <AlertTriangle className="w-3.5 h-3.5 shrink-0" />}
-                                    Asimmetria: {asim.toFixed(1)}%{asim > 10 ? " — superiore al 10%, attenzione!" : " — nella norma"}
+                                    {formSup} superiore del {asim.toFixed(1)}%{asim > 10 ? " — attenzione!" : " — nella norma"}
                                   </div>
                                 )}
                               </div>
