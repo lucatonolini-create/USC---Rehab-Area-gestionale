@@ -634,6 +634,32 @@ export default function AtletiPage() {
     setMostraForm(true);
   };
 
+  const sendStatusNotify = async (atleta: Atleta) => {
+    try {
+      if (atleta.stato === "Infortunato") {
+        await fetch("/api/notify/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "🚨 Nuovo infortunio",
+            body: `${nd(atleta)} — ${atleta.infortunio || atleta.tipoInfortunio || "infortunio"}`,
+            url: "/atleti",
+          }),
+        });
+      } else if (atleta.stato === "Disponibile") {
+        await fetch("/api/notify/send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: "✅ Atleta disponibile",
+            body: `${nd(atleta)} è tornato disponibile`,
+            url: "/atleti",
+          }),
+        });
+      }
+    } catch { /* silenzioso, notifica non critica */ }
+  };
+
   const onSalvaAtleta = async (dati: Omit<Atleta, "id">) => {
     try {
       if (editAtleta) {
@@ -668,11 +694,15 @@ export default function AtletiPage() {
         setSelected(aggiornato);
         await upsertAtleta(aggiornato);
         syncInjury(aggiornato);
+        // Notifica se lo stato è cambiato
+        if (editAtleta.stato !== aggiornato.stato) sendStatusNotify(aggiornato);
       } else {
         const nuovo = { ...dati, id: uid() };
         setAtleti((prev) => [...prev, nuovo]);
         await upsertAtleta(nuovo);
         syncInjury(nuovo);
+        // Nuovo atleta infortunato
+        if (nuovo.stato === "Infortunato") sendStatusNotify(nuovo);
       }
       setMostraForm(false);
     } catch (err: any) {

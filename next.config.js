@@ -24,4 +24,5 @@ module.exports = withPWA({
   aggressiveFrontEndNavCaching: false,
   skipWaiting: true,
   clientsClaim: true,
+  customWorkerSrc: "worker",
 })(nextConfig);

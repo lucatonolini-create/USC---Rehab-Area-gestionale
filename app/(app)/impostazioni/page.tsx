@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle } from "lucide-react";
+import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff } from "lucide-react";
 import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni } from "@/lib/store";
+import { subscribeToPush, unsubscribeFromPush, getPushSubscription } from "@/lib/push-client";
 
 function ListaPersonale({
   titolo,
@@ -55,7 +56,11 @@ export default function ImpostazioniPage() {
   const [salvato, setSalvato] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [syncMsg, setSyncMsg] = useState("");
-  useEffect(() => { loadImpostazioni().then(setForm); }, []);
+  const [pushState, setPushState] = useState<"unknown" | "subscribed" | "unsubscribed" | "busy">("unknown");
+  useEffect(() => {
+    loadImpostazioni().then(setForm);
+    getPushSubscription().then((s) => setPushState(s ? "subscribed" : "unsubscribed"));
+  }, []);
 
   const salva = async () => {
     await saveImpostazioni(form);
@@ -163,7 +168,41 @@ export default function ImpostazioniPage() {
           )}
         </div>
 
-<p className="text-xs text-gray-400 text-center">
+        {/* Notifiche push */}
+        <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+          <h2 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <Bell className="w-5 h-5 text-[#C8102E]" /> Notifiche push
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Ricevi una notifica su questo dispositivo quando un atleta diventa infortunato o torna disponibile.
+          </p>
+          {pushState === "subscribed" ? (
+            <button
+              onClick={async () => {
+                setPushState("busy");
+                await unsubscribeFromPush();
+                setPushState("unsubscribed");
+              }}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 transition-all"
+            >
+              <BellOff className="w-4 h-4" /> Disabilita notifiche
+            </button>
+          ) : (
+            <button
+              disabled={pushState === "busy"}
+              onClick={async () => {
+                setPushState("busy");
+                const ok = await subscribeToPush();
+                setPushState(ok ? "subscribed" : "unsubscribed");
+              }}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-[#C8102E] text-white hover:bg-red-800 transition-all disabled:opacity-50"
+            >
+              <Bell className="w-4 h-4" /> {pushState === "busy" ? "Attendere…" : "Abilita notifiche"}
+            </button>
+          )}
+        </div>
+
+        <p className="text-xs text-gray-400 text-center">
           Premi "Salva" per confermare le modifiche.
         </p>
       </div>
