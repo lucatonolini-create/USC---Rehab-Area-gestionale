@@ -14,31 +14,71 @@ const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov",
 function parseCSV(text: string): EpiMonthlyEntry[] {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(l => l.trim());
   if (lines.length < 2) return [];
-  const rows = lines.slice(1);
   const entries: EpiMonthlyEntry[] = [];
-  for (const row of rows) {
+  for (const row of lines.slice(1)) {
     const cols = row.split(/[,;]/).map(c => c.trim().replace(/^["']|["']$/g, ""));
-    if (cols.length < 3) continue;
-    const [dataRaw, atleta, presenteRaw, minutaggioRaw, rpeRaw] = cols;
-    if (!dataRaw || !atleta.trim()) continue;
-    let data = dataRaw.trim();
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
-      const [d, m, y] = data.split("/");
-      data = `${y}-${m}-${d}`;
-    }
-    const p = (presenteRaw ?? "").toLowerCase().trim();
-    const presente = p === "1" || p === "sì" || p === "si" || p === "true" || p === "vero" || p === "presenza";
-    const minutaggio = minutaggioRaw ? parseFloat(minutaggioRaw.replace(",", ".")) : undefined;
-    const rpe = rpeRaw ? parseFloat(rpeRaw.replace(",", ".")) : undefined;
-    entries.push({
-      data,
-      atleta: atleta.trim(),
-      presente,
-      minutaggio: minutaggio != null && !isNaN(minutaggio) ? minutaggio : undefined,
-      rpe: rpe != null && !isNaN(rpe) ? rpe : undefined,
-    });
+    const entry = normalizeRow(cols);
+    if (entry) entries.push(entry);
   }
   return entries;
+}
+
+// ── Row normalizer (shared by CSV and Excel parsers) ──────────────────────────
+function normalizeRow(cols: string[]): EpiMonthlyEntry | null {
+  if (cols.length < 3) return null;
+  const [dataRaw, atleta, presenteRaw, minutaggioRaw, rpeRaw] = cols;
+  if (!dataRaw || !atleta.trim()) return null;
+  let data = dataRaw.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
+    const [d, m, y] = data.split("/");
+    data = `${y}-${m}-${d}`;
+  }
+  // handle Excel serial date numbers
+  if (/^\d{5}$/.test(data)) {
+    const jsDate = new Date(Math.round((Number(data) - 25569) * 86400 * 1000));
+    data = jsDate.toISOString().slice(0, 10);
+  }
+  const p = (presenteRaw ?? "").toLowerCase().trim();
+  const presente = p === "1" || p === "sì" || p === "si" || p === "true" || p === "vero" || p === "presenza";
+  const minutaggio = minutaggioRaw ? parseFloat(String(minutaggioRaw).replace(",", ".")) : undefined;
+  const rpe = rpeRaw ? parseFloat(String(rpeRaw).replace(",", ".")) : undefined;
+  return {
+    data,
+    atleta: atleta.trim(),
+    presente,
+    minutaggio: minutaggio != null && !isNaN(minutaggio) ? minutaggio : undefined,
+    rpe: rpe != null && !isNaN(rpe) ? rpe : undefined,
+  };
+}
+
+// ── Excel Parser ──────────────────────────────────────────────────────────────
+async function parseExcel(buffer: ArrayBuffer): Promise<EpiMonthlyEntry[]> {
+  const XLSX = await import("xlsx");
+  const wb = XLSX.read(buffer, { type: "array" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const rows: string[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "YYYY-MM-DD" }) as string[][];
+  if (rows.length < 2) return [];
+  const entries: EpiMonthlyEntry[] = [];
+  for (const row of rows.slice(1)) {
+    const entry = normalizeRow(row.map(c => String(c ?? "").trim()));
+    if (entry) entries.push(entry);
+  }
+  return entries;
+}
+
+// ── PDF Text Parser ───────────────────────────────────────────────────────────
+async function parsePDF(buffer: ArrayBuffer): Promise<EpiMonthlyEntry[]> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
+  let allText = "";
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    allText += content.items.map((it: any) => it.str).join(" ") + "\n";
+  }
+  // attempt CSV parse on extracted text
+  return parseCSV(allText);
 }
 
 // ── PDF Export ────────────────────────────────────────────────────────────────
@@ -278,10 +318,23 @@ export default function EpidemiologiaPage() {
     if (!file) return;
     setUploading(true);
     try {
-      const text = await file.text();
-      const entries = parseCSV(text);
+      const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
+      let entries: EpiMonthlyEntry[] = [];
+      if (ext === "csv" || ext === "txt") {
+        entries = parseCSV(await file.text());
+      } else if (ext === "xlsx" || ext === "xls") {
+        entries = await parseExcel(await file.arrayBuffer());
+      } else if (ext === "pdf") {
+        entries = await parsePDF(await file.arrayBuffer());
+      } else if (ext === "png" || ext === "jpg" || ext === "jpeg") {
+        alert("I file immagine (PNG/JPG) non supportano il parsing automatico. Carica il file in formato CSV o Excel.");
+        return;
+      } else {
+        alert("Formato non supportato. Usa CSV, Excel, o PDF.");
+        return;
+      }
       if (entries.length === 0) {
-        alert("Nessun dato valido trovato nel CSV. Formato atteso: Data, Atleta, Presente, Minutaggio, RPE");
+        alert("Nessun dato valido trovato nel file. Formato atteso: Data, Atleta, Presente, Minutaggio, RPE");
         return;
       }
       const id = `${uploadCat}-${uploadAnno}-${uploadMese}`;
@@ -377,7 +430,7 @@ export default function EpidemiologiaPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">File CSV</label>
-                <input ref={fileRef} type="file" accept=".csv,.txt" onChange={handleFileUpload}
+                <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" onChange={handleFileUpload}
                   className="mt-1 w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#C8102E] file:text-white hover:file:bg-[#a80d26] cursor-pointer" />
               </div>
               {uploading && <p className="text-xs text-gray-400 text-center animate-pulse">Elaborazione in corso...</p>}
