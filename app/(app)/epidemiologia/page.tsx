@@ -11,44 +11,82 @@ const MESI_FULL = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Lugl
 const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"];
 
 // ── CSV Parser ────────────────────────────────────────────────────────────────
+// ── Column auto-detection ─────────────────────────────────────────────────────
+type ColMap = { data: number; atleta: number; presente: number; minutaggio: number; rpe: number; presenteInverted: boolean };
+
+function detectColumns(headers: string[]): ColMap {
+  const h = headers.map(s => s.trim().toLowerCase().replace(/[^a-zàèéìòù0-9]/g, ""));
+  const find = (...keys: RegExp[]) => h.findIndex(c => keys.some(k => k.test(c)));
+
+  const dataIdx       = find(/^(data|date|giorno|day|dt)$/);
+  const atletaIdx     = find(/^(atleta|nome|giocatore|player|nominativo|cognome|surname|name)$/);
+  const presenteIdx   = find(/^(presente|presenza|presenze|presence|partecipazione|p)$/);
+  const assenteIdx    = find(/^(assente|assenza|absent)$/);
+  const minutaggioIdx = find(/^(minutaggio|minuti|minutes?|min|durata|tempoallenamento|loadminutes?)$/);
+  const rpeIdx        = find(/^(rpe|cr10|borg|caricointerno|sforzo|effort|perceivedexertion)$/);
+
+  // If no header detected, fall back to positional defaults (col 0-4)
+  const noHeaders = [dataIdx, atletaIdx, presenteIdx, assenteIdx].every(i => i === -1);
+  if (noHeaders) return { data: 0, atleta: 1, presente: 2, minutaggio: 3, rpe: 4, presenteInverted: false };
+
+  return {
+    data:             dataIdx       >= 0 ? dataIdx       : 0,
+    atleta:           atletaIdx     >= 0 ? atletaIdx     : 1,
+    presente:         presenteIdx   >= 0 ? presenteIdx   : (assenteIdx >= 0 ? assenteIdx : 2),
+    minutaggio:       minutaggioIdx >= 0 ? minutaggioIdx : -1,
+    rpe:              rpeIdx        >= 0 ? rpeIdx        : -1,
+    presenteInverted: presenteIdx   < 0  && assenteIdx   >= 0,
+  };
+}
+
+function parseDate(raw: string): string {
+  const s = raw.trim();
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) { const [d, m, y] = s.split("/"); return `${y}-${m}-${d}`; }
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(s)) return s.replace(/\//g, "-");
+  if (/^\d{5,6}$/.test(s)) { // Excel serial
+    const js = new Date(Math.round((Number(s) - 25569) * 86400 * 1000));
+    return js.toISOString().slice(0, 10);
+  }
+  return s;
+}
+
+function parsePresente(raw: string, inverted: boolean): boolean {
+  const p = raw.toLowerCase().trim();
+  const yes = p === "1" || p === "sì" || p === "si" || p === "true" || p === "vero" || p === "presenza" || p === "yes" || p === "x";
+  return inverted ? !yes : yes;
+}
+
+function buildEntry(cols: string[], map: ColMap): EpiMonthlyEntry | null {
+  const get = (i: number) => (i >= 0 && i < cols.length ? cols[i] : "");
+  const dataRaw   = get(map.data);
+  const atletaRaw = get(map.atleta);
+  if (!dataRaw || !atletaRaw.trim()) return null;
+  const data        = parseDate(dataRaw);
+  const presente    = parsePresente(get(map.presente), map.presenteInverted);
+  const minRaw      = get(map.minutaggio);
+  const rpeRaw      = get(map.rpe);
+  const minutaggio  = minRaw ? parseFloat(minRaw.replace(",", ".")) : undefined;
+  const rpe         = rpeRaw ? parseFloat(rpeRaw.replace(",", ".")) : undefined;
+  return {
+    data,
+    atleta:    atletaRaw.trim(),
+    presente,
+    minutaggio: minutaggio != null && !isNaN(minutaggio) ? minutaggio : undefined,
+    rpe:        rpe        != null && !isNaN(rpe)        ? rpe        : undefined,
+  };
+}
+
+// ── CSV Parser ────────────────────────────────────────────────────────────────
 function parseCSV(text: string): EpiMonthlyEntry[] {
   const lines = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n").filter(l => l.trim());
   if (lines.length < 2) return [];
-  const entries: EpiMonthlyEntry[] = [];
-  for (const row of lines.slice(1)) {
-    const cols = row.split(/[,;]/).map(c => c.trim().replace(/^["']|["']$/g, ""));
-    const entry = normalizeRow(cols);
-    if (entry) entries.push(entry);
-  }
-  return entries;
-}
-
-// ── Row normalizer (shared by CSV and Excel parsers) ──────────────────────────
-function normalizeRow(cols: string[]): EpiMonthlyEntry | null {
-  if (cols.length < 3) return null;
-  const [dataRaw, atleta, presenteRaw, minutaggioRaw, rpeRaw] = cols;
-  if (!dataRaw || !atleta.trim()) return null;
-  let data = dataRaw.trim();
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)) {
-    const [d, m, y] = data.split("/");
-    data = `${y}-${m}-${d}`;
-  }
-  // handle Excel serial date numbers
-  if (/^\d{5}$/.test(data)) {
-    const jsDate = new Date(Math.round((Number(data) - 25569) * 86400 * 1000));
-    data = jsDate.toISOString().slice(0, 10);
-  }
-  const p = (presenteRaw ?? "").toLowerCase().trim();
-  const presente = p === "1" || p === "sì" || p === "si" || p === "true" || p === "vero" || p === "presenza";
-  const minutaggio = minutaggioRaw ? parseFloat(String(minutaggioRaw).replace(",", ".")) : undefined;
-  const rpe = rpeRaw ? parseFloat(String(rpeRaw).replace(",", ".")) : undefined;
-  return {
-    data,
-    atleta: atleta.trim(),
-    presente,
-    minutaggio: minutaggio != null && !isNaN(minutaggio) ? minutaggio : undefined,
-    rpe: rpe != null && !isNaN(rpe) ? rpe : undefined,
-  };
+  const split = (l: string) => l.split(/[,;|\t]/).map(c => c.trim().replace(/^["']|["']$/g, ""));
+  const map = detectColumns(split(lines[0]));
+  return lines.slice(1).flatMap(row => {
+    const entry = buildEntry(split(row), map);
+    return entry ? [entry] : [];
+  });
 }
 
 // ── Excel Parser ──────────────────────────────────────────────────────────────
@@ -58,12 +96,11 @@ async function parseExcel(buffer: ArrayBuffer): Promise<EpiMonthlyEntry[]> {
   const ws = wb.Sheets[wb.SheetNames[0]];
   const rows: string[][] = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, dateNF: "YYYY-MM-DD" }) as string[][];
   if (rows.length < 2) return [];
-  const entries: EpiMonthlyEntry[] = [];
-  for (const row of rows.slice(1)) {
-    const entry = normalizeRow(row.map(c => String(c ?? "").trim()));
-    if (entry) entries.push(entry);
-  }
-  return entries;
+  const map = detectColumns(rows[0].map(c => String(c ?? "")));
+  return rows.slice(1).flatMap(row => {
+    const entry = buildEntry(row.map(c => String(c ?? "").trim()), map);
+    return entry ? [entry] : [];
+  });
 }
 
 // ── PDF Text Parser ───────────────────────────────────────────────────────────
@@ -334,7 +371,7 @@ export default function EpidemiologiaPage() {
         return;
       }
       if (entries.length === 0) {
-        alert("Nessun dato valido trovato nel file. Formato atteso: Data, Atleta, Presente, Minutaggio, RPE");
+        alert("Nessun dato valido trovato nel file. Assicurati che contenga almeno le colonne data e atleta.");
         return;
       }
       const id = `${uploadCat}-${uploadAnno}-${uploadMese}`;
@@ -376,7 +413,7 @@ export default function EpidemiologiaPage() {
         <div className="flex gap-2">
           <button onClick={() => setShowUpload(true)}
             className="flex items-center gap-1.5 bg-[#C8102E] text-white px-3 py-2 rounded-xl text-xs font-semibold hover:bg-[#a80d26] transition-colors">
-            <Upload className="w-3.5 h-3.5" /> Carica CSV
+            <Upload className="w-3.5 h-3.5" /> Carica File
           </button>
           <button onClick={async () => { setPdfLoading(true); try { await esportaPDFEpi({ filtroCat, filtroAnno, filtroMese, kpi, catData, monthlyData }); } finally { setPdfLoading(false); } }}
             disabled={vuoto || pdfLoading}
@@ -392,17 +429,16 @@ export default function EpidemiologiaPage() {
           onClick={e => e.target === e.currentTarget && setShowUpload(false)}>
           <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">Carica File CSV</h2>
+              <h2 className="text-lg font-bold text-gray-900">Carica File</h2>
               <button onClick={() => setShowUpload(false)} className="text-gray-400 hover:text-gray-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-gray-500 mb-1">Il file CSV deve avere le colonne (prima riga = intestazione):</p>
-            <code className="block bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-[11px] text-gray-600 mb-4 font-mono">
-              Data, Atleta, Presente, Minutaggio, RPE
-            </code>
+            <p className="text-xs text-gray-500 mb-1">
+              Il sistema rileva automaticamente le colonne dalla prima riga del file. Sono supportati CSV, Excel e PDF.
+            </p>
             <p className="text-[11px] text-gray-400 mb-4">
-              "Presente": 1/0 · Sì/No · true/false — "Minutaggio" e "RPE" opzionali
+              Colonne riconosciute: data · atleta/nome · presente/assente · minutaggio/minuti · RPE — in qualsiasi ordine o lingua.
             </p>
             <div className="space-y-3">
               <div>
@@ -429,7 +465,7 @@ export default function EpidemiologiaPage() {
                 </div>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">File CSV</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">File</label>
                 <input ref={fileRef} type="file" accept=".csv,.txt,.xlsx,.xls,.pdf,.png,.jpg,.jpeg" onChange={handleFileUpload}
                   className="mt-1 w-full text-sm text-gray-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#C8102E] file:text-white hover:file:bg-[#a80d26] cursor-pointer" />
               </div>
@@ -490,7 +526,7 @@ export default function EpidemiologiaPage() {
           <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500 font-medium mb-1">Nessun dato disponibile</p>
           <p className="text-gray-400 text-sm mb-4">
-            Carica un file CSV mensile per ogni categoria per visualizzare l&apos;analisi.
+            Carica un file mensile (CSV, Excel, PDF) per ogni categoria per visualizzare l&apos;analisi.
           </p>
           <button onClick={() => setShowUpload(true)}
             className="inline-flex items-center gap-1.5 bg-[#C8102E] text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-[#a80d26] transition-colors">
