@@ -310,17 +310,17 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 14 },
+        0:  { cellWidth: 13 },
         1:  { cellWidth: 22 },
-        2:  { cellWidth: 14 },
-        3:  { cellWidth: 16 },
+        2:  { cellWidth: 13 },
+        3:  { cellWidth: 17 },
         4:  { cellWidth: 28 },
-        5:  { cellWidth: 8,  halign: "center" as const },
-        6:  { cellWidth: 16 },
+        5:  { cellWidth: 11, halign: "center" as const },
+        6:  { cellWidth: 17 },
         7:  { cellWidth: 22 },
-        8:  { cellWidth: 8,  halign: "center" as const },
+        8:  { cellWidth: 11, halign: "center" as const },
         9:  { cellWidth: 18 },
-        10: { cellWidth: 8,  halign: "center" as const },
+        10: { cellWidth: 10, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
@@ -334,8 +334,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 6.5;
-          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 3, right: 2 };
+          data.cell.styles.fontSize = 5.8;
+          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1.5, right: 1 };
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];
           data.cell.styles.textColor = [154, 52, 18];
