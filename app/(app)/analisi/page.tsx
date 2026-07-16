@@ -1078,8 +1078,11 @@ export default function AnalisiPage() {
   const [stagioneMeseFine, setStagioneMeseFine] = useState(5);
 
   useEffect(() => {
-    loadAtleti().then(setAtleti);
-    loadProgrammi().then(setProgrammi);
+    loadAtleti().then(async (atletiData) => {
+      setAtleti(atletiData);
+      const all = (await Promise.all(atletiData.map((a) => loadProgrammi(a.id)))).flat();
+      setProgrammi(all);
+    });
   }, []);
 
   const attivi = atleti.filter((a) => a.stato !== "Disponibile");
