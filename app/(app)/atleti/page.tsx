@@ -442,6 +442,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       ) && isSessionePDF(p)).length : 0;
   const totaleStagionePDF = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
+  checkPage(60);
   y = secTitle("Storico infortuni", y);
 
   // Riquadro riepilogativo sessioni
