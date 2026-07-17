@@ -242,7 +242,15 @@ export default function EserciziPage() {
 
   // Carico
   const carico = form.carico ?? { ...caricoVuoto };
-  const aggiornaCarico = (campo: keyof Carico, val: string) => setForm({ ...form, carico: { ...carico, [campo]: val } });
+  const aggiornaCarico = (campo: keyof Carico, val: string) => {
+    const next = { ...carico, [campo]: val };
+    if (campo === "rpe" || campo === "durata") {
+      const r = Number(campo === "rpe" ? val : next.rpe);
+      const d = Number(campo === "durata" ? val : next.durata);
+      next.interno = r > 0 && d > 0 ? String(Math.round(r * d)) : next.interno;
+    }
+    setForm({ ...form, carico: next });
+  };
 
   const handleGpsFile = async (file: File | null) => {
     if (!file) return;
@@ -499,9 +507,9 @@ export default function EserciziPage() {
                             </p>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                               {[
-                                { label: "RPE sessione", value: prog.carico.rpe, unit: "/10" },
+                                { label: "RPE", value: prog.carico.rpe, unit: "/10" },
                                 { label: "Durata", value: prog.carico.durata, unit: "min" },
-                                { label: "Carico interno", value: prog.carico.interno, unit: "" },
+                                { label: "Training Load", value: prog.carico.interno, unit: "" },
                                 { label: "Distanza", value: prog.carico.distanzaTotale, unit: "km" },
                                 { label: "Vel. max", value: prog.carico.velocitaMax, unit: "km/h" },
                                 { label: "Vel. >18 km/h", value: prog.carico.hsr, unit: "m" },
@@ -1007,7 +1015,7 @@ export default function EserciziPage() {
                   </div>
 
                   {/* Riga 1 — sessione */}
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Durata (min)</label>
                       <input value={carico.durata} onChange={(e) => aggiornaCarico("durata", e.target.value)}
@@ -1015,10 +1023,18 @@ export default function EserciziPage() {
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Carico interno (RPE×min)</label>
-                      <input value={carico.interno} onChange={(e) => aggiornaCarico("interno", e.target.value)}
-                        placeholder="Es. 450"
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">RPE (/10)</label>
+                      <input value={carico.rpe} onChange={(e) => aggiornaCarico("rpe", e.target.value)}
+                        placeholder="Es. 6"
+                        type="number" min="1" max="10"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Training Load</label>
+                      <input value={carico.interno}
+                        readOnly
+                        placeholder="RPE × min"
+                        className="mt-1 w-full border border-gray-100 rounded-xl px-4 py-2.5 text-sm bg-gray-50 text-gray-500 cursor-not-allowed" />
                     </div>
                   </div>
 
