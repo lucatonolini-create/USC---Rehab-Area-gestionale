@@ -339,6 +339,7 @@ export interface Programma {
   carico: Carico;
   assente?: boolean;
   riposo?: boolean;
+  squadra?: boolean;
   noteAssenza?: string;
 }
 
@@ -435,7 +436,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
   const caricoRaw = (r.carico as Record<string, unknown>) ?? {};
   const {
     _esercizicampo, _infortunio_id, _infortunio_label,
-    _riposo, _assente, _note_assenza,
+    _riposo, _assente, _squadra, _note_assenza,
     _obiettivi_palestra, _obiettivi_campo,
     ...caricoClean
   } = caricoRaw;
@@ -452,6 +453,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
 
   const isRiposo  = !!_riposo  || legacyRiposo;
   const isAssente = !!_assente || legacyAssente || (!_riposo && !legacyRiposo && ((r.assente as boolean) ?? false));
+  const isSquadra = !!_squadra;
   const noteAssenza = (_note_assenza as string | undefined) ?? legacyNote;
 
   return {
@@ -470,6 +472,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     carico: caricoClean as unknown as Carico,
     assente: isAssente,
     riposo: isRiposo,
+    squadra: isSquadra,
     noteAssenza,
   };
 }
@@ -486,6 +489,7 @@ function programmaToRow(p: Programma): Record<string, unknown> {
   }
   if (p.riposo)      caricoExtended._riposo       = true;
   if (p.assente)     caricoExtended._assente      = true;
+  if (p.squadra)     caricoExtended._squadra      = true;
   if (p.noteAssenza) caricoExtended._note_assenza = p.noteAssenza;
   return {
     id: p.id,

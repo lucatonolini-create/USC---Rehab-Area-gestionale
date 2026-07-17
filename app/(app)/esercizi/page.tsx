@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2 } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
@@ -25,6 +25,7 @@ const progVuoto: Omit<Programma, "id"> = {
   carico: { ...caricoVuoto },
   assente: false,
   riposo: false,
+  squadra: false,
   noteAssenza: "",
 };
 
@@ -61,7 +62,7 @@ function superioreTest(sx: string, dx: string): "Dx" | "Sx" | null {
 
 function trovaPrecedenteTest(lista: Programma[], currentId: string, nomeTest: string): import("@/lib/store").TestFisiometrico | null {
   const sorted = [...lista]
-    .filter(p => !p.assente && !p.riposo && p.tests?.length)
+    .filter(p => !p.assente && !p.riposo && !p.squadra && p.tests?.length)
     .sort((a, b) => a.data.localeCompare(b.data));
   const idx = sorted.findIndex(p => p.id === currentId);
   if (idx <= 0) return null;
@@ -177,7 +178,7 @@ export default function EserciziPage() {
   };
 
   const apriNuovo = () => {
-    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, riposo: false, noteAssenza: "" });
+    setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, riposo: false, squadra: false, noteAssenza: "" });
     setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
@@ -194,7 +195,7 @@ export default function EserciziPage() {
 
   const salvaProgramma = async () => {
     if (!form.atletaId) return;
-    const nomeEffettivo = form.assente && !form.nome.trim() ? "Assenza" : form.riposo && !form.nome.trim() ? "Riposo" : form.nome;
+    const nomeEffettivo = form.assente && !form.nome.trim() ? "Assenza" : form.riposo && !form.nome.trim() ? "Riposo" : form.squadra && !form.nome.trim() ? "Squadra" : form.nome;
     if (!nomeEffettivo.trim()) return;
     const pulito = { ...form, nome: nomeEffettivo, esercizi: form.esercizi.filter((e) => e.nome.trim()), esercizicampo: (form.esercizicampo ?? []).filter((c) => c.tipo), tests: (form.tests ?? []).filter((t) => t.nome.trim()) };
     const prog: Programma = editId ? { ...pulito, id: editId } : { ...pulito, id: uid() };
@@ -264,7 +265,7 @@ export default function EserciziPage() {
   const tabClass = (s: FormSection) =>
     `flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${sezioneAttiva === s ? "bg-white shadow-sm text-gray-900" : "text-gray-500 hover:text-gray-700"}`;
 
-  const fontePerSuggerimenti = (programmiPerAtleta[form.atletaId] ?? []).filter((p) => !p.assente && !p.riposo);
+  const fontePerSuggerimenti = (programmiPerAtleta[form.atletaId] ?? []).filter((p) => !p.assente && !p.riposo && !p.squadra);
   const nomiUnici = Array.from(new Set(fontePerSuggerimenti.map((p) => p.nome).filter(Boolean)));
   const fasiUniche = Array.from(new Set(fontePerSuggerimenti.map((p) => p.fase).filter(Boolean)));
   const nomiFiltrati = nomiUnici.filter((n) => !form.nome.trim() || n.toLowerCase().includes(form.nome.toLowerCase())).slice(0, 6);
@@ -306,9 +307,10 @@ export default function EserciziPage() {
                 {isOpen && atleta.id in programmiPerAtleta && (() => {
                   const assenze = lista.filter((p) => p.assente).length;
                   const riposi = lista.filter((p) => p.riposo).length;
+                  const squadre = lista.filter((p) => p.squadra).length;
                   return (
                     <span className="text-xs text-gray-400">
-                      {lista.length} sessioni{assenze > 0 && <span className="text-orange-400"> · {assenze} ass.</span>}{riposi > 0 && <span className="text-blue-400"> · {riposi} rip.</span>}
+                      {lista.length} sessioni{assenze > 0 && <span className="text-orange-400"> · {assenze} ass.</span>}{riposi > 0 && <span className="text-blue-400"> · {riposi} rip.</span>}{squadre > 0 && <span className="text-[#C8102E]"> · {squadre} sq.</span>}
                     </span>
                   );
                 })()}
@@ -350,18 +352,19 @@ export default function EserciziPage() {
                           </div>
                         )}
                         {progs.map((prog) => (
-                  <div key={prog.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${prog.assente ? "border-orange-100" : prog.riposo ? "border-blue-100" : "border-gray-100"}`}>
+                  <div key={prog.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${prog.assente ? "border-orange-100" : prog.riposo ? "border-blue-100" : prog.squadra ? "border-red-100" : "border-gray-100"}`}>
                     <button onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
                       className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 text-left">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${prog.assente ? "bg-orange-400" : prog.riposo ? "bg-blue-400" : "bg-[#C8102E]"}`}>
-                        {prog.assente ? <CalendarX2 className="w-5 h-5 text-white" /> : prog.riposo ? <CalendarX2 className="w-5 h-5 text-white" /> : <Dumbbell className="w-5 h-5 text-white" />}
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${prog.assente ? "bg-orange-400" : prog.riposo ? "bg-blue-400" : prog.squadra ? "bg-[#C8102E]" : "bg-[#C8102E]"}`}>
+                        {prog.assente ? <CalendarX2 className="w-5 h-5 text-white" /> : prog.riposo ? <CalendarX2 className="w-5 h-5 text-white" /> : prog.squadra ? <Users className="w-5 h-5 text-white" /> : <Dumbbell className="w-5 h-5 text-white" />}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <h3 className="font-semibold text-gray-900">{prog.nome}</h3>
                           {prog.assente && <span className="text-xs bg-orange-100 text-orange-700 font-semibold px-2 py-0.5 rounded-full">Assente</span>}
                           {prog.riposo && <span className="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded-full">Riposo</span>}
-                          {prog.fase && !prog.assente && !prog.riposo && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{prog.fase}</span>}
+                          {prog.squadra && <span className="text-xs bg-red-100 text-[#C8102E] font-semibold px-2 py-0.5 rounded-full">Squadra</span>}
+                          {prog.fase && !prog.assente && !prog.riposo && !prog.squadra && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{prog.fase}</span>}
                         </div>
                         <p className="text-xs text-gray-400">
                           {prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : ""}
@@ -593,19 +596,23 @@ export default function EserciziPage() {
                 </div>
               </div>
 
-              {/* Presente / Assente / Riposo */}
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: false })}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${!form.assente && !form.riposo ? "bg-green-500 text-white border-green-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
+              {/* Presente / Assente / Riposo / Squadra */}
+              <div className="flex gap-2 flex-wrap">
+                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: false, squadra: false })}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${!form.assente && !form.riposo && !form.squadra ? "bg-green-500 text-white border-green-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
                   ✓ Presente
                 </button>
-                <button type="button" onClick={() => setForm({ ...form, assente: true, riposo: false })}
+                <button type="button" onClick={() => setForm({ ...form, assente: true, riposo: false, squadra: false })}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.assente ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
                   ✗ Assente
                 </button>
-                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: true })}
+                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: true, squadra: false })}
                   className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.riposo ? "bg-blue-500 text-white border-blue-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
                   ↺ Riposo
+                </button>
+                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: false, squadra: true })}
+                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.squadra ? "bg-[#C8102E] text-white border-[#C8102E]" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
+                  ★ Squadra
                 </button>
               </div>
 
@@ -622,7 +629,7 @@ export default function EserciziPage() {
               )}
 
               {/* Injury selector + Nome/Fase + Tab */}
-              {!form.assente && !form.riposo && <>
+              {!form.assente && !form.riposo && !form.squadra && <>
               {(() => {
                 const atletaSelezionato = atleti.find((a) => a.id === form.atletaId);
                 if (!atletaSelezionato) return null;
@@ -1118,7 +1125,7 @@ export default function EserciziPage() {
                 className="flex-1 border border-gray-200 text-gray-600 py-3 rounded-xl text-sm font-medium hover:bg-gray-50">
                 Annulla
               </button>
-              <button onClick={salvaProgramma} disabled={!form.atletaId || (!form.assente && !form.riposo && !form.nome.trim())}
+              <button onClick={salvaProgramma} disabled={!form.atletaId || (!form.assente && !form.riposo && !form.squadra && !form.nome.trim())}
                 className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
                 {editId ? "Salva modifiche" : "Crea programma"}
               </button>
