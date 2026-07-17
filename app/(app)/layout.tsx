@@ -1,6 +1,7 @@
 import Sidebar from "@/components/Sidebar";
 import OfflineBanner from "@/components/OfflineBanner";
 import IntakeNotifier from "@/components/IntakeNotifier";
+import PushSetup from "@/components/PushSetup";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 overflow-y-auto pt-16 md:pt-0">{children}</main>
       <OfflineBanner />
       <IntakeNotifier />
+      <PushSetup />
     </div>
   );
 }

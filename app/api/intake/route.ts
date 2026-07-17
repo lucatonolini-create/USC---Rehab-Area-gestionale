@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import webpush from "web-push";
 
 const CATEGORIE_VALIDE = ["U19", "U17", "U16", "U15", "U14"];
 
@@ -76,6 +77,28 @@ export async function POST(req: NextRequest) {
         }),
       },
     ).catch(() => {});
+
+    // Web Push to all subscribed devices
+    if (process.env.VAPID_PRIVATE_KEY && process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY) {
+      webpush.setVapidDetails(
+        "mailto:rehab@uscremonese.it",
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+        process.env.VAPID_PRIVATE_KEY,
+      );
+      const { data: subs } = await supabase.from("push_subscriptions").select("endpoint, keys");
+      if (subs?.length) {
+        const payload = JSON.stringify({
+          title: "Nuovo infortunio segnalato",
+          body: `${row.nome} · ${row.categoria}`,
+          url: "/segnalazioni",
+        });
+        await Promise.allSettled(
+          subs.map((s) =>
+            webpush.sendNotification({ endpoint: s.endpoint, keys: s.keys }, payload)
+          )
+        );
+      }
+    }
 
     return NextResponse.json({ ok: true, id: row.id });
   } catch (e) {
