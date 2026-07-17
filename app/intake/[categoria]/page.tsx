@@ -108,7 +108,7 @@ export default function IntakePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nome.trim()) return;
+    if (!form.nome.trim() || !form.categoria) return;
     setStato("invio");
     setErrMsg("");
     try {
@@ -164,16 +164,24 @@ export default function IntakePage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
+                <Label>Categoria *</Label>
+                <Sel value={form.categoria} onChange={(e) => f("categoria", e.target.value)} required>
+                  <option value="">—</option>
+                  {Object.values(CATEGORIA_MAP).map((c) => <option key={c}>{c}</option>)}
+                </Sel>
+              </div>
+              <div>
                 <Label>Ruolo / Posizione</Label>
                 <Input value={form.posizione} onChange={(e) => f("posizione", e.target.value)} placeholder="Es. Centrocampista" />
               </div>
-              <div>
-                <Label>Piede dominante</Label>
-                <Sel value={form.piedeDominante} onChange={(e) => f("piedeDominante", e.target.value)}>
-                  <option value="">—</option>
-                  {PIEDI.map((p) => <option key={p}>{p}</option>)}
-                </Sel>
-              </div>
+            </div>
+
+            <div>
+              <Label>Piede dominante</Label>
+              <Sel value={form.piedeDominante} onChange={(e) => f("piedeDominante", e.target.value)}>
+                <option value="">—</option>
+                {PIEDI.map((p) => <option key={p}>{p}</option>)}
+              </Sel>
             </div>
 
             <div className="border-t border-gray-100 pt-4">
@@ -259,7 +267,7 @@ export default function IntakePage() {
               <p className="text-sm text-red-600 bg-red-50 rounded-xl px-4 py-3">{errMsg}</p>
             )}
 
-            <button type="submit" disabled={!form.nome.trim() || stato === "invio"}
+            <button type="submit" disabled={!form.nome.trim() || !form.categoria || stato === "invio"}
               className="w-full bg-[#C8102E] text-white py-3.5 rounded-xl text-sm font-semibold hover:bg-red-800 disabled:opacity-40 transition-colors">
               {stato === "invio" ? "Invio in corso…" : "Invia segnalazione"}
             </button>
