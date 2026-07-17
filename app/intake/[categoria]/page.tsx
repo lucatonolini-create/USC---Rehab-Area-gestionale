@@ -185,6 +185,7 @@ export default function IntakePage() {
               <div>
                 <Label>Ruolo / Posizione</Label>
                 <Input value={form.posizione} onChange={(e) => f("posizione", e.target.value)} placeholder="Es. Centrocampista" />
+              </div>
               <div>
                 <Label>Piede dominante</Label>
                 <Sel value={form.piedeDominante} onChange={(e) => f("piedeDominante", e.target.value)}>
