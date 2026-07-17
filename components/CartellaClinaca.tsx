@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Upload, FileText, Image, Trash2, ExternalLink, FolderOpen, ClipboardList, CheckCircle2 } from "lucide-react";
-import { caricaDocs, salvaDoc, eliminaDoc, formatBytes, type DocMedico } from "@/lib/filestore";
+import { caricaDocs, caricaDoc, salvaDoc, eliminaDoc, formatBytes, type DocMedico } from "@/lib/filestore";
 import { uid, type RefertoClinico } from "@/lib/store";
+import { getSignedRefertoUrl } from "@/lib/storage";
 
 const TIPI_ACCETTATI = "image/*,application/pdf";
 
@@ -110,6 +111,26 @@ export default function CartellaClinaca({ atletaId, refertiClinici = [], onVaiAD
                     <span className="text-[10px] text-gray-400">
                       {new Date(r.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "short", year: "numeric" })}
                     </span>
+                    {(r.storagePath || r.fileId) && (
+                      <button
+                        title={r.fileNome ?? "Apri allegato"}
+                        onClick={async () => {
+                          if (r.storagePath) {
+                            const url = await getSignedRefertoUrl(r.storagePath);
+                            if (url) window.open(url, "_blank");
+                          } else if (r.fileId) {
+                            const doc = await caricaDoc(r.fileId);
+                            if (doc) {
+                              const url = URL.createObjectURL(doc.blob);
+                              window.open(url, "_blank");
+                              setTimeout(() => URL.revokeObjectURL(url), 10000);
+                            }
+                          }
+                        }}
+                        className="text-blue-400 hover:text-blue-600 transition-colors">
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    )}
                   </div>
                   {r.note && <p className="text-xs text-gray-500 mt-1 leading-relaxed">{r.note}</p>}
                 </div>

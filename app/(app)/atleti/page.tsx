@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X, Paperclip } from "lucide-react";
+import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X, Paperclip, ExternalLink } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
@@ -11,6 +11,7 @@ import {
   type RefertoClinico, type TipoReferto, type EsitoReferto, type TestFisiometrico,
 } from "@/lib/store";
 import { salvaDoc, caricaDoc, eliminaDoc } from "@/lib/filestore";
+import { uploadRefertoFile, deleteRefertoFile, getSignedRefertoUrl } from "@/lib/storage";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
 import QuestionarioTSK from "@/components/QuestionarioTSK";
@@ -776,11 +777,13 @@ export default function AtletiPage() {
     // Gestione file allegato
     let nuovoFileId: string | undefined;
     let nuovoFileNome: string | undefined;
+    let nuovoStoragePath: string | undefined;
     const originalReferto = (selected.refertiClinici ?? []).find((r) => r.id === editingRefertoId);
 
     if (fileReferto) {
       // Nuovo file selezionato: se c'era un vecchio file lo sostituiamo
       if (originalReferto?.fileId) await eliminaDoc(originalReferto.fileId);
+      if (originalReferto?.storagePath) await deleteRefertoFile(originalReferto.storagePath);
       nuovoFileId = uid();
       nuovoFileNome = fileReferto.name;
       await salvaDoc({
@@ -792,23 +795,28 @@ export default function AtletiPage() {
         dimensione: fileReferto.size,
         blob: fileReferto,
       });
+      // Upload to Supabase Storage (best-effort)
+      const sp = await uploadRefertoFile(selected.id, nuovoFileId, fileReferto);
+      if (sp) nuovoStoragePath = sp;
     } else if (editingFileInfo) {
       // File esistente mantenuto
       nuovoFileId = editingFileInfo.id;
       nuovoFileNome = editingFileInfo.nome;
+      nuovoStoragePath = originalReferto?.storagePath;
     } else if (editingRefertoId && originalReferto?.fileId) {
       // File esistente rimosso dall'utente
       await eliminaDoc(originalReferto.fileId);
+      if (originalReferto.storagePath) await deleteRefertoFile(originalReferto.storagePath);
     }
 
-    // Aggiorna i referti con il fileId corretto
+    // Aggiorna i referti con fileId e storagePath corretti
     if (editingRefertoId) {
       nuoviReferti = nuoviReferti.map((r) =>
-        r.id === editingRefertoId ? { ...r, fileId: nuovoFileId, fileNome: nuovoFileNome } : r
+        r.id === editingRefertoId ? { ...r, fileId: nuovoFileId, fileNome: nuovoFileNome, storagePath: nuovoStoragePath } : r
       );
     } else {
       nuoviReferti = nuoviReferti.map((r, i) =>
-        i === nuoviReferti.length - 1 ? { ...r, fileId: nuovoFileId, fileNome: nuovoFileNome } : r
+        i === nuoviReferti.length - 1 ? { ...r, fileId: nuovoFileId, fileNome: nuovoFileNome, storagePath: nuovoStoragePath } : r
       );
     }
 
@@ -825,6 +833,9 @@ export default function AtletiPage() {
 
   const rimuoviReferto = async (refertoId: string) => {
     if (!selected) return;
+    const referto = (selected.refertiClinici ?? []).find((r) => r.id === refertoId);
+    if (referto?.fileId) await eliminaDoc(referto.fileId).catch(() => {});
+    if (referto?.storagePath) await deleteRefertoFile(referto.storagePath);
     const aggiornato: Atleta = {
       ...selected,
       refertiClinici: (selected.refertiClinici ?? []).filter((r) => r.id !== refertoId),
@@ -1134,6 +1145,26 @@ export default function AtletiPage() {
                             {r.note && <p className="text-xs text-gray-500 mt-0.5">{r.note}</p>}
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
+                            {(r.storagePath || r.fileId) && (
+                              <button
+                                title={r.fileNome ?? "Apri allegato"}
+                                onClick={async () => {
+                                  if (r.storagePath) {
+                                    const url = await getSignedRefertoUrl(r.storagePath);
+                                    if (url) window.open(url, "_blank");
+                                  } else if (r.fileId) {
+                                    const doc = await caricaDoc(r.fileId);
+                                    if (doc) {
+                                      const url = URL.createObjectURL(doc.blob);
+                                      window.open(url, "_blank");
+                                      setTimeout(() => URL.revokeObjectURL(url), 10000);
+                                    }
+                                  }
+                                }}
+                                className="text-gray-300 hover:text-blue-500 transition-colors">
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </button>
+                            )}
                             <button
                               onClick={async () => {
                                 setEditingRefertoId(r.id);
