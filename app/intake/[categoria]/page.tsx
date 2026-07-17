@@ -57,7 +57,7 @@ type FormState = {
   infortunio: string; inizioRehab: string; tipoInfortunio: string;
   evento: string; meccanismo: string; contatto: string;
   lato: string; posizioneInfortunio: string; note: string;
-  fisioterapista: string; peso: string; altezza: string;
+  fisioterapista: string;
 };
 
 const vuoto: FormState = {
@@ -65,7 +65,7 @@ const vuoto: FormState = {
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   tipoInfortunio: "", evento: "", meccanismo: "", contatto: "",
   lato: "", posizioneInfortunio: "", note: "",
-  fisioterapista: "", peso: "", altezza: "",
+  fisioterapista: "",
 };
 
 export default function IntakePage() {
@@ -228,20 +228,6 @@ export default function IntakePage() {
                 <div>
                   <Label>Data inizio riabilitazione</Label>
                   <Input type="date" value={form.inizioRehab} onChange={(e) => f("inizioRehab", e.target.value)} />
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dati antropometrici</p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label>Peso (kg)</Label>
-                  <Input type="number" min="0" step="0.1" value={form.peso} onChange={(e) => f("peso", e.target.value)} placeholder="Es. 68" />
-                </div>
-                <div>
-                  <Label>Altezza (cm)</Label>
-                  <Input type="number" min="0" step="0.1" value={form.altezza} onChange={(e) => f("altezza", e.target.value)} placeholder="Es. 175" />
                 </div>
               </div>
             </div>

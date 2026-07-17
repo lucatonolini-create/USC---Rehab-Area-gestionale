@@ -13,7 +13,7 @@ const atletaVuoto: Omit<Atleta, "id"> = {
   stato: "Infortunato", progresso: 0,
   fisioterapista: "", preparatoreAtletico: "",
   telefono: "", email: "", note: "",
-  peso: "", altezza: "",
+  peso: undefined, altezza: undefined,
 };
 
 interface Props {
@@ -229,25 +229,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             <textarea value={form.note} onChange={(e) => f("note", e.target.value)}
               placeholder="Note aggiuntive..." rows={3}
               className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
-          </div>
-
-          {/* Dati antropometrici */}
-          <div className="pt-2 border-t border-gray-100">
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Dati antropometrici</p>
-            <div className="grid grid-cols-3 gap-3">
-              <div>
-                <Label>Peso (kg)</Label>
-                <Input className="mt-1" type="number" min="0" step="0.1"
-                  value={form.peso ?? ""} onChange={(e) => f("peso", e.target.value)}
-                  placeholder="es. 68" />
-              </div>
-              <div>
-                <Label>Altezza (cm)</Label>
-                <Input className="mt-1" type="number" min="0" step="0.1"
-                  value={form.altezza ?? ""} onChange={(e) => f("altezza", e.target.value)}
-                  placeholder="es. 175" />
-              </div>
-            </div>
           </div>
 
         </div>
