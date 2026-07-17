@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, upsertAtleta, deleteProgramma, uid, nd, calcolaProgressoAuto,
   subscribeToAtleti, subscribeToProgrammi,
@@ -638,7 +638,7 @@ export default function EserciziPage() {
                 const opts: { label: string; icon: React.ReactNode; active: boolean; color: "green"|"orange"|"blue"|"red"; onClick: () => void }[] = [
                   { label: "Presente", icon: <span className="text-lg leading-none">✓</span>, active: isPresente, color: "green",  onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: false }) },
                   { label: "Assente",  icon: <span className="text-lg leading-none">✕</span>, active: !!form.assente,  color: "orange", onClick: () => setForm({ ...form, assente: true,  riposo: false, squadra: false }) },
-                  { label: "Riposo",   icon: <span className="text-lg leading-none">↺</span>, active: !!form.riposo,   color: "blue",   onClick: () => setForm({ ...form, assente: false, riposo: true,  squadra: false }) },
+                  { label: "Riposo",   icon: <BatteryFull className="w-5 h-5" />,             active: !!form.riposo,   color: "blue",   onClick: () => setForm({ ...form, assente: false, riposo: true,  squadra: false }) },
                   { label: "Squadra",  icon: <Users className="w-5 h-5" />,                   active: !!form.squadra,  color: "red",    onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: true  }) },
                 ];
                 const activeClass: Record<"green"|"orange"|"blue"|"red", string> = {
