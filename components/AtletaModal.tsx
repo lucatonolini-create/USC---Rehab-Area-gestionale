@@ -99,7 +99,7 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
               <Sel className="mt-1" value={form.nome} onChange={(e) => handleSelectGiocatore(e.target.value)}>
                 <option value="">— Seleziona giocatore —</option>
                 {ROSA.map((g) => (
-                  <option key={g.nome} value={g.nome}>{g.nome} ({g.categoria})</option>
+                  <option key={g.nome} value={g.nome}>{g.nome}</option>
                 ))}
                 <option value="__libero__">— Inserimento libero —</option>
               </Sel>

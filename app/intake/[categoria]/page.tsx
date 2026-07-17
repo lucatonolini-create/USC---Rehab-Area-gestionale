@@ -82,10 +82,6 @@ export default function IntakePage() {
   const f = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
 
-  const giocatoriCategoria = categoria
-    ? ROSA.filter((g) => g.categoria === categoria)
-    : [];
-
   const handleSelectGiocatore = (val: string) => {
     if (val === "__libero__") {
       setNomeLibero(true);
@@ -177,7 +173,7 @@ export default function IntakePage() {
               ) : (
                 <Sel value={form.nome} onChange={(e) => handleSelectGiocatore(e.target.value)} required>
                   <option value="">— Seleziona giocatore —</option>
-                  {giocatoriCategoria.map((g) => (
+                  {ROSA.map((g) => (
                     <option key={g.nome} value={g.nome}>{g.nome}</option>
                   ))}
                   <option value="__libero__">— Inserimento libero —</option>
