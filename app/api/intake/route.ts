@@ -58,6 +58,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Aggiungi il giocatore alla rosa se non è già presente
+    try {
+      const { data: imp } = await supabase
+        .from("impostazioni")
+        .select("rosa")
+        .eq("id", 1)
+        .single();
+      const rosaAttuale: { nome: string; categoria: string; ruolo: string }[] = imp?.rosa ?? [];
+      const giàPresente = rosaAttuale.some(
+        (g) => g.nome.toLowerCase() === row.nome.toLowerCase(),
+      );
+      if (!giàPresente) {
+        await supabase.from("impostazioni").upsert({
+          id: 1,
+          rosa: [...rosaAttuale, { nome: row.nome, categoria: row.categoria, ruolo: row.posizione }],
+        });
+      }
+    } catch {}
+
     // Broadcast via Realtime REST — bypasses RLS entirely
     await fetch(
       `${process.env.NEXT_PUBLIC_SUPABASE_URL}/realtime/v1/api/broadcast`,
