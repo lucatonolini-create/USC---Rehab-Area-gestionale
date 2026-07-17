@@ -715,12 +715,9 @@ export function subscribeToAtleti(onChange: () => void): () => void {
 
 export function subscribeToIntakeInsert(onNew: (nome: string, categoria: string) => void): () => void {
   const channel = supabase
-    .channel(`intake-rt-${Date.now()}-${Math.random().toString(36).slice(2)}`)
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "atleti" }, (payload) => {
-      const row = payload.new as Record<string, unknown>;
-      if (row.telefono === "__intake__") {
-        onNew((row.nome as string) ?? "Atleta", (row.categoria as string) ?? "");
-      }
+    .channel("intake-notify")
+    .on("broadcast", { event: "new" }, (payload: { payload: { nome: string; categoria: string } }) => {
+      onNew(payload.payload?.nome ?? "Atleta", payload.payload?.categoria ?? "");
     })
     .subscribe();
   return () => { supabase.removeChannel(channel); };

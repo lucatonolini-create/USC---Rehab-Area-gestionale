@@ -57,6 +57,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Broadcast via Realtime REST — bypasses RLS entirely
+    await fetch(
+      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/realtime/v1/api/broadcast`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          "Authorization": `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+        },
+        body: JSON.stringify({
+          messages: [{
+            topic: "intake-notify",
+            event: "new",
+            payload: { nome: row.nome, categoria: row.categoria },
+          }],
+        }),
+      },
+    ).catch(() => {});
+
     return NextResponse.json({ ok: true, id: row.id });
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 });
