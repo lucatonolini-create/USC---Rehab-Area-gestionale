@@ -263,8 +263,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           return `${t.nome}${val ? `: ${val}` : ""}${extras.length ? ` [${extras.join(", ")}]` : ""}`;
         });
         const tests = testLines.join("\n") || "—";
-        const rpeStr = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
-        const rpe = prog.carico?.sprint ? `${rpeStr}\n${prog.carico.sprint} spr.` : rpeStr;
+        const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
 
         if (esercizi.length <= 1) {
           const e = esercizi[0];
