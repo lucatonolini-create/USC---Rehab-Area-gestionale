@@ -1006,19 +1006,24 @@ export default function EserciziPage() {
                     <p className="text-xs text-gray-400 mt-1">Compatibile con Catapult, STATSports, GPSports – colonne distanza, velocità, acc. rilevate automaticamente</p>
                   </div>
 
+                  {/* Riga 1 — sessione */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Durata sessione (min)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Durata (min)</label>
                       <input value={carico.durata} onChange={(e) => aggiornaCarico("durata", e.target.value)}
                         placeholder="Es. 75"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Carico interno (RPE sessione)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Carico interno (RPE×min)</label>
                       <input value={carico.interno} onChange={(e) => aggiornaCarico("interno", e.target.value)}
-                        placeholder="Es. 6 o 450 (RPE×min)"
+                        placeholder="Es. 450"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
+                  </div>
+
+                  {/* Riga 2 — distanza e velocità */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza totale (km)</label>
                       <input value={carico.distanzaTotale} onChange={(e) => aggiornaCarico("distanzaTotale", e.target.value)}
@@ -1031,6 +1036,10 @@ export default function EserciziPage() {
                         placeholder="Es. 24.5"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
+                  </div>
+
+                  {/* Riga 3 — zone di velocità */}
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">HSR &gt;19 km/h (m)</label>
                       <input value={carico.hsr} onChange={(e) => aggiornaCarico("hsr", e.target.value)}
@@ -1038,35 +1047,41 @@ export default function EserciziPage() {
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Velocità &gt;21 km/h (m)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vel. &gt;21 km/h (m)</label>
                       <input value={carico.velocita21 ?? ""} onChange={(e) => aggiornaCarico("velocita21", e.target.value)}
                         placeholder="Es. 280"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Velocità &gt;25 km/h (m)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vel. &gt;25 km/h (m)</label>
                       <input value={carico.velocita25 ?? ""} onChange={(e) => aggiornaCarico("velocita25", e.target.value)}
                         placeholder="Es. 120"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
+                  </div>
+
+                  {/* Riga 4 — acc/dec */}
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Accelerazioni (&gt;3 m/s²)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Accelerazioni (≥3 m/s²)</label>
                       <input value={carico.accelerazioni} onChange={(e) => aggiornaCarico("accelerazioni", e.target.value)}
                         placeholder="Es. 42"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Decelerazioni (&gt;3 m/s²)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Decelerazioni (≤-3 m/s²)</label>
                       <input value={carico.decelerazioni ?? ""} onChange={(e) => aggiornaCarico("decelerazioni", e.target.value)}
                         placeholder="Es. 38"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Note GPS</label>
-                      <input value={carico.note} onChange={(e) => aggiornaCarico("note", e.target.value)}
-                        placeholder="Note aggiuntive"
-                        className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                    </div>
+                  </div>
+
+                  {/* Note */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Note GPS</label>
+                    <input value={carico.note} onChange={(e) => aggiornaCarico("note", e.target.value)}
+                      placeholder="Note aggiuntive"
+                      className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                   </div>
                 </div>
               )}
