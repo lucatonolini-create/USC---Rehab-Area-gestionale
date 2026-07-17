@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, Gauge, LogOut, HeartPulse,
+  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, LogOut, HeartPulse,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -16,7 +16,6 @@ const navItems = [
   { href: "/progressi",    label: "Progressi",    icon: TrendingUp },
   { href: "/analisi",        label: "Analisi",        icon: BarChart2   },
   { href: "/epidemiologia", label: "Epidemiologia", icon: HeartPulse  },
-  { href: "/performance",   label: "Performance",   icon: Gauge       },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 

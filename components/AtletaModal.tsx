@@ -1,20 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X, Zap } from "lucide-react";
+import { useState } from "react";
+import { X } from "lucide-react";
 import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, calcolaProgressoAuto, RECOVERY_DAYS, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
-
-interface PerfAthlete {
-  id: string;
-  name: string;
-  code?: string;
-  position: string;
-  birth_date: string;
-  jersey_number: number;
-  vmax_kmh: number;
-  preferred_foot?: string;
-  _source?: string;
-}
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
@@ -65,36 +53,8 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
   const [form, setForm] = useState<Omit<Atleta, "id">>(
     atletaIniziale ? (({ id, ...rest }) => rest)(atletaIniziale) : atletaVuoto
   );
-  const [perfAthletes, setPerfAthletes] = useState<PerfAthlete[]>([]);
-  const [perfLoading, setPerfLoading] = useState(false);
-
-  useEffect(() => {
-    if (isModifica) return;
-    setPerfLoading(true);
-    fetch("/api/performance/athletes")
-      .then((r) => r.ok ? r.json() : null)
-      .then((d) => { if (d) setPerfAthletes(d.athletes ?? d ?? []); })
-      .catch(() => {})
-      .finally(() => setPerfLoading(false));
-  }, [isModifica]);
-
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
-
-  const importaDaPerf = (compositeId: string) => {
-    const [source, id] = compositeId.includes("|") ? compositeId.split("|") : ["", compositeId];
-    const p = perfAthletes.find((a) => (source ? a._source === source : true) && a.id === id);
-    if (!p) return;
-    const footMap: Record<string, Piede> = { destro: "Destro", sinistro: "Sinistro", ambidestro: "Ambidestro" };
-    const piede = p.preferred_foot ? (footMap[p.preferred_foot.toLowerCase()] ?? "") : "";
-    setForm((prev) => ({
-      ...prev,
-      nome: p.name,
-      posizione: p.position ?? "",
-      categoria: "U17" as Categoria,
-      ...(piede ? { piedeDominante: piede as Piede } : {}),
-    }));
-  };
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -107,32 +67,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
         </div>
 
         <div className="p-6 space-y-4">
-          {/* Importa da Performance */}
-          {!isModifica && (
-            <div className="bg-gray-50 border border-gray-100 rounded-xl p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-[#C8102E]" />
-                <span className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Importa da app Performance</span>
-              </div>
-              <select
-                defaultValue=""
-                onChange={(e) => importaDaPerf(e.target.value)}
-                disabled={perfLoading || perfAthletes.length === 0}
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C8102E] disabled:opacity-50"
-              >
-                <option value="">{perfLoading ? "Caricamento giocatori..." : perfAthletes.length === 0 ? "Nessun giocatore disponibile" : "— Seleziona giocatore —"}</option>
-                {perfAthletes.map((p) => (
-                  <option key={p._source + p.id} value={p._source + "|" + p.id}>
-                    {p.name}{p.jersey_number ? ` · #${p.jersey_number}` : ""}{p.position ? ` · ${p.position}` : ""}
-                  </option>
-                ))}
-              </select>
-              {perfAthletes.length > 0 && (
-                <p className="text-xs text-gray-400">Seleziona un giocatore per compilare automaticamente nome e posizione.</p>
-              )}
-            </div>
-          )}
-
           <div>
             <Label>Cognome e Nome *</Label>
             <Input className="mt-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Rossi Marco" />

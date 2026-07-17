@@ -1,6 +1,5 @@
 import { supabase } from "./supabase";
 import { getDB } from "./db";
-import { syncInfortunioAPI, pullPerformanceAthletesMap } from "./performance-sync";
 
 export type Stato = "Infortunato" | "Disponibile";
 
@@ -614,22 +613,16 @@ export async function loadAtleti(): Promise<Atleta[]> {
   const db = getDB();
   if (isOnline()) {
     try {
-      const [sbResult, perfMap] = await Promise.all([
-        supabase.from("atleti").select("*").order("created_at", { ascending: true }),
-        pullPerformanceAthletesMap().catch(() => new Map()),
-      ]);
+      const sbResult = await supabase.from("atleti").select("*").order("created_at", { ascending: true });
       if (!sbResult.error && sbResult.data) {
         // Merge with local to preserve IndexedDB-only fields (refertiClinici, progressoManuale)
         // in case Supabase columns don't exist yet
         const localAll = await db.atleti.toArray();
         const localMap = new Map(localAll.map(a => [a.id, a]));
         const atleti = sbResult.data.map(rowToAtleta).map(a => {
-          const perf = perfMap.get(a.nome);
           const local = localMap.get(a.id);
           return {
             ...a,
-            nomeCompleto: perf?.full_name || a.nomeCompleto,
-            // Prefer Supabase values if present, else fall back to local
             refertiClinici: (a.refertiClinici && a.refertiClinici.length > 0)
               ? a.refertiClinici : (local?.refertiClinici ?? []),
             progressoManuale: a.progressoManuale ?? local?.progressoManuale,
@@ -648,7 +641,7 @@ export async function upsertAtleta(a: Atleta): Promise<void> {
   const toSave = { ...a, progresso: progrEffettivo(a) };
   await db.atleti.put(toSave);
   await db.pendingOps.add({ table: "atleti", op: "upsert", payload: atletaToRow(toSave), createdAt: Date.now() });
-  if (isOnline()) syncFlush().then(() => syncInfortunioAPI(toSave)).catch(() => {});
+  if (isOnline()) syncFlush().catch(() => {});
 }
 
 export async function deleteAtleta(id: string): Promise<void> {
