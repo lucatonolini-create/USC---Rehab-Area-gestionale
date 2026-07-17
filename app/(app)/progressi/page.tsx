@@ -207,8 +207,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 8 }, 1: { cellWidth: 52, overflow: "ellipsize" }, 2: { cellWidth: 66 },
-        3: { cellWidth: 22 }, 4: { cellWidth: 22 }, 5: { cellWidth: 16 },
+        0: { cellWidth: 8 }, 1: { cellWidth: 60 }, 2: { cellWidth: 140 },
+        3: { cellWidth: 22 }, 4: { cellWidth: 22 }, 5: { cellWidth: 17 },
       },
     });
     y = (doc as any).lastAutoTable.finalY + 8;

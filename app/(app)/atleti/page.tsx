@@ -409,14 +409,14 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         r.note || "—",
       ]),
       headStyles: hS(dark),
-      bodyStyles: { ...bS, fontSize: 8 },
+      bodyStyles: { ...bS, fontSize: 8, overflow: "linebreak" as const },
       alternateRowStyles: aS,
       margin: { left: M, right: M },
       columnStyles: {
         0: { cellWidth: 26 },
-        1: { cellWidth: 40 },
-        2: { cellWidth: 36 },
-        3: { cellWidth: "auto" as any },
+        1: { cellWidth: 55 },
+        2: { cellWidth: 46 },
+        3: { cellWidth: 142 },
       },
       didDrawCell: (data: any) => {
         if (data.section === "body" && data.column.index === 2) {
@@ -480,7 +480,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
-      columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 } },
+      columnStyles: { 0: { cellWidth: 185 }, 1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 } },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   } else {
