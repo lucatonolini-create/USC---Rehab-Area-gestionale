@@ -11,7 +11,6 @@ import {
   type RefertoClinico, type TipoReferto, type EsitoReferto, type TestFisiometrico,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
-import CartellaClinaca from "@/components/CartellaClinaca";
 import QuestionarioTSK from "@/components/QuestionarioTSK";
 
 const MAPPING_KEY = "perf_athlete_mapping";
@@ -1243,11 +1242,6 @@ export default function AtletiPage() {
                   ]}
                   onSalva={salvaQuestionnaire}
                 />
-                <div className="border-t border-gray-100 pt-4">
-                  <CartellaClinaca
-                    atletaId={selected.id}
-                  />
-                </div>
               </div>
             ) : (
               /* ── Storico infortuni ── */
