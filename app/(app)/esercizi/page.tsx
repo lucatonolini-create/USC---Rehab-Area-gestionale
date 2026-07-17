@@ -11,7 +11,7 @@ import {
 
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
-const caricoVuoto: Carico = { rpe: "", interno: "", esterno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", accelerazioni: "", note: "" };
+const caricoVuoto: Carico = { rpe: "", interno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", velocita21: "", velocita25: "", accelerazioni: "", decelerazioni: "", note: "" };
 const campoVuoto: EsercizioCampo = { tipo: "", serie: "", durata: "", descrizione: "", vas: "" };
 
 const progVuoto: Omit<Programma, "id"> = {
@@ -504,8 +504,11 @@ export default function EserciziPage() {
                                 { label: "Carico interno", value: prog.carico.interno, unit: "" },
                                 { label: "Distanza", value: prog.carico.distanzaTotale, unit: "km" },
                                 { label: "Vel. max", value: prog.carico.velocitaMax, unit: "km/h" },
-                                { label: "HSR", value: prog.carico.hsr, unit: "m" },
-                                { label: "Accelerazioni", value: prog.carico.accelerazioni, unit: "" },
+                                { label: "HSR >19 km/h", value: prog.carico.hsr, unit: "m" },
+                                { label: "Vel. >21 km/h", value: prog.carico.velocita21, unit: "m" },
+                                { label: "Vel. >25 km/h", value: prog.carico.velocita25, unit: "m" },
+                                { label: "Acc. >3 m/s²", value: prog.carico.accelerazioni, unit: "" },
+                                { label: "Dec. >3 m/s²", value: prog.carico.decelerazioni, unit: "" },
                               ].filter((x) => x.value).map(({ label, value, unit }) => (
                                 <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
                                   <p className="text-xs text-gray-400">{label}</p>
@@ -1017,12 +1020,6 @@ export default function EserciziPage() {
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Carico esterno</label>
-                      <input value={carico.esterno} onChange={(e) => aggiornaCarico("esterno", e.target.value)}
-                        placeholder="Es. Player Load, ACWR…"
-                        className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
-                    </div>
-                    <div>
                       <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza totale (km)</label>
                       <input value={carico.distanzaTotale} onChange={(e) => aggiornaCarico("distanzaTotale", e.target.value)}
                         placeholder="Es. 4.2"
@@ -1041,9 +1038,27 @@ export default function EserciziPage() {
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Accelerazioni (&gt;2 m/s²)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Velocità &gt;21 km/h (m)</label>
+                      <input value={carico.velocita21 ?? ""} onChange={(e) => aggiornaCarico("velocita21", e.target.value)}
+                        placeholder="Es. 280"
+                        className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Velocità &gt;25 km/h (m)</label>
+                      <input value={carico.velocita25 ?? ""} onChange={(e) => aggiornaCarico("velocita25", e.target.value)}
+                        placeholder="Es. 120"
+                        className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Accelerazioni (&gt;3 m/s²)</label>
                       <input value={carico.accelerazioni} onChange={(e) => aggiornaCarico("accelerazioni", e.target.value)}
                         placeholder="Es. 42"
+                        className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Decelerazioni (&gt;3 m/s²)</label>
+                      <input value={carico.decelerazioni ?? ""} onChange={(e) => aggiornaCarico("decelerazioni", e.target.value)}
+                        placeholder="Es. 38"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>

@@ -311,12 +311,15 @@ export interface TestFisiometrico {
 export interface Carico {
   rpe: string;
   interno: string;
-  esterno: string;
+  esterno?: string;
   durata: string;
   distanzaTotale: string;
   velocitaMax: string;
   hsr: string;
+  velocita21?: string;
+  velocita25?: string;
   accelerazioni: string;
+  decelerazioni?: string;
   note: string;
 }
 
