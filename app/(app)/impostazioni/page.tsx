@@ -62,7 +62,8 @@ function NotificheSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sub),
       });
-      if (!res.ok) throw new Error("Errore salvataggio sottoscrizione");
+      const resData = await res.json();
+      if (!res.ok) throw new Error(resData.error ?? "Errore salvataggio sottoscrizione");
       setAttiva(true);
       setStato("ok");
       setMsg("Notifiche attivate su questo dispositivo.");

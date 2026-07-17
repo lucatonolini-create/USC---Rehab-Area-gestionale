@@ -13,12 +13,17 @@ export async function POST(req: NextRequest) {
       process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
 
-    await supabase
+    const { error } = await supabase
       .from("push_subscriptions")
       .upsert(
         { endpoint: sub.endpoint, keys: sub.keys },
         { onConflict: "endpoint" },
       );
+
+    if (error) {
+      console.error("[push/subscribe POST]", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (e) {
