@@ -310,7 +310,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         }
 
         const ca = prog.carico;
-        const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
+        const rpeStr = ca?.rpe ? `${ca.rpe}/10` : "—";
+        const rpe = ca?.sprint ? `${rpeStr}\n${ca.sprint} spr.` : rpeStr;
 
         if (esercizi.length <= 1) {
           const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
