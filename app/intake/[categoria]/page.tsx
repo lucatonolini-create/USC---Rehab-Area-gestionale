@@ -61,12 +61,14 @@ type FormState = {
   fisioterapista: string; categoria: string;
 };
 
-const vuoto = (categoriaDefault: string): FormState => ({
+const RUOLI = ["Attaccante", "Centrocampista", "Difensore"];
+
+const vuoto = (): FormState => ({
   nome: "", posizione: "", piedeDominante: "",
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   tipoInfortunio: "", evento: "", meccanismo: "", contatto: "",
   lato: "", posizioneInfortunio: "", note: "",
-  fisioterapista: "", categoria: categoriaDefault,
+  fisioterapista: "", categoria: "",
 });
 
 export default function IntakePage() {
@@ -74,7 +76,7 @@ export default function IntakePage() {
   const categoriaRaw = Array.isArray(params.categoria) ? params.categoria[0] : (params.categoria ?? "");
   const categoria = CATEGORIA_MAP[categoriaRaw.toLowerCase()] ?? null;
 
-  const [form, setForm] = useState<FormState>(() => vuoto(categoria ?? ""));
+  const [form, setForm] = useState<FormState>(vuoto);
   const [stato, setStato] = useState<"idle" | "invio" | "ok" | "errore">("idle");
   const [errMsg, setErrMsg] = useState("");
   const f = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -172,7 +174,10 @@ export default function IntakePage() {
               </div>
               <div>
                 <Label>Ruolo / Posizione</Label>
-                <Input value={form.posizione} onChange={(e) => f("posizione", e.target.value)} placeholder="Es. Centrocampista" />
+                <Sel value={form.posizione} onChange={(e) => f("posizione", e.target.value)}>
+                  <option value="">—</option>
+                  {RUOLI.map((r) => <option key={r}>{r}</option>)}
+                </Sel>
               </div>
             </div>
 
