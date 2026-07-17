@@ -1,8 +1,228 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle } from "lucide-react";
+import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff, Send } from "lucide-react";
 import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni } from "@/lib/store";
+
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
+
+function urlBase64ToUint8Array(base64: string): ArrayBuffer {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr.buffer;
+}
+
+function NotificheSection() {
+  const [permesso, setPermesso] = useState<NotificationPermission | "unsupported">("default");
+  const [attiva, setAttiva] = useState<boolean | null>(null);
+  const [stato, setStato] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [msg, setMsg] = useState("");
+  const [testStato, setTestStato] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [testMsg, setTestMsg] = useState("");
+
+  useEffect(() => {
+    if (!("Notification" in window) || !("serviceWorker" in navigator)) {
+      setPermesso("unsupported");
+      return;
+    }
+    setPermesso(Notification.permission);
+    navigator.serviceWorker.ready.then((reg) =>
+      reg.pushManager.getSubscription().then((sub) => setAttiva(!!sub))
+    ).catch(() => setAttiva(false));
+  }, []);
+
+  const abilita = async () => {
+    if (!VAPID_PUBLIC_KEY) {
+      setStato("error");
+      setMsg("Chiave VAPID non configurata (NEXT_PUBLIC_VAPID_PUBLIC_KEY).");
+      return;
+    }
+    setStato("loading");
+    setMsg("");
+    try {
+      const perm = await Notification.requestPermission();
+      setPermesso(perm);
+      if (perm !== "granted") {
+        setStato("error");
+        setMsg("Permesso negato. Abilitalo nelle impostazioni del browser.");
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      if (existing) await existing.unsubscribe();
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+      const res = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      if (!res.ok) throw new Error("Errore salvataggio sottoscrizione");
+      setAttiva(true);
+      setStato("ok");
+      setMsg("Notifiche attivate su questo dispositivo.");
+    } catch (err) {
+      setStato("error");
+      setMsg(`Errore: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    setTimeout(() => setStato("idle"), 5000);
+  };
+
+  const disabilita = async () => {
+    setStato("loading");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch("/api/push/subscribe", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setAttiva(false);
+      setStato("ok");
+      setMsg("Notifiche disattivate.");
+    } catch (err) {
+      setStato("error");
+      setMsg(`Errore: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    setTimeout(() => setStato("idle"), 4000);
+  };
+
+  const inviaTest = async () => {
+    setTestStato("loading");
+    setTestMsg("");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        setTestStato("error");
+        setTestMsg("Nessuna sottoscrizione attiva. Prima abilita le notifiche.");
+        setTimeout(() => setTestStato("idle"), 4000);
+        return;
+      }
+      const res = await fetch("/api/push/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Errore sconosciuto");
+      setTestStato("ok");
+      setTestMsg("Notifica inviata — dovresti riceverla a breve.");
+    } catch (err) {
+      setTestStato("error");
+      setTestMsg(`Errore: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    setTimeout(() => setTestStato("idle"), 6000);
+  };
+
+  if (permesso === "unsupported") {
+    return (
+      <p className="text-sm text-gray-400">
+        Questo browser non supporta le notifiche push.
+      </p>
+    );
+  }
+
+  const isLoading = stato === "loading";
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${attiva ? "bg-green-500" : "bg-gray-300"}`} />
+        <span className="text-sm text-gray-700">
+          {attiva === null ? "Verifica in corso…" : attiva ? "Attive su questo dispositivo" : "Non attive su questo dispositivo"}
+        </span>
+      </div>
+
+      {permesso === "denied" && (
+        <p className="text-xs text-orange-600">
+          Permesso bloccato. Vai nelle impostazioni del browser e abilita le notifiche per questo sito.
+        </p>
+      )}
+
+      <div className="flex gap-2 flex-wrap">
+        {!attiva && permesso !== "denied" && (
+          <button
+            onClick={abilita}
+            disabled={isLoading}
+            className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${
+              stato === "ok" ? "bg-green-500 text-white" :
+              stato === "error" ? "bg-orange-500 text-white" :
+              "bg-[#C8102E] text-white hover:bg-red-800"
+            }`}>
+            {isLoading
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Attivazione…</>
+              : stato === "ok"
+              ? <><Check className="w-4 h-4" /> Attivate!</>
+              : stato === "error"
+              ? <><AlertCircle className="w-4 h-4" /> Riprova</>
+              : <><Bell className="w-4 h-4" /> Abilita notifiche</>}
+          </button>
+        )}
+        {attiva && (
+          <>
+            <button
+              onClick={abilita}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium bg-[#2B2B2B] text-white hover:bg-black transition-all">
+              {isLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              Riattiva
+            </button>
+            <button
+              onClick={disabilita}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-medium border border-gray-200 text-gray-500 hover:bg-gray-50 transition-all">
+              <BellOff className="w-4 h-4" />
+              Disabilita
+            </button>
+          </>
+        )}
+      </div>
+
+      {msg && (
+        <p className={`text-xs font-medium ${stato === "error" ? "text-orange-600" : "text-green-600"}`}>
+          {msg}
+        </p>
+      )}
+
+      {attiva && (
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mb-2">Verifica che le notifiche arrivino su questo dispositivo:</p>
+          <button
+            onClick={inviaTest}
+            disabled={testStato === "loading"}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              testStato === "ok" ? "bg-green-500 text-white" :
+              testStato === "error" ? "bg-orange-500 text-white" :
+              "border border-gray-200 text-gray-600 hover:bg-gray-50"
+            }`}>
+            {testStato === "loading"
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Invio…</>
+              : testStato === "ok"
+              ? <><Check className="w-4 h-4" /> Inviata!</>
+              : testStato === "error"
+              ? <><AlertCircle className="w-4 h-4" /> Errore</>
+              : <><Send className="w-4 h-4" /> Invia notifica test</>}
+          </button>
+          {testMsg && (
+            <p className={`mt-2 text-xs font-medium ${testStato === "error" ? "text-orange-600" : "text-green-600"}`}>
+              {testMsg}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function ListaPersonale({
   titolo,
@@ -134,6 +354,15 @@ export default function ImpostazioniPage() {
               onRimuovi={(i) => setForm({ ...form, preparatori: form.preparatori.filter((_, idx) => idx !== i) })}
             />
           </div>
+        </div>
+
+        {/* Notifiche push */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <h2 className="font-bold text-gray-900 mb-1">Notifiche push</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Ricevi una notifica su questo dispositivo quando viene segnalato un nuovo infortunio. Ogni dispositivo va abilitato separatamente.
+          </p>
+          <NotificheSection />
         </div>
 
         {/* Sincronizzazione */}

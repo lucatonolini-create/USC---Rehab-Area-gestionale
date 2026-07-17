@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
@@ -11,7 +11,32 @@ import {
   type RefertoClinico, type TipoReferto, type EsitoReferto, type TestFisiometrico,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
+import CartellaClinaca from "@/components/CartellaClinaca";
 import QuestionarioTSK from "@/components/QuestionarioTSK";
+
+const MAPPING_KEY = "perf_athlete_mapping";
+function getPerfId(rehabId: string): string | null {
+  try { return JSON.parse(localStorage.getItem(MAPPING_KEY) ?? "{}")[rehabId] ?? null; } catch { return null; }
+}
+
+async function syncInjury(atleta: Atleta) {
+  const perfId = getPerfId(atleta.id);
+  const statoMap: Record<string, string> = { Infortunato: "rehab", Disponibile: "disponibile" };
+  const body: Record<string, any> = {
+    external_id: atleta.id,
+    athlete_name: atleta.nome,
+    date: atleta.inizioRehab || new Date().toISOString().slice(0, 10),
+    type: (atleta.tipoInfortunio ?? "").toLowerCase() || "altro",
+    body_part: atleta.infortunio || "",
+    status: statoMap[atleta.stato] ?? "rehab",
+    notes: atleta.note || "",
+  };
+  if (perfId) body.athlete_id = perfId;
+  if (atleta.fineRehab) body.expected_return = atleta.fineRehab;
+  try {
+    await fetch("/api/performance/injuries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  } catch { /* sync is best-effort */ }
+}
 
 async function getLogoDataUrl(): Promise<string | null> {
   try {
@@ -59,13 +84,13 @@ function _calcolaDelta(curr: TestFisiometrico, prev: TestFisiometrico | null): n
 async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[]) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
-  const doc = new jsPDF({ orientation: "landscape" });
+  const doc = new jsPDF();
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
   const gray: [number, number, number] = [130, 130, 130];
   const logoDataUrl = await getLogoDataUrl();
   const oggi = new Date().toLocaleDateString("it-IT");
-  const M = 14; const W = 297; const H = 210; const HDR = 30;
+  const M = 14; const W = 210; const H = 297; const HDR = 30;
 
   const addHeader = (subtitle?: string) => {
     doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
@@ -277,20 +302,20 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 6, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 19 },
-        1:  { cellWidth: 28 },
-        2:  { cellWidth: 16 },
-        3:  { cellWidth: 24 },
-        4:  { cellWidth: 40 },
-        5:  { cellWidth: 13, halign: "center" as const },
-        6:  { cellWidth: 22 },
-        7:  { cellWidth: 35 },
-        8:  { cellWidth: 12, halign: "center" as const },
-        9:  { cellWidth: 46 },
-        10: { cellWidth: 14, halign: "center" as const },
+        0:  { cellWidth: 15 },
+        1:  { cellWidth: 20 },
+        2:  { cellWidth: 13 },
+        3:  { cellWidth: 17 },
+        4:  { cellWidth: 28 },
+        5:  { cellWidth: 11, halign: "center" as const },
+        6:  { cellWidth: 17 },
+        7:  { cellWidth: 22 },
+        8:  { cellWidth: 11, halign: "center" as const },
+        9:  { cellWidth: 18 },
+        10: { cellWidth: 10, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
@@ -298,14 +323,14 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           data.cell.styles.fillColor = [200, 16, 46];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 8;
-          data.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 5, right: 2 };
+          data.cell.styles.fontSize = 7;
+          data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 7;
-          data.cell.styles.cellPadding = { top: 2.5, bottom: 2.5, left: 2, right: 1 };
+          data.cell.styles.fontSize = 5.8;
+          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1.5, right: 1 };
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];
           data.cell.styles.textColor = [154, 52, 18];
@@ -371,7 +396,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     const esitoColor = (esito: string): [number, number, number] => {
       if (esito === "Negativo") return [34, 139, 34];
       if (esito === "In miglioramento") return [180, 120, 0];
-      return [180, 30, 30];
+      return [180, 30, 30]; // Positivo
     };
     autoTable(doc, {
       startY: y,
@@ -383,14 +408,14 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         r.note || "—",
       ]),
       headStyles: hS(dark),
-      bodyStyles: { ...bS, fontSize: 8, overflow: "linebreak" as const },
+      bodyStyles: { ...bS, fontSize: 8 },
       alternateRowStyles: aS,
       margin: { left: M, right: M },
       columnStyles: {
         0: { cellWidth: 26 },
-        1: { cellWidth: 55 },
-        2: { cellWidth: 46 },
-        3: { cellWidth: 142 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 36 },
+        3: { cellWidth: "auto" as any },
       },
       didDrawCell: (data: any) => {
         if (data.section === "body" && data.column.index === 2) {
@@ -416,7 +441,6 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       ) && isSessionePDF(p)).length : 0;
   const totaleStagionePDF = giorniArchivio.reduce((s, g) => s + g, 0) + giorniCorrente;
 
-  checkPage(60);
   y = secTitle("Storico infortuni", y);
 
   // Riquadro riepilogativo sessioni
@@ -455,7 +479,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
-      columnStyles: { 0: { cellWidth: 185 }, 1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 } },
+      columnStyles: { 0: { cellWidth: 90 }, 1: { cellWidth: 28 }, 2: { cellWidth: 28 }, 3: { cellWidth: 28 } },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
   } else {
@@ -679,10 +703,12 @@ export default function AtletiPage() {
         setAtleti((prev) => prev.map((a) => a.id === editAtleta.id ? aggiornato : a));
         setSelected(aggiornato);
         await upsertAtleta(aggiornato);
+        syncInjury(aggiornato);
       } else {
         const nuovo = { ...dati, id: uid() };
         setAtleti((prev) => [...prev, nuovo]);
         await upsertAtleta(nuovo);
+        syncInjury(nuovo);
       }
       setMostraForm(false);
     } catch (err: any) {
@@ -983,7 +1009,7 @@ export default function AtletiPage() {
                   ["Piede dominante", selected.piedeDominante || "—"],
                   ["Diagnosi / Infortunio", selected.infortunio || "—"],
                   ["Inizio riabilitazione", selected.inizioRehab ? new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
-                  ["Fine riabilitazione", selected.fineRehab ? new Date(selected.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
+                  ...(selected.fineRehab ? [["Fine riabilitazione", new Date(selected.fineRehab + "T12:00").toLocaleDateString("it-IT")]] : []),
                 ].map(([label, value]) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-400">{label}</p>
@@ -1028,7 +1054,6 @@ export default function AtletiPage() {
                     <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${selected.progresso}%` }} />
                   </div>
                 </div>
-
 
                 {/* Referti clinici */}
                 {selected.stato === "Infortunato" && (
@@ -1081,7 +1106,7 @@ export default function AtletiPage() {
                     </div>
 
                     {nuovoReferto && (
-                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2">
+                      <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-3 mt-2 overflow-hidden">
                         <div>
                           <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Data</p>
                           {(() => {
@@ -1156,6 +1181,21 @@ export default function AtletiPage() {
                   </div>
                 )}
 
+                {(selected.telefono || selected.email) && (
+                  <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
+                    <p className="text-xs text-gray-400">Contatti</p>
+                    {selected.telefono && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Phone className="w-3.5 h-3.5 text-gray-400" />{selected.telefono}
+                      </div>
+                    )}
+                    {selected.email && (
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Mail className="w-3.5 h-3.5 text-gray-400" />{selected.email}
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {selected.note && (
                   <div className="bg-gray-50 rounded-xl p-3">
@@ -1201,6 +1241,13 @@ export default function AtletiPage() {
                   ]}
                   onSalva={salvaQuestionnaire}
                 />
+                <div className="border-t border-gray-100 pt-4">
+                  <CartellaClinaca
+                    atletaId={selected.id}
+                    refertiClinici={selected.refertiClinici ?? []}
+                    onVaiADati={() => setTab("dati")}
+                  />
+                </div>
               </div>
             ) : (
               /* ── Storico infortuni ── */
