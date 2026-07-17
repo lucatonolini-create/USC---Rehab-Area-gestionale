@@ -58,23 +58,23 @@ type FormState = {
   infortunio: string; inizioRehab: string; tipoInfortunio: string;
   evento: string; meccanismo: string; contatto: string;
   lato: string; posizioneInfortunio: string; note: string;
-  fisioterapista: string;
+  fisioterapista: string; categoria: string;
 };
 
-const vuoto: FormState = {
+const vuoto = (categoriaDefault: string): FormState => ({
   nome: "", posizione: "", piedeDominante: "",
   infortunio: "", inizioRehab: new Date().toISOString().slice(0, 10),
   tipoInfortunio: "", evento: "", meccanismo: "", contatto: "",
   lato: "", posizioneInfortunio: "", note: "",
-  fisioterapista: "",
-};
+  fisioterapista: "", categoria: categoriaDefault,
+});
 
 export default function IntakePage() {
   const params = useParams();
   const categoriaRaw = Array.isArray(params.categoria) ? params.categoria[0] : (params.categoria ?? "");
   const categoria = CATEGORIA_MAP[categoriaRaw.toLowerCase()] ?? null;
 
-  const [form, setForm] = useState<FormState>(vuoto);
+  const [form, setForm] = useState<FormState>(() => vuoto(categoria ?? ""));
   const [stato, setStato] = useState<"idle" | "invio" | "ok" | "errore">("idle");
   const [errMsg, setErrMsg] = useState("");
   const f = <K extends keyof FormState>(k: K, v: FormState[K]) =>
@@ -115,7 +115,7 @@ export default function IntakePage() {
       const res = await fetch("/api/intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, categoria }),
+        body: JSON.stringify(form),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Errore sconosciuto");
@@ -154,7 +154,10 @@ export default function IntakePage() {
                 required
                 onSelect={(nome, g) => {
                   f("nome", nome);
-                  if (g) f("posizione", g.ruolo);
+                  if (g) {
+                    f("posizione", g.ruolo);
+                    f("categoria", g.categoria);
+                  }
                 }}
               />
             </div>
