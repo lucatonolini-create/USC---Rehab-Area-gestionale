@@ -320,6 +320,7 @@ export interface Carico {
   velocita25?: string;
   accelerazioni: string;
   decelerazioni?: string;
+  sprint?: string;
   note: string;
 }
 

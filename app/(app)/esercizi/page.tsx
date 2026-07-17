@@ -11,7 +11,7 @@ import {
 
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
 const testVuoto: TestFisiometrico = { nome: "", risultatoSx: "", risultatoDx: "", risultato: "", unita: "", note: "" };
-const caricoVuoto: Carico = { rpe: "", interno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", velocita21: "", velocita25: "", accelerazioni: "", decelerazioni: "", note: "" };
+const caricoVuoto: Carico = { rpe: "", interno: "", durata: "", distanzaTotale: "", velocitaMax: "", hsr: "", velocita21: "", velocita25: "", accelerazioni: "", decelerazioni: "", sprint: "", note: "" };
 const campoVuoto: EsercizioCampo = { tipo: "", serie: "", durata: "", descrizione: "", vas: "" };
 
 const progVuoto: Omit<Programma, "id"> = {
@@ -517,6 +517,7 @@ export default function EserciziPage() {
                                 { label: "Vel. >25 km/h", value: prog.carico.velocita25, unit: "m" },
                                 { label: "Acc. >3 m/s²", value: prog.carico.accelerazioni, unit: "" },
                                 { label: "Dec. >3 m/s²", value: prog.carico.decelerazioni, unit: "" },
+                                { label: "Sprint", value: prog.carico.sprint, unit: "" },
                               ].filter((x) => x.value).map(({ label, value, unit }) => (
                                 <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
                                   <p className="text-xs text-gray-400">{label}</p>
@@ -1090,6 +1091,14 @@ export default function EserciziPage() {
                         placeholder="Es. 38"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
+                  </div>
+
+                  {/* Riga 5 — sprint */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Numero di sprint</label>
+                    <input value={carico.sprint ?? ""} onChange={(e) => aggiornaCarico("sprint", e.target.value)}
+                      placeholder="Es. 12"
+                      className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                   </div>
 
                   {/* Note */}
