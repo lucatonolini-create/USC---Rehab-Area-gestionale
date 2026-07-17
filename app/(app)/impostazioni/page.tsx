@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff, Send } from "lucide-react";
-import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni } from "@/lib/store";
+import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff, Send, Pencil, X } from "lucide-react";
+import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni, type GiocatoreRosa } from "@/lib/store";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
 
@@ -269,9 +269,122 @@ function ListaPersonale({
   );
 }
 
+const CATEGORIE = ["U14", "U15", "U16", "U17", "U19"];
+const RUOLI_ROSA = ["Attaccante", "Centrocampista", "Difensore", "Portiere"];
+
+function RosaSection({
+  rosa,
+  onChange,
+}: {
+  rosa: GiocatoreRosa[];
+  onChange: (r: GiocatoreRosa[]) => void;
+}) {
+  const [nuovo, setNuovo] = useState<GiocatoreRosa>({ nome: "", categoria: "", ruolo: "" });
+  const [editIdx, setEditIdx] = useState<number | null>(null);
+  const [editVal, setEditVal] = useState<GiocatoreRosa>({ nome: "", categoria: "", ruolo: "" });
+
+  const sorted = [...rosa].sort((a, b) => a.nome.localeCompare(b.nome));
+
+  const aggiungi = () => {
+    if (!nuovo.nome.trim() || !nuovo.categoria || !nuovo.ruolo) return;
+    onChange([...rosa, { ...nuovo, nome: nuovo.nome.trim() }]);
+    setNuovo({ nome: "", categoria: "", ruolo: "" });
+  };
+
+  const rimuovi = (nome: string) => onChange(rosa.filter((g) => g.nome !== nome));
+
+  const salvaEdit = () => {
+    if (editIdx === null || !editVal.nome.trim() || !editVal.categoria || !editVal.ruolo) return;
+    const updated = [...rosa];
+    updated[editIdx] = { ...editVal, nome: editVal.nome.trim() };
+    onChange(updated);
+    setEditIdx(null);
+  };
+
+  const inputCls = "flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]";
+  const selCls = "border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white";
+
+  return (
+    <div className="space-y-3">
+      {sorted.length === 0 && (
+        <p className="text-sm text-gray-400 text-center py-2">Nessun giocatore ancora</p>
+      )}
+      {sorted.map((g) => {
+        const realIdx = rosa.findIndex((r) => r.nome === g.nome);
+        return editIdx === realIdx ? (
+          <div key={g.nome} className="bg-blue-50 rounded-xl p-3 space-y-2">
+            <input value={editVal.nome} onChange={(e) => setEditVal({ ...editVal, nome: e.target.value })}
+              placeholder="Cognome e Nome" className={`w-full ${inputCls}`} />
+            <div className="flex gap-2">
+              <select value={editVal.categoria} onChange={(e) => setEditVal({ ...editVal, categoria: e.target.value })}
+                className={selCls}>
+                <option value="">Categoria</option>
+                {CATEGORIE.map((c) => <option key={c}>{c}</option>)}
+              </select>
+              <select value={editVal.ruolo} onChange={(e) => setEditVal({ ...editVal, ruolo: e.target.value })}
+                className={selCls}>
+                <option value="">Ruolo</option>
+                {RUOLI_ROSA.map((r) => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={salvaEdit}
+                className="flex items-center gap-1.5 bg-[#C8102E] text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-800">
+                <Check className="w-3 h-3" /> Salva
+              </button>
+              <button onClick={() => setEditIdx(null)}
+                className="flex items-center gap-1.5 border border-gray-200 text-gray-500 px-3 py-1.5 rounded-lg text-xs hover:bg-gray-50">
+                <X className="w-3 h-3" /> Annulla
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div key={g.nome} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">{g.nome}</p>
+              <p className="text-xs text-gray-400">{g.categoria} · {g.ruolo}</p>
+            </div>
+            <button onClick={() => { setEditIdx(realIdx); setEditVal(g); }}
+              className="text-gray-300 hover:text-blue-400 shrink-0">
+              <Pencil className="w-4 h-4" />
+            </button>
+            <button onClick={() => rimuovi(g.nome)} className="text-gray-300 hover:text-red-400 shrink-0">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        );
+      })}
+
+      <div className="border-t border-gray-100 pt-3 space-y-2">
+        <input value={nuovo.nome} onChange={(e) => setNuovo({ ...nuovo, nome: e.target.value })}
+          onKeyDown={(e) => { if (e.key === "Enter") aggiungi(); }}
+          placeholder="Cognome e Nome"
+          className={`w-full ${inputCls}`} />
+        <div className="flex gap-2">
+          <select value={nuovo.categoria} onChange={(e) => setNuovo({ ...nuovo, categoria: e.target.value })}
+            className={`${selCls} flex-1`}>
+            <option value="">Categoria</option>
+            {CATEGORIE.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <select value={nuovo.ruolo} onChange={(e) => setNuovo({ ...nuovo, ruolo: e.target.value })}
+            className={`${selCls} flex-1`}>
+            <option value="">Ruolo</option>
+            {RUOLI_ROSA.map((r) => <option key={r}>{r}</option>)}
+          </select>
+          <button onClick={aggiungi}
+            disabled={!nuovo.nome.trim() || !nuovo.categoria || !nuovo.ruolo}
+            className="flex items-center gap-1.5 bg-[#C8102E] text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ImpostazioniPage() {
   const [form, setForm] = useState<Impostazioni>({
-    nomeClub: "", nomeStruttura: "", indirizzo: "", fisioterapisti: [], preparatori: [],
+    nomeClub: "", nomeStruttura: "", indirizzo: "", fisioterapisti: [], preparatori: [], rosa: [],
   });
   const [salvato, setSalvato] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
@@ -355,6 +468,18 @@ export default function ImpostazioniPage() {
               onRimuovi={(i) => setForm({ ...form, preparatori: form.preparatori.filter((_, idx) => idx !== i) })}
             />
           </div>
+        </div>
+
+        {/* Rosa giocatori */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
+          <h2 className="font-bold text-gray-900 mb-1">Rosa giocatori</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            Aggiungi, modifica o rimuovi i giocatori che appaiono nel form di segnalazione infortuni.
+          </p>
+          <RosaSection
+            rosa={form.rosa}
+            onChange={(r) => setForm({ ...form, rosa: r })}
+          />
         </div>
 
         {/* Notifiche push */}

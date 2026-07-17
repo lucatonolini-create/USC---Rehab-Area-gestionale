@@ -14,9 +14,17 @@ interface Props {
 export default function PlayerCombobox({ value, onSelect, placeholder = "Cerca giocatore…", required, className }: Props) {
   const [query, setQuery] = useState(value);
   const [open, setOpen] = useState(false);
+  const [players, setPlayers] = useState<Giocatore[]>(ROSA);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { setQuery(value); }, [value]);
+
+  useEffect(() => {
+    fetch("/api/players")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data) && data.length > 0) setPlayers(data); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -29,8 +37,8 @@ export default function PlayerCombobox({ value, onSelect, placeholder = "Cerca g
   }, []);
 
   const q = query.trim().toLowerCase();
-  const filtered = q ? ROSA.filter((g) => g.nome.toLowerCase().includes(q)) : ROSA;
-  const exactMatch = ROSA.some((g) => g.nome.toLowerCase() === q);
+  const filtered = q ? players.filter((g) => g.nome.toLowerCase().includes(q)) : players;
+  const exactMatch = players.some((g) => g.nome.toLowerCase() === q);
 
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>

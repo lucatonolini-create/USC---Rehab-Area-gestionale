@@ -341,12 +341,19 @@ export interface Programma {
   noteAssenza?: string;
 }
 
+export interface GiocatoreRosa {
+  nome: string;
+  categoria: string;
+  ruolo: string;
+}
+
 export interface Impostazioni {
   nomeClub: string;
   nomeStruttura: string;
   indirizzo: string;
   fisioterapisti: string[];
   preparatori: string[];
+  rosa: GiocatoreRosa[];
 }
 
 const defaultCarico: Carico = {
@@ -744,6 +751,7 @@ const defaultImpostazioni: Impostazioni = {
   indirizzo: "",
   fisioterapisti: [],
   preparatori: [],
+  rosa: [],
 };
 
 export async function loadImpostazioni(): Promise<Impostazioni> {
@@ -762,6 +770,7 @@ export async function loadImpostazioni(): Promise<Impostazioni> {
           indirizzo: (data.indirizzo as string) ?? "",
           fisioterapisti: (data.fisioterapisti as string[]) ?? [],
           preparatori: (data.preparatori as string[]) ?? [],
+          rosa: (data.rosa as GiocatoreRosa[]) ?? [],
         };
         await db.impostazioni.put({ ...imp, id: 1 });
         return imp;
@@ -786,6 +795,7 @@ export async function saveImpostazioni(s: Impostazioni): Promise<void> {
     indirizzo: s.indirizzo,
     fisioterapisti: s.fisioterapisti,
     preparatori: s.preparatori,
+    rosa: s.rosa,
   };
   if (isOnline()) {
     try {
