@@ -1156,21 +1156,6 @@ export default function AtletiPage() {
                   </div>
                 )}
 
-                {(selected.telefono || selected.email) && (
-                  <div className="bg-gray-50 rounded-xl p-3 space-y-1.5">
-                    <p className="text-xs text-gray-400">Contatti</p>
-                    {selected.telefono && (
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Phone className="w-3.5 h-3.5 text-gray-400" />{selected.telefono}
-                      </div>
-                    )}
-                    {selected.email && (
-                      <div className="flex items-center gap-2 text-gray-700">
-                        <Mail className="w-3.5 h-3.5 text-gray-400" />{selected.email}
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {selected.note && (
                   <div className="bg-gray-50 rounded-xl p-3">
