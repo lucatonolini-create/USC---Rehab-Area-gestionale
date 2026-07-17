@@ -983,7 +983,7 @@ export default function AtletiPage() {
                   ["Piede dominante", selected.piedeDominante || "—"],
                   ["Diagnosi / Infortunio", selected.infortunio || "—"],
                   ["Inizio riabilitazione", selected.inizioRehab ? new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
-                  ...(selected.fineRehab ? [["Fine riabilitazione", new Date(selected.fineRehab + "T12:00").toLocaleDateString("it-IT")]] : []),
+                  ["Fine riabilitazione", selected.fineRehab ? new Date(selected.fineRehab + "T12:00").toLocaleDateString("it-IT") : "—"],
                 ].map(([label, value]) => (
                   <div key={label} className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-400">{label}</p>
