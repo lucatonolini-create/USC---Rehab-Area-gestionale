@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users } from "lucide-react";
 import {
-  loadAtleti, loadProgrammi, upsertProgramma, deleteProgramma, uid, nd,
+  loadAtleti, loadProgrammi, upsertProgramma, upsertAtleta, deleteProgramma, uid, nd, calcolaProgressoAuto,
   subscribeToAtleti, subscribeToProgrammi,
   TESTS_PREDEFINITI, OBIETTIVI_PALESTRA, OBIETTIVI_CAMPO,
-  type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo,
+  type Atleta, type Programma, type Esercizio, type TestFisiometrico, type Carico, type EsercizioCampo, type InfortunioStorico,
 } from "@/lib/store";
 
 const esVuoto: Esercizio = { nome: "", serie: "", reps: "", carico: "", rir: "", vas: "", note: "" };
@@ -206,6 +206,42 @@ export default function EserciziPage() {
       const lista = prev[id];
       return { ...prev, [id]: editId ? lista.map((p) => p.id === editId ? prog : p) : [...lista, prog] };
     });
+
+    // Quando si registra "Squadra", porta automaticamente l'atleta a Disponibile
+    if (form.squadra) {
+      const atleta = atleti.find((a) => a.id === form.atletaId);
+      if (atleta && atleta.stato === "Infortunato") {
+        const fineRehab = prog.data; // usa la data della sessione come fine riabilitazione
+        const diagnosi = atleta.infortunio;
+        const inizioRehab = atleta.inizioRehab;
+        const tipo = atleta.tipoInfortunio;
+        const nuovoStorico: InfortunioStorico[] = [...(atleta.storicoInfortuni ?? [])];
+        if (diagnosi || inizioRehab) {
+          nuovoStorico.push({
+            id: uid(),
+            tipo,
+            diagnosi: diagnosi || "—",
+            inizioRehab: inizioRehab || "",
+            fineRehab,
+            note: atleta.note || undefined,
+          });
+        }
+        const aggiornato: Atleta = {
+          ...atleta,
+          stato: "Disponibile",
+          fineRehab,
+          storicoInfortuni: nuovoStorico,
+          infortunio: "",
+          tipoInfortunio: undefined,
+          inizioRehab: "",
+          progresso: 100,
+        };
+        aggiornato.progresso = calcolaProgressoAuto(aggiornato);
+        await upsertAtleta(aggiornato);
+        setAtleti((prev) => prev.map((a) => a.id === aggiornato.id ? aggiornato : a));
+      }
+    }
+
     setMostraForm(false);
   };
 
