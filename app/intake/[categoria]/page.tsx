@@ -61,7 +61,7 @@ type FormState = {
   fisioterapista: string; categoria: string;
 };
 
-const RUOLI = ["Attaccante", "Centrocampista", "Difensore"];
+const RUOLI = ["Attaccante", "Centrocampista", "Difensore", "Portiere"];
 
 const vuoto = (): FormState => ({
   nome: "", posizione: "", piedeDominante: "",
