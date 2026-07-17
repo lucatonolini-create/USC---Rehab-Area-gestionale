@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff } from "lucide-react";
+import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff, Send } from "lucide-react";
 import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni } from "@/lib/store";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
@@ -20,6 +20,8 @@ function NotificheSection() {
   const [attiva, setAttiva] = useState<boolean | null>(null);
   const [stato, setStato] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [msg, setMsg] = useState("");
+  const [testStato, setTestStato] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [testMsg, setTestMsg] = useState("");
 
   useEffect(() => {
     if (!("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -94,6 +96,34 @@ function NotificheSection() {
     setTimeout(() => setStato("idle"), 4000);
   };
 
+  const inviaTest = async () => {
+    setTestStato("loading");
+    setTestMsg("");
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        setTestStato("error");
+        setTestMsg("Nessuna sottoscrizione attiva. Prima abilita le notifiche.");
+        setTimeout(() => setTestStato("idle"), 4000);
+        return;
+      }
+      const res = await fetch("/api/push/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(sub),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Errore sconosciuto");
+      setTestStato("ok");
+      setTestMsg("Notifica inviata — dovresti riceverla a breve.");
+    } catch (err) {
+      setTestStato("error");
+      setTestMsg(`Errore: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    setTimeout(() => setTestStato("idle"), 6000);
+  };
+
   if (permesso === "unsupported") {
     return (
       <p className="text-sm text-gray-400">
@@ -162,6 +192,33 @@ function NotificheSection() {
         <p className={`text-xs font-medium ${stato === "error" ? "text-orange-600" : "text-green-600"}`}>
           {msg}
         </p>
+      )}
+
+      {attiva && (
+        <div className="pt-2 border-t border-gray-100">
+          <p className="text-xs text-gray-400 mb-2">Verifica che le notifiche arrivino su questo dispositivo:</p>
+          <button
+            onClick={inviaTest}
+            disabled={testStato === "loading"}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+              testStato === "ok" ? "bg-green-500 text-white" :
+              testStato === "error" ? "bg-orange-500 text-white" :
+              "border border-gray-200 text-gray-600 hover:bg-gray-50"
+            }`}>
+            {testStato === "loading"
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Invio…</>
+              : testStato === "ok"
+              ? <><Check className="w-4 h-4" /> Inviata!</>
+              : testStato === "error"
+              ? <><AlertCircle className="w-4 h-4" /> Errore</>
+              : <><Send className="w-4 h-4" /> Invia notifica test</>}
+          </button>
+          {testMsg && (
+            <p className={`mt-2 text-xs font-medium ${testStato === "error" ? "text-orange-600" : "text-green-600"}`}>
+              {testMsg}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
