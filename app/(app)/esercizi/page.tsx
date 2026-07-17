@@ -504,7 +504,7 @@ export default function EserciziPage() {
                                 { label: "Carico interno", value: prog.carico.interno, unit: "" },
                                 { label: "Distanza", value: prog.carico.distanzaTotale, unit: "km" },
                                 { label: "Vel. max", value: prog.carico.velocitaMax, unit: "km/h" },
-                                { label: "HSR >19 km/h", value: prog.carico.hsr, unit: "m" },
+                                { label: "Vel. >18 km/h", value: prog.carico.hsr, unit: "m" },
                                 { label: "Vel. >21 km/h", value: prog.carico.velocita21, unit: "m" },
                                 { label: "Vel. >25 km/h", value: prog.carico.velocita25, unit: "m" },
                                 { label: "Acc. >3 m/s²", value: prog.carico.accelerazioni, unit: "" },
@@ -1041,7 +1041,7 @@ export default function EserciziPage() {
                   {/* Riga 3 — zone di velocità */}
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">HSR &gt;19 km/h (m)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vel. &gt;18 km/h (m)</label>
                       <input value={carico.hsr} onChange={(e) => aggiornaCarico("hsr", e.target.value)}
                         placeholder="Es. 350"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
