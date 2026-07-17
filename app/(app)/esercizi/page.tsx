@@ -635,13 +635,13 @@ export default function EserciziPage() {
               {/* Presente / Assente / Riposo / Squadra */}
               {(() => {
                 const isPresente = !form.assente && !form.riposo && !form.squadra;
-                const opts = [
-                  { label: "Presente", icon: "✓", active: isPresente, color: "green", onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: false }) },
-                  { label: "Assente",  icon: "✕", active: form.assente,  color: "orange", onClick: () => setForm({ ...form, assente: true,  riposo: false, squadra: false }) },
-                  { label: "Riposo",   icon: "↺", active: form.riposo,   color: "blue",   onClick: () => setForm({ ...form, assente: false, riposo: true,  squadra: false }) },
-                  { label: "Squadra",  icon: "★", active: form.squadra,  color: "red",    onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: true  }) },
-                ] as const;
-                const activeClass: Record<typeof opts[number]["color"], string> = {
+                const opts: { label: string; icon: React.ReactNode; active: boolean; color: "green"|"orange"|"blue"|"red"; onClick: () => void }[] = [
+                  { label: "Presente", icon: <span className="text-lg leading-none">✓</span>, active: isPresente, color: "green",  onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: false }) },
+                  { label: "Assente",  icon: <span className="text-lg leading-none">✕</span>, active: !!form.assente,  color: "orange", onClick: () => setForm({ ...form, assente: true,  riposo: false, squadra: false }) },
+                  { label: "Riposo",   icon: <span className="text-lg leading-none">↺</span>, active: !!form.riposo,   color: "blue",   onClick: () => setForm({ ...form, assente: false, riposo: true,  squadra: false }) },
+                  { label: "Squadra",  icon: <Users className="w-5 h-5" />,                   active: !!form.squadra,  color: "red",    onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: true  }) },
+                ];
+                const activeClass: Record<"green"|"orange"|"blue"|"red", string> = {
                   green:  "bg-green-500  border-green-500  text-white",
                   orange: "bg-orange-500 border-orange-500 text-white",
                   blue:   "bg-blue-500   border-blue-500   text-white",
@@ -652,7 +652,7 @@ export default function EserciziPage() {
                     {opts.map(({ label, icon, active, color, onClick }) => (
                       <button key={label} type="button" onClick={onClick}
                         className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-all ${active ? activeClass[color] : "bg-white border-gray-200 text-gray-400 hover:border-gray-300"}`}>
-                        <span className="text-lg leading-none">{icon}</span>
+                        {icon}
                         <span>{label}</span>
                       </button>
                     ))}
