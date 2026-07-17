@@ -633,24 +633,32 @@ export default function EserciziPage() {
               </div>
 
               {/* Presente / Assente / Riposo / Squadra */}
-              <div className="flex gap-2 flex-wrap">
-                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: false, squadra: false })}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${!form.assente && !form.riposo && !form.squadra ? "bg-green-500 text-white border-green-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
-                  ✓ Presente
-                </button>
-                <button type="button" onClick={() => setForm({ ...form, assente: true, riposo: false, squadra: false })}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.assente ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
-                  ✗ Assente
-                </button>
-                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: true, squadra: false })}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.riposo ? "bg-blue-500 text-white border-blue-500" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
-                  ↺ Riposo
-                </button>
-                <button type="button" onClick={() => setForm({ ...form, assente: false, riposo: false, squadra: true })}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all border ${form.squadra ? "bg-[#C8102E] text-white border-[#C8102E]" : "bg-white text-gray-400 border-gray-200 hover:border-gray-300"}`}>
-                  ★ Squadra
-                </button>
-              </div>
+              {(() => {
+                const isPresente = !form.assente && !form.riposo && !form.squadra;
+                const opts = [
+                  { label: "Presente", icon: "✓", active: isPresente, color: "green", onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: false }) },
+                  { label: "Assente",  icon: "✕", active: form.assente,  color: "orange", onClick: () => setForm({ ...form, assente: true,  riposo: false, squadra: false }) },
+                  { label: "Riposo",   icon: "↺", active: form.riposo,   color: "blue",   onClick: () => setForm({ ...form, assente: false, riposo: true,  squadra: false }) },
+                  { label: "Squadra",  icon: "★", active: form.squadra,  color: "red",    onClick: () => setForm({ ...form, assente: false, riposo: false, squadra: true  }) },
+                ] as const;
+                const activeClass: Record<typeof opts[number]["color"], string> = {
+                  green:  "bg-green-500  border-green-500  text-white",
+                  orange: "bg-orange-500 border-orange-500 text-white",
+                  blue:   "bg-blue-500   border-blue-500   text-white",
+                  red:    "bg-[#C8102E]  border-[#C8102E]  text-white",
+                };
+                return (
+                  <div className="grid grid-cols-4 gap-2">
+                    {opts.map(({ label, icon, active, color, onClick }) => (
+                      <button key={label} type="button" onClick={onClick}
+                        className={`flex flex-col items-center justify-center gap-1.5 py-3 rounded-xl border text-xs font-semibold transition-all ${active ? activeClass[color] : "bg-white border-gray-200 text-gray-400 hover:border-gray-300"}`}>
+                        <span className="text-lg leading-none">{icon}</span>
+                        <span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
 
               {/* Nota assenza / riposo */}
               {(form.assente || form.riposo) && (
