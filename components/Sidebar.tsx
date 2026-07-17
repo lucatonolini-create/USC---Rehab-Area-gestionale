@@ -16,7 +16,7 @@ const navItems = [
   { href: "/progressi",    label: "Progressi",    icon: TrendingUp },
   { href: "/analisi",        label: "Analisi",        icon: BarChart2   },
   { href: "/epidemiologia", label: "Epidemiologia", icon: HeartPulse  },
-  { href: "/segnalazioni", label: "Fisioterapia",  icon: Link2      },
+  { href: "/segnalazioni", label: "Link",           icon: Link2      },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
 ];
 
