@@ -380,7 +380,25 @@ export default function ImpostazioniPage() {
   const [salvato, setSalvato] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [syncMsg, setSyncMsg] = useState("");
-  useEffect(() => { loadImpostazioni().then(setForm); }, []);
+  useEffect(() => {
+    loadImpostazioni().then(async (imp) => {
+      try {
+        const res = await fetch("/api/players");
+        const players = await res.json();
+        if (Array.isArray(players) && players.length > 0) {
+          // merge: keep existing rosa entries, add players from atleti not yet in rosa
+          const merged = [...imp.rosa];
+          for (const p of players) {
+            if (!merged.some((g) => g.nome.toLowerCase() === p.nome.toLowerCase())) {
+              merged.push(p);
+            }
+          }
+          imp = { ...imp, rosa: merged };
+        }
+      } catch {}
+      setForm(imp);
+    });
+  }, []);
 
   const salva = async () => {
     await saveImpostazioni(form);

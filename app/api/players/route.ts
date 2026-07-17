@@ -8,16 +8,25 @@ export async function GET() {
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
-    const { data } = await supabase
-      .from("impostazioni")
-      .select("rosa")
-      .eq("id", 1)
-      .single();
 
-    const rosa = (data?.rosa as { nome: string; categoria: string; ruolo: string }[] | null);
-    if (rosa && rosa.length > 0) {
-      return NextResponse.json(rosa);
+    const [impRes, atletiRes] = await Promise.all([
+      supabase.from("impostazioni").select("rosa").eq("id", 1).single(),
+      supabase.from("atleti").select("nome, categoria, posizione"),
+    ]);
+
+    const rosa: { nome: string; categoria: string; ruolo: string }[] =
+      (impRes.data?.rosa as { nome: string; categoria: string; ruolo: string }[] | null) ?? [];
+
+    // merge unique players from atleti
+    if (atletiRes.data) {
+      for (const a of atletiRes.data) {
+        if (!rosa.some((g) => g.nome.toLowerCase() === a.nome.toLowerCase())) {
+          rosa.push({ nome: a.nome, categoria: a.categoria ?? "", ruolo: a.posizione ?? "" });
+        }
+      }
     }
+
+    if (rosa.length > 0) return NextResponse.json(rosa);
   } catch {}
 
   return NextResponse.json(ROSA);
