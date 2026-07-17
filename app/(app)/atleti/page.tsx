@@ -85,13 +85,13 @@ function _calcolaDelta(curr: TestFisiometrico, prev: TestFisiometrico | null): n
 async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[]) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
-  const doc = new jsPDF();
+  const doc = new jsPDF({ orientation: "landscape" });
   const red: [number, number, number] = [200, 16, 46];
   const dark: [number, number, number] = [43, 43, 43];
   const gray: [number, number, number] = [130, 130, 130];
   const logoDataUrl = await getLogoDataUrl();
   const oggi = new Date().toLocaleDateString("it-IT");
-  const M = 14; const W = 210; const H = 297; const HDR = 30;
+  const M = 14; const W = 297; const H = 210; const HDR = 30;
 
   const addHeader = (subtitle?: string) => {
     doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
@@ -303,20 +303,20 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 6, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 15 },
-        1:  { cellWidth: 20 },
-        2:  { cellWidth: 13 },
-        3:  { cellWidth: 17 },
-        4:  { cellWidth: 28 },
-        5:  { cellWidth: 11, halign: "center" as const },
-        6:  { cellWidth: 17 },
-        7:  { cellWidth: 22 },
-        8:  { cellWidth: 11, halign: "center" as const },
-        9:  { cellWidth: 18 },
-        10: { cellWidth: 10, halign: "center" as const },
+        0:  { cellWidth: 19 },
+        1:  { cellWidth: 28 },
+        2:  { cellWidth: 16 },
+        3:  { cellWidth: 24 },
+        4:  { cellWidth: 40 },
+        5:  { cellWidth: 13, halign: "center" as const },
+        6:  { cellWidth: 22 },
+        7:  { cellWidth: 35 },
+        8:  { cellWidth: 12, halign: "center" as const },
+        9:  { cellWidth: 46 },
+        10: { cellWidth: 14, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
@@ -324,14 +324,14 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           data.cell.styles.fillColor = [200, 16, 46];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 7;
-          data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
+          data.cell.styles.fontSize = 8;
+          data.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 5, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 5.8;
-          data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1.5, right: 1 };
+          data.cell.styles.fontSize = 7;
+          data.cell.styles.cellPadding = { top: 2.5, bottom: 2.5, left: 2, right: 1 };
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];
           data.cell.styles.textColor = [154, 52, 18];
