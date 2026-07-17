@@ -141,9 +141,6 @@ export interface RefertoClinico {
   tipo: TipoReferto;
   esito: EsitoReferto;
   note?: string;
-  fileId?: string;       // local IndexedDB reference
-  fileNome?: string;     // display name
-  storagePath?: string;  // Supabase Storage path
 }
 
 export interface Atleta {
