@@ -4,7 +4,7 @@ export type Giocatore = {
   ruolo: string;
 };
 
-export const ROSA: Giocatore[] = [
+const _ROSA: Giocatore[] = [
   // U19
   { nome: "Bagnoli Edoardo",          categoria: "U19", ruolo: "Difensore"      },
   { nome: "Barros Cabezas Ronie",     categoria: "U19", ruolo: "Centrocampista" },
@@ -156,3 +156,7 @@ export const ROSA: Giocatore[] = [
   { nome: "Zanardini Sebastiano",         categoria: "U14", ruolo: "Difensore"      },
   { nome: "Zaniboni Riccardo",            categoria: "U14", ruolo: "Portiere"       },
 ];
+
+export const ROSA = [..._ROSA].sort((a, b) =>
+  a.nome.localeCompare(b.nome, "it")
+);
