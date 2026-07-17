@@ -713,6 +713,19 @@ export function subscribeToAtleti(onChange: () => void): () => void {
   return () => { supabase.removeChannel(channel); };
 }
 
+export function subscribeToIntakeInsert(onNew: (nome: string, categoria: string) => void): () => void {
+  const channel = supabase
+    .channel(`intake-rt-${Date.now()}-${Math.random().toString(36).slice(2)}`)
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "atleti" }, (payload) => {
+      const row = payload.new as Record<string, unknown>;
+      if (row.telefono === "__intake__") {
+        onNew((row.nome as string) ?? "Atleta", (row.categoria as string) ?? "");
+      }
+    })
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+}
+
 export function subscribeToProgrammi(onChange: (atletaId?: string) => void): () => void {
   const channel = supabase
     .channel(`programmi-rt-${Date.now()}-${Math.random().toString(36).slice(2)}`)

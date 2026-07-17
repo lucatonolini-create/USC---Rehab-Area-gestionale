@@ -8,6 +8,7 @@ import {
   LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, LogOut, HeartPulse, Link2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getIntakeBadgeCount, resetIntakeBadge } from "@/components/IntakeNotifier";
 
 const navItems = [
   { href: "/",             label: "Dashboard",   icon: LayoutDashboard },
@@ -28,6 +29,7 @@ export default function Sidebar() {
   const router = useRouter();
   const [mobileAperta, setMobileAperta] = useState(false);
   const [collapsed, setCollapsed]       = useState(false);
+  const [intakeBadge, setIntakeBadge]   = useState(0);
   const [userEmail, setUserEmail]       = useState<string | null>(null);
 
   useEffect(() => { setMobileAperta(false); }, [pathname]);
@@ -35,6 +37,19 @@ export default function Sidebar() {
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserEmail(data.user?.email ?? null));
   }, []);
+
+  // Badge intake: leggi da localStorage e ascolta aggiornamenti in tempo reale
+  useEffect(() => {
+    setIntakeBadge(getIntakeBadgeCount());
+    const handler = (e: Event) => setIntakeBadge((e as CustomEvent<number>).detail);
+    window.addEventListener("intake-badge-update", handler);
+    return () => window.removeEventListener("intake-badge-update", handler);
+  }, []);
+
+  // Quando l'utente apre la pagina Link, azzera il badge
+  useEffect(() => {
+    if (pathname === "/segnalazioni") resetIntakeBadge();
+  }, [pathname]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -108,6 +123,7 @@ export default function Sidebar() {
         <nav className={`flex-1 overflow-y-auto space-y-1 ${collapsed ? "p-2" : "p-4"}`}>
           {navItems.map(({ href, label, icon: Icon }) => {
             const isActive = pathname === href;
+            const showBadge = href === "/segnalazioni" && intakeBadge > 0;
             return (
               <Link key={href} href={href}
                 title={collapsed ? label : undefined}
@@ -115,8 +131,20 @@ export default function Sidebar() {
                   collapsed ? "justify-center p-3" : "gap-3 px-4 py-3"
                 } ${isActive ? "text-white" : "text-white/65 hover:text-white hover:bg-white/10"}`}
                 style={isActive ? { backgroundColor: RED } : {}}>
-                <Icon className="w-5 h-5 shrink-0" />
-                {!collapsed && label}
+                <div className="relative shrink-0">
+                  <Icon className="w-5 h-5" />
+                  {showBadge && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 bg-[#C8102E] rounded-full text-white text-[9px] font-bold flex items-center justify-center px-0.5 border border-[#2B2B2B]">
+                      {intakeBadge > 9 ? "9+" : intakeBadge}
+                    </span>
+                  )}
+                </div>
+                {!collapsed && <span className="flex-1">{label}</span>}
+                {!collapsed && showBadge && (
+                  <span className="ml-auto bg-[#C8102E] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {intakeBadge > 9 ? "9+" : intakeBadge}
+                  </span>
+                )}
               </Link>
             );
           })}

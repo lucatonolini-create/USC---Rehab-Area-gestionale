@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
       progresso: 0,
       fisioterapista: body.fisioterapista ?? "",
       preparatore_atletico: "",
-      telefono: "",
+      telefono: "__intake__",
       email: "",
       note: body.note ?? "",
       storico_infortuni: [],
