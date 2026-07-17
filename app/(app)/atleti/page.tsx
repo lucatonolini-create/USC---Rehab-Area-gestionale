@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X, Paperclip } from "lucide-react";
+import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
   subscribeToAtleti, subscribeToProgrammi,
@@ -10,7 +10,6 @@ import {
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
   type RefertoClinico, type TipoReferto, type EsitoReferto, type TestFisiometrico,
 } from "@/lib/store";
-import { salvaDoc, caricaDoc, eliminaDoc } from "@/lib/filestore";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
 import QuestionarioTSK from "@/components/QuestionarioTSK";
@@ -631,9 +630,6 @@ export default function AtletiPage() {
   const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
   const [nuovoReferto, setNuovoReferto] = useState<{ data: string; tipo: TipoReferto | ""; esito: EsitoReferto | ""; note: string } | null>(null);
   const [editingRefertoId, setEditingRefertoId] = useState<string | null>(null);
-  const [fileReferto, setFileReferto] = useState<File | null>(null);
-  const [editingFileInfo, setEditingFileInfo] = useState<{ id: string; nome: string } | null>(null);
-  const fileRefertoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -774,53 +770,12 @@ export default function AtletiPage() {
         note: nuovoReferto.note || undefined,
       }];
     }
-    // Gestione file allegato
-    let nuovoFileId: string | undefined;
-    let nuovoFileNome: string | undefined;
-    const originalReferto = (selected.refertiClinici ?? []).find((r) => r.id === editingRefertoId);
-
-    if (fileReferto) {
-      // Nuovo file selezionato: se c'era un vecchio file lo sostituiamo
-      if (originalReferto?.fileId) await eliminaDoc(originalReferto.fileId);
-      nuovoFileId = uid();
-      nuovoFileNome = fileReferto.name;
-      await salvaDoc({
-        id: nuovoFileId,
-        atletaId: selected.id,
-        nome: fileReferto.name,
-        mimeType: fileReferto.type,
-        dataCaricamento: new Date().toISOString(),
-        dimensione: fileReferto.size,
-        blob: fileReferto,
-      });
-    } else if (editingFileInfo) {
-      // File esistente mantenuto
-      nuovoFileId = editingFileInfo.id;
-      nuovoFileNome = editingFileInfo.nome;
-    } else if (editingRefertoId && originalReferto?.fileId) {
-      // File esistente rimosso dall'utente
-      await eliminaDoc(originalReferto.fileId);
-    }
-
-    // Aggiorna i referti con il fileId corretto
-    if (editingRefertoId) {
-      nuoviReferti = nuoviReferti.map((r) =>
-        r.id === editingRefertoId ? { ...r, fileId: nuovoFileId, fileNome: nuovoFileNome } : r
-      );
-    } else {
-      nuoviReferti = nuoviReferti.map((r, i) =>
-        i === nuoviReferti.length - 1 ? { ...r, fileId: nuovoFileId, fileNome: nuovoFileNome } : r
-      );
-    }
-
     const aggiornato: Atleta = { ...selected, refertiClinici: nuoviReferti };
     aggiornato.progresso = calcolaProgressoAuto(aggiornato);
     setAtleti((prev) => prev.map((a) => a.id === selected.id ? aggiornato : a));
     setSelected(aggiornato);
     setNuovoReferto(null);
     setEditingRefertoId(null);
-    setFileReferto(null);
-    setEditingFileInfo(null);
     await upsertAtleta(aggiornato);
   };
 
@@ -1136,16 +1091,9 @@ export default function AtletiPage() {
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button
-                              onClick={async () => {
+                              onClick={() => {
                                 setEditingRefertoId(r.id);
                                 setNuovoReferto({ data: r.data, tipo: r.tipo, esito: r.esito, note: r.note ?? "" });
-                                setFileReferto(null);
-                                if (r.fileId) {
-                                  const doc = await caricaDoc(r.fileId);
-                                  setEditingFileInfo(doc ? { id: doc.id, nome: doc.nome } : null);
-                                } else {
-                                  setEditingFileInfo(null);
-                                }
                               }}
                               className="text-gray-300 hover:text-[#C8102E] transition-colors">
                               <Pencil className="w-3.5 h-3.5" />
@@ -1219,52 +1167,8 @@ export default function AtletiPage() {
                             rows={3}
                             className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white resize-none focus:outline-none focus:ring-2 focus:ring-[#C8102E]/30 focus:border-[#C8102E]" />
                         </div>
-                        <div>
-                          <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                            Allegato <span className="font-normal normal-case text-gray-400">(opzionale)</span>
-                          </p>
-                          <input
-                            ref={fileRefertoRef}
-                            type="file"
-                            accept="image/*,application/pdf"
-                            className="hidden"
-                            onChange={(e) => setFileReferto(e.target.files?.[0] ?? null)}
-                          />
-                          {fileReferto ? (
-                            // Nuovo file appena selezionato
-                            <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
-                              <Paperclip className="w-3.5 h-3.5 text-green-600 shrink-0" />
-                              <span className="text-xs text-green-800 truncate flex-1">{fileReferto.name}</span>
-                              <button onClick={() => { setFileReferto(null); if (fileRefertoRef.current) fileRefertoRef.current.value = ""; }}
-                                className="text-green-500 hover:text-red-500 shrink-0">
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : editingFileInfo ? (
-                            // File esistente collegato al referto
-                            <div className="flex items-center gap-2 bg-gray-100 border border-gray-200 rounded-lg px-3 py-2">
-                              <Paperclip className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-                              <span className="text-xs text-gray-700 truncate flex-1">{editingFileInfo.nome}</span>
-                              <button onClick={() => fileRefertoRef.current?.click()} title="Sostituisci"
-                                className="text-gray-400 hover:text-[#C8102E] shrink-0 transition-colors">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </button>
-                              <button onClick={() => setEditingFileInfo(null)} title="Rimuovi allegato"
-                                className="text-gray-400 hover:text-red-500 shrink-0 transition-colors">
-                                <X className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              onClick={() => fileRefertoRef.current?.click()}
-                              className="w-full flex items-center gap-2 border border-dashed border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-400 hover:border-[#C8102E] hover:text-[#C8102E] transition-colors">
-                              <Paperclip className="w-3.5 h-3.5" />
-                              Allega PDF o foto esame
-                            </button>
-                          )}
-                        </div>
                         <div className="flex gap-2 pt-0.5">
-                          <button onClick={() => { setNuovoReferto(null); setEditingRefertoId(null); setFileReferto(null); setEditingFileInfo(null); }}
+                          <button onClick={() => { setNuovoReferto(null); setEditingRefertoId(null); }}
                             className="flex-1 text-sm border border-gray-200 rounded-lg py-2 text-gray-500 bg-white font-medium hover:bg-gray-100 transition-colors">
                             Annulla
                           </button>
