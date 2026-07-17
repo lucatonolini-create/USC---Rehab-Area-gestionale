@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, calcolaProgressoAuto, RECOVERY_DAYS, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+import { ROSA } from "@/lib/players";
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
@@ -53,8 +54,23 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
   const [form, setForm] = useState<Omit<Atleta, "id">>(
     atletaIniziale ? (({ id, ...rest }) => rest)(atletaIniziale) : atletaVuoto
   );
+  const [nomeLibero, setNomeLibero] = useState(isModifica);
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
+
+  const handleSelectGiocatore = (val: string) => {
+    if (val === "__libero__") {
+      setNomeLibero(true);
+      f("nome", "");
+      return;
+    }
+    f("nome", val);
+    const g = ROSA.find((x) => x.nome === val);
+    if (g) {
+      f("categoria", g.categoria as Categoria);
+      f("posizione", g.ruolo);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -69,7 +85,25 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
         <div className="p-6 space-y-4">
           <div>
             <Label>Cognome e Nome *</Label>
-            <Input className="mt-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Rossi Marco" />
+            {nomeLibero ? (
+              <div className="flex gap-2 mt-1">
+                <Input className="flex-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Rossi Marco" />
+                {!isModifica && (
+                  <button type="button" onClick={() => { setNomeLibero(false); f("nome", ""); }}
+                    className="px-3 py-2 text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 shrink-0">
+                    ↩ Lista
+                  </button>
+                )}
+              </div>
+            ) : (
+              <Sel className="mt-1" value={form.nome} onChange={(e) => handleSelectGiocatore(e.target.value)}>
+                <option value="">— Seleziona giocatore —</option>
+                {ROSA.map((g) => (
+                  <option key={g.nome} value={g.nome}>{g.nome} ({g.categoria})</option>
+                ))}
+                <option value="__libero__">— Inserimento libero —</option>
+              </Sel>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">

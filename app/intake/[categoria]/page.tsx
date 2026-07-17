@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
+import { ROSA } from "@/lib/players";
 
 const CATEGORIA_MAP: Record<string, string> = {
   u19: "U19", u17: "U17", u16: "U16", u15: "U15", u14: "U14",
@@ -76,9 +77,25 @@ export default function IntakePage() {
   const [form, setForm] = useState<FormState>(vuoto);
   const [stato, setStato] = useState<"idle" | "invio" | "ok" | "errore">("idle");
   const [errMsg, setErrMsg] = useState("");
+  const [nomeLibero, setNomeLibero] = useState(false);
 
   const f = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
+
+  const giocatoriCategoria = categoria
+    ? ROSA.filter((g) => g.categoria === categoria)
+    : [];
+
+  const handleSelectGiocatore = (val: string) => {
+    if (val === "__libero__") {
+      setNomeLibero(true);
+      f("nome", "");
+      return;
+    }
+    f("nome", val);
+    const g = ROSA.find((x) => x.nome === val);
+    if (g) f("posizione", g.ruolo);
+  };
 
   if (!categoria) {
     return (
@@ -149,14 +166,29 @@ export default function IntakePage() {
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             <div>
               <Label>Cognome e Nome *</Label>
-              <Input value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Rossi Marco" required />
+              {nomeLibero ? (
+                <div className="flex gap-2">
+                  <Input className="flex-1" value={form.nome} onChange={(e) => f("nome", e.target.value)} placeholder="Es. Rossi Marco" required />
+                  <button type="button" onClick={() => { setNomeLibero(false); f("nome", ""); f("posizione", ""); }}
+                    className="px-3 py-2 text-xs text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 shrink-0">
+                    ↩ Lista
+                  </button>
+                </div>
+              ) : (
+                <Sel value={form.nome} onChange={(e) => handleSelectGiocatore(e.target.value)} required>
+                  <option value="">— Seleziona giocatore —</option>
+                  {giocatoriCategoria.map((g) => (
+                    <option key={g.nome} value={g.nome}>{g.nome}</option>
+                  ))}
+                  <option value="__libero__">— Inserimento libero —</option>
+                </Sel>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>Ruolo / Posizione</Label>
                 <Input value={form.posizione} onChange={(e) => f("posizione", e.target.value)} placeholder="Es. Centrocampista" />
-              </div>
               <div>
                 <Label>Piede dominante</Label>
                 <Sel value={form.piedeDominante} onChange={(e) => f("piedeDominante", e.target.value)}>
