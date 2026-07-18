@@ -17,6 +17,7 @@ export const OBIETTIVI_PALESTRA = [
   "Forza massima",
   "Forza strutturale",
   "Isometrie",
+  "Metabolico",
   "Pliometria estensiva",
   "Pliometria intensiva",
   "Potenza",
