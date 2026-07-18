@@ -163,7 +163,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
   const squadraRowIndices = new Set<number>();
   const altRowIndices = new Set<number>();
 
-  const CATEGORIE_ORD = ["U14", "U15", "U16", "U17", "U19"];
+  const CATEGORIE_ORD = ["U19", "U17", "U16", "U15", "U14"];
   const perCategoria = new Map<string, { atleta: Atleta; prog: Programma }[]>();
 
   for (const prog of progDelGiorno) {
