@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull, FileText } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, upsertAtleta, deleteProgramma, uid, nd, calcolaProgressoAuto,
   subscribeToAtleti, subscribeToProgrammi,
@@ -107,6 +107,196 @@ function calcolaDelta(curr: import("@/lib/store").TestFisiometrico, prev: import
   return null;
 }
 
+async function getLogoDataUrl(): Promise<string | null> {
+  try {
+    const r = await fetch("/logo.png"); if (!r.ok) return null;
+    const blob = await r.blob();
+    return new Promise<string>((res, rej) => { const rd = new FileReader(); rd.onloadend = () => res(rd.result as string); rd.onerror = rej; rd.readAsDataURL(blob); });
+  } catch { return null; }
+}
+
+async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgrammi: Programma[]) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
+  const progDelGiorno = tuttiProgrammi.filter((p) => p.data === data);
+  if (progDelGiorno.length === 0) return;
+
+  const doc = new jsPDF({ orientation: "landscape" });
+  const red: [number, number, number] = [200, 16, 46];
+  const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
+  const logoDataUrl = await getLogoDataUrl();
+  const dataFmt = new Date(data + "T12:00").toLocaleDateString("it-IT");
+  const M = 14; const W = 297; const H = 210; const HDR = 30;
+
+  const addHeader = () => {
+    doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
+    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
+    const tx = logoDataUrl ? 30 : M;
+    doc.setTextColor(...red); doc.setFontSize(13); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese – Programmi del Giorno", tx, 14);
+    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(dataFmt, tx, 22);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), W - M, 14, { align: "right" });
+  };
+
+  const addFooter = () => {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
+    }
+  };
+
+  addHeader();
+
+  const body: any[] = [];
+  const catRowIndices = new Set<number>();
+  const absenteRowIndices = new Set<number>();
+  const riposoRowIndices = new Set<number>();
+  const squadraRowIndices = new Set<number>();
+  const altRowIndices = new Set<number>();
+
+  const CATEGORIE_ORD = ["U14", "U15", "U16", "U17", "U19"];
+  const perCategoria = new Map<string, { atleta: Atleta; prog: Programma }[]>();
+
+  for (const prog of progDelGiorno) {
+    const atleta = atleti.find((a) => a.id === prog.atletaId);
+    if (!atleta) continue;
+    const cat = atleta.categoria ?? "—";
+    if (!perCategoria.has(cat)) perCategoria.set(cat, []);
+    perCategoria.get(cat)!.push({ atleta, prog });
+  }
+
+  const categoriePres = CATEGORIE_ORD.filter((c) => perCategoria.has(c));
+  const altreCategorie = Array.from(perCategoria.keys()).filter((c) => !CATEGORIE_ORD.includes(c)).sort();
+
+  let dataRowCount = 0;
+  for (const cat of [...categoriePres, ...altreCategorie]) {
+    const lista = perCategoria.get(cat) ?? [];
+    catRowIndices.add(body.length);
+    body.push([{ content: cat, colSpan: 10 }]);
+
+    for (const { atleta, prog } of lista) {
+      const nomeAtleta = nd(atleta);
+      const isAlt = dataRowCount % 2 === 1;
+
+      if (prog.assente) {
+        absenteRowIndices.add(body.length);
+        body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        dataRowCount++; continue;
+      }
+      if (prog.riposo) {
+        riposoRowIndices.add(body.length);
+        body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        dataRowCount++; continue;
+      }
+      if (prog.squadra) {
+        squadraRowIndices.add(body.length);
+        body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        dataRowCount++; continue;
+      }
+
+      const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
+      const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+      const campoLines = (prog.esercizicampo ?? []).map((c) => {
+        const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
+        return parts.join(" ");
+      });
+      const esC = campoLines.join("\n") || "—";
+      const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
+      const esercizi = prog.esercizi ?? [];
+
+      const testLines = (prog.tests ?? []).map((t) => {
+        const vals = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean);
+        return `${t.nome}${vals.length ? `: ${vals.join(" / ")}` : ""}`;
+      });
+      const tests = testLines.join("\n") || "—";
+
+      if (esercizi.length <= 1) {
+        const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
+        const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
+        if (isAlt) altRowIndices.add(body.length);
+        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, tests, rpe]);
+      } else {
+        esercizi.forEach((e, i) => {
+          const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
+          if (isAlt) altRowIndices.add(body.length);
+          if (i === 0) {
+            body.push([
+              { content: nomeAtleta, rowSpan: esercizi.length, styles: { valign: "top", fontStyle: "bold" as const } },
+              { content: prog.nome ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
+              { content: prog.fase ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
+              { content: obP, rowSpan: esercizi.length, styles: { valign: "top" } },
+              esLine, e.vas || "—",
+              { content: obCampo, rowSpan: esercizi.length, styles: { valign: "top" } },
+              { content: esC, rowSpan: esercizi.length, styles: { valign: "top" } },
+              { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
+              { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
+            ]);
+          } else {
+            body.push([esLine, e.vas || "—"]);
+          }
+        });
+      }
+      dataRowCount++;
+    }
+  }
+
+  autoTable(doc, {
+    startY: HDR + 8,
+    head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "RPE"]],
+    body,
+    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+    margin: { left: M, right: M },
+    columnStyles: {
+      0: { cellWidth: 28, fontStyle: "bold" },
+      1: { cellWidth: 28 },
+      2: { cellWidth: 16 },
+      3: { cellWidth: 24 },
+      4: { cellWidth: 44 },
+      5: { cellWidth: 12, halign: "center" as const },
+      6: { cellWidth: 22 },
+      7: { cellWidth: 38 },
+      8: { cellWidth: 46 },
+      9: { cellWidth: 13, halign: "center" as const },
+    },
+    didParseCell: (data: any) => {
+      if (data.section === "head") return;
+      if (catRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [200, 16, 46];
+        data.cell.styles.textColor = [255, 255, 255];
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.fontSize = 8;
+        data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 5, right: 2 };
+      } else if (absenteRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [255, 237, 213];
+        data.cell.styles.textColor = [154, 52, 18];
+      } else if (riposoRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [219, 234, 254];
+        data.cell.styles.textColor = [30, 64, 175];
+      } else if (squadraRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [254, 226, 226];
+        data.cell.styles.textColor = [153, 27, 27];
+      } else if (altRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [243, 244, 246];
+      } else {
+        data.cell.styles.fillColor = [255, 255, 255];
+      }
+    },
+  });
+
+  addFooter();
+  doc.save(`USC_Programmi_${data}.pdf`);
+}
+
 function parseGpsCsv(text: string): Partial<Carico> {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return {};
@@ -152,6 +342,8 @@ export default function EserciziPage() {
   const [sezioneAttiva, setSezioneAttiva] = useState<FormSection>("esercizi");
   const [gpsCaricando, setGpsCaricando] = useState(false);
   const gpsInputRef = useRef<HTMLInputElement>(null);
+  const [dataGiorno, setDataGiorno] = useState(new Date().toISOString().slice(0, 10));
+  const [esportandoGiorno, setEsportandoGiorno] = useState(false);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -309,15 +501,40 @@ export default function EserciziPage() {
 
   return (
     <div className="p-6">
-      <div className="mb-6 flex items-center justify-between gap-3">
+      <div className="mb-6 flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Programmi <span className="whitespace-nowrap">di Lavoro</span></h1>
           <p className="text-gray-500 mt-0.5 text-sm">{atleti.length} atleti</p>
         </div>
-        <button onClick={apriNuovo}
-          className="flex items-center gap-1.5 bg-[#C8102E] text-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-800 shrink-0 whitespace-nowrap">
-          <Plus className="w-4 h-4" /> Nuovo programma
-        </button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm">
+            <input
+              type="date"
+              value={dataGiorno}
+              onChange={(e) => setDataGiorno(e.target.value)}
+              className="text-sm text-gray-700 focus:outline-none bg-transparent"
+            />
+          </div>
+          <button
+            disabled={esportandoGiorno}
+            onClick={async () => {
+              setEsportandoGiorno(true);
+              try {
+                const tutti = await loadProgrammi();
+                await esportaPDFGiornaliero(dataGiorno, atleti, tutti);
+              } finally {
+                setEsportandoGiorno(false);
+              }
+            }}
+            className="flex items-center gap-1.5 border border-red-200 text-[#C8102E] px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-50 disabled:opacity-50 shrink-0 whitespace-nowrap bg-white shadow-sm">
+            <FileText className="w-4 h-4" />
+            {esportandoGiorno ? "Generazione…" : "PDF del giorno"}
+          </button>
+          <button onClick={apriNuovo}
+            className="flex items-center gap-1.5 bg-[#C8102E] text-white px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-800 shrink-0 whitespace-nowrap">
+            <Plus className="w-4 h-4" /> Nuovo programma
+          </button>
+        </div>
       </div>
 
       {atleti.length === 0 ? (
