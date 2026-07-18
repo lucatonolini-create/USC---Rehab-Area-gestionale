@@ -22,7 +22,19 @@ export default function PlayerCombobox({ value, onSelect, placeholder = "Cerca g
   useEffect(() => {
     fetch("/api/players")
       .then((r) => r.json())
-      .then((data) => { if (Array.isArray(data) && data.length > 0) setPlayers(data); })
+      .then((data: Giocatore[]) => {
+        if (!Array.isArray(data)) return;
+        // Merge API players into the static ROSA (never replace it)
+        setPlayers((prev) => {
+          const merged = [...prev];
+          for (const p of data) {
+            if (!merged.some((g) => g.nome.toLowerCase() === p.nome.toLowerCase())) {
+              merged.push(p);
+            }
+          }
+          return merged.sort((a, b) => a.nome.localeCompare(b.nome, "it"));
+        });
+      })
       .catch(() => {});
   }, []);
 
