@@ -261,7 +261,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 12 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "GPS", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "GPS", "VAS C.", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
@@ -325,7 +325,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
           const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
           if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, vasC, tests, gps, rpe]);
+          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, gps, vasC, tests, rpe]);
         } else {
           esercizi.forEach((e, i) => {
             const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
@@ -340,9 +340,9 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
                 esLine, vas,
                 { content: obCampo, rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: esC, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: gps, rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: vasC, rowSpan: esercizi.length, styles: { valign: "top", halign: "center" as const } },
                 { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: gps, rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
               ]);
             } else {
@@ -368,9 +368,9 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         5:  { cellWidth: 10, halign: "center" as const },
         6:  { cellWidth: 16 },
         7:  { cellWidth: 26 },
-        8:  { cellWidth: 10, halign: "center" as const },
-        9:  { cellWidth: 35 },
-        10: { cellWidth: 57 },
+        8:  { cellWidth: 55 },
+        9:  { cellWidth: 13, halign: "center" as const },
+        10: { cellWidth: 34 },
         11: { cellWidth: 12, halign: "center" as const },
       },
       didParseCell: (data: any) => {
