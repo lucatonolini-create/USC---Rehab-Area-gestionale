@@ -277,36 +277,10 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
         ].filter(Boolean).join("\n") || "—";
 
-        if (esercizi.length <= 1) {
-          const e = esercizi[0];
-          const esLine = e ? (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
-          const vas = e ? (e.vas || "—") : "—";
-          if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, vasC, gps, tests, rpe]);
-        } else {
-          esercizi.forEach((e, i) => {
-            const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
-            const vas = e.vas || "—";
-            if (isAlt) altRowIndices.add(body.length);
-            if (i === 0) {
-              body.push([
-                { content: dataStr,       rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: prog.nome ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: prog.fase ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: obP,           rowSpan: esercizi.length, styles: { valign: "top" } },
-                esLine, vas,
-                { content: obCampo,       rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: esC,           rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: vasC,          rowSpan: esercizi.length, styles: { valign: "top", halign: "center" as const } },
-                { content: gps,           rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: tests,         rowSpan: esercizi.length, styles: { valign: "top" } },
-                { content: rpe,           rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
-              ]);
-            } else {
-              body.push([esLine, vas]);
-            }
-          });
-        }
+        const esText = esercizi.map((e) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; }).join("\n") || "—";
+        const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
+        if (isAlt) altRowIndices.add(body.length);
+        body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
         dataRowCount++;
       }
     });
