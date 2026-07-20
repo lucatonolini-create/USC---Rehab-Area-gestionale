@@ -358,22 +358,6 @@ async function esportaPDFPanoramica(params: {
     y += 14;
   }
 
-  if (params.perInfortunio.length > 0) {
-    if (y > 220) { doc.addPage(); addHeader(); y = HDR + 12; }
-    y = secTitle("Diagnosi specifiche più frequenti", y);
-    autoTable(doc, {
-      startY: y,
-      head: [["Diagnosi", "N° atleti"]],
-      body: params.perInfortunio.map(({ nome, count }) => [nome, count]),
-      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [250, 250, 250] },
-      margin: { left: M, right: M },
-      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {} },
-    });
-    y = (doc as any).lastAutoTable.finalY + 8;
-  }
-
   // Ensure enough vertical space so the trend table never splits across pages
   const trendRows = params.trendMensile;
   const estTrendH = (trendRows.length + 1) * 7 + 15; // rows × row-height + secTitle
