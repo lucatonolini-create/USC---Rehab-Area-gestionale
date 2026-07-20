@@ -617,7 +617,7 @@ async function esportaPDFReportMensile(
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      pdfRows.push([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato]);
+      pdfRows.push([nd(a), a.categoria, "—", "—", a.note || "—", "—", "—", "—", a.stato]);
       athleteForRowP.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
@@ -628,9 +628,11 @@ async function esportaPDFReportMensile(
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
+        row.push(inf.diagnosi, inf.tipo ?? "—");
+        if (i === 0) {
+          row.push({ content: a.note || "—", rowSpan: count, styles: { valign: "middle" } });
+        }
         row.push(
-          inf.diagnosi,
-          inf.tipo ?? "—",
           inf.inizio ? fmtDP(inf.inizio) : "—",
           inf.fine ? fmtDP(inf.fine) : "—",
           inf.inizio ? ggP(inf.inizio, inf.fine) : "—",
@@ -644,15 +646,15 @@ async function esportaPDFReportMensile(
 
   autoTable(doc, {
     startY: y,
-    head: [["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato"]],
+    head: [["Nome", "Categoria", "Infortunio", "Tipo", "Note", "Inizio", "Fine", "Giorni", "Stato"]],
     body: pdfRows,
-    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 34 }, 1: { cellWidth: 20 }, 2: { cellWidth: 72 },
-      3: { cellWidth: 60, overflow: "ellipsize" }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
-      6: { cellWidth: 16 }, 7: { cellWidth: 30 },
+      0: { cellWidth: 28 }, 1: { cellWidth: 16 }, 2: { cellWidth: 55 },
+      3: { cellWidth: 40 }, 4: { cellWidth: 50 }, 5: { cellWidth: 20 },
+      6: { cellWidth: 20 }, 7: { cellWidth: 14 }, 8: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
