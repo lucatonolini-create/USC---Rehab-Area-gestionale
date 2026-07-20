@@ -219,32 +219,15 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       });
       const tests = testLines.join("\n") || "—";
 
-      if (esercizi.length <= 1) {
-        const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
-        const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
-        if (isAlt) altRowIndices.add(body.length);
-        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, tests, rpe]);
-      } else {
-        esercizi.forEach((e, i) => {
-          const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
-          if (isAlt) altRowIndices.add(body.length);
-          if (i === 0) {
-            body.push([
-              { content: nomeAtleta, rowSpan: esercizi.length, styles: { valign: "top", fontStyle: "bold" as const } },
-              { content: prog.nome ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
-              { content: prog.fase ?? "—", rowSpan: esercizi.length, styles: { valign: "top" } },
-              { content: obP, rowSpan: esercizi.length, styles: { valign: "top" } },
-              esLine, e.vas || "—",
-              { content: obCampo, rowSpan: esercizi.length, styles: { valign: "top" } },
-              { content: esC, rowSpan: esercizi.length, styles: { valign: "top" } },
-              { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
-              { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
-            ]);
-          } else {
-            body.push([esLine, e.vas || "—"]);
-          }
-        });
-      }
+      // Esercizi uniti in celle multi-riga: un atleta = una riga, niente rowSpan
+      const esText = esercizi.map((e) => {
+        const sx = [e.serie, e.reps].filter(Boolean).join("×");
+        return sx ? `${e.nome} ${sx}` : e.nome;
+      }).join("\n") || "—";
+      const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
+
+      if (isAlt) altRowIndices.add(body.length);
+      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, tests, rpe]);
       dataRowCount++;
     }
   }
@@ -254,8 +237,9 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "RPE"]],
     body,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
-    margin: { left: M, right: M },
+    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
+    rowPageBreak: "avoid",
+    margin: { left: M, right: M, top: HDR + 8 },
     columnStyles: {
       0: { cellWidth: 28, fontStyle: "bold" },
       1: { cellWidth: 28 },
@@ -267,6 +251,9 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       7: { cellWidth: 38 },
       8: { cellWidth: 46 },
       9: { cellWidth: 13, halign: "center" as const },
+    },
+    didDrawPage: () => {
+      addHeader();
     },
     didParseCell: (data: any) => {
       if (data.section === "head") return;
