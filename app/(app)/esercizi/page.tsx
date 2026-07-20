@@ -228,26 +228,26 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
       const ca = prog.carico;
       const gps = [
-        ca?.distanzaTotale ? `Dist ${ca.distanzaTotale}m` : "",
-        ca?.velocitaMax ? `Vmax ${ca.velocitaMax}km/h` : "",
-        ca?.hsr ? `>16: ${ca.hsr}m` : "",
-        ca?.velocita21 ? `>20: ${ca.velocita21}m` : "",
-        ca?.velocita25 ? `>25: ${ca.velocita25}m` : "",
-        ca?.accelerazioni ? `Acc ${ca.accelerazioni}` : "",
-        ca?.decelerazioni ? `Dec ${ca.decelerazioni}` : "",
-        ca?.sprint ? `Sprint ${ca.sprint}` : "",
-        ca?.potenzaMetabolica ? `PM ${ca.potenzaMetabolica}W/kg` : "",
+        ca?.distanzaTotale ? `Dist. ${ca.distanzaTotale}m` : "",
+        ca?.velocitaMax ? `V.max ${ca.velocitaMax}km/h` : "",
+        ca?.hsr ? `D>16km/h ${ca.hsr}m` : "",
+        ca?.velocita21 ? `D>20km/h ${ca.velocita21}m` : "",
+        ca?.velocita25 ? `D>25km/h ${ca.velocita25}m` : "",
+        ca?.accelerazioni ? `N.Acc ${ca.accelerazioni}` : "",
+        ca?.decelerazioni ? `N.Dec ${ca.decelerazioni}` : "",
+        ca?.sprint ? `N.Spr ${ca.sprint}` : "",
+        ca?.potenzaMetabolica ? `P.Met. ${ca.potenzaMetabolica}W/kg` : "",
       ].filter(Boolean).join("\n") || "—";
 
       if (isAlt) altRowIndices.add(body.length);
-      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, tests, rpe, gps]);
+      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, tests, gps, rpe]);
       dataRowCount++;
     }
   }
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "RPE", "GPS"]],
+    head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "GPS", "RPE"]],
     body,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
@@ -263,8 +263,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       6:  { cellWidth: 16 },
       7:  { cellWidth: 28 },
       8:  { cellWidth: 36 },
-      9:  { cellWidth: 11, halign: "center" as const },
-      10: { cellWidth: 48 },
+      9:  { cellWidth: 48 },
+      10: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => {
       addHeader();
