@@ -261,9 +261,9 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       4:  { cellWidth: 36 },
       5:  { cellWidth: 10, halign: "center" as const },
       6:  { cellWidth: 16 },
-      7:  { cellWidth: 28 },
+      7:  { cellWidth: 36 },
       8:  { cellWidth: 36 },
-      9:  { cellWidth: 48 },
+      9:  { cellWidth: 40 },
       10: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => {
