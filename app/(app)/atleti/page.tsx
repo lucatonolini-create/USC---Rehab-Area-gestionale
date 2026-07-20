@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
-  subscribeToAtleti, subscribeToProgrammi,
+  subscribeToAtleti, subscribeToProgrammi, subscribeToIntakeInsert,
   CATEGORIE, TIPI_INFORTUNIO, calcolaProgressoAuto,
   TIPI_REFERTO, ESITI_REFERTO,
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
@@ -632,8 +632,9 @@ export default function AtletiPage() {
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
-    const unsub = subscribeToAtleti(() => loadAtleti().then(setAtleti));
-    return unsub;
+    const unsubAtleti = subscribeToAtleti(() => loadAtleti().then(setAtleti));
+    const unsubIntake = subscribeToIntakeInsert(() => loadAtleti().then(setAtleti));
+    return () => { unsubAtleti(); unsubIntake(); };
   }, []);
 
   useEffect(() => {
