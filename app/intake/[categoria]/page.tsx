@@ -102,7 +102,12 @@ export default function IntakePage() {
             </svg>
           </div>
           <h2 className="text-lg font-bold text-gray-900 mb-2">Segnalazione inviata</h2>
-          <p className="text-sm text-gray-500">Il giocatore è stato aggiunto al gestionale rehab. Grazie.</p>
+          <p className="text-sm text-gray-500 mb-5">Il giocatore è stato aggiunto al gestionale rehab. Grazie.</p>
+          <button
+            onClick={() => { setForm(vuoto()); setStato("idle"); setErrMsg(""); }}
+            className="w-full bg-[#C8102E] text-white py-3 rounded-xl text-sm font-semibold hover:bg-red-800 transition-colors">
+            Inserisci un altro infortunio
+          </button>
         </div>
       </div>
     );
