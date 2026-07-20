@@ -913,19 +913,6 @@ export default function ProgressiPage() {
                     )}
                   </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-semibold text-gray-600">Progresso recupero</label>
-                      <span className="text-2xl font-bold text-[#C8102E]">{atleta.progresso}%</span>
-                    </div>
-                    <input type="range" min={0} max={100} value={atleta.progresso}
-                      onChange={(e) => aggiorna(atleta.id, "progresso", Number(e.target.value))}
-                      className="w-full accent-[#C8102E] h-2" />
-                    <div className="flex justify-between text-xs text-gray-300 mt-1">
-                      {["0%", "25%", "50%", "75%", "100%"].map((v) => <span key={v}>{v}</span>)}
-                    </div>
-                  </div>
-
                   {atleta.infortunio && (
                     <p className="text-xs text-gray-400 mt-3">{atleta.infortunio}</p>
                   )}
@@ -1088,9 +1075,6 @@ export default function ProgressiPage() {
                             <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>
                               {a.stato}
                             </span>
-                          </div>
-                          <div className="w-16 text-right shrink-0">
-                            <span className="text-lg font-bold text-[#C8102E]">{a.progresso}%</span>
                           </div>
                         </div>
                         );
