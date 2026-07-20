@@ -308,7 +308,7 @@ function parseGpsCsv(text: string): Partial<Carico> {
   });
 
   return {
-    distanzaTotale: distTotal > 0 ? (distTotal > 500 ? (distTotal / 1000).toFixed(2) : distTotal.toFixed(2)) : "",
+    distanzaTotale: distTotal > 0 ? (distTotal > 500 ? Math.round(distTotal).toString() : Math.round(distTotal * 1000).toString()) : "",
     velocitaMax: speedMax > 0 ? speedMax.toFixed(1) : "",
     accelerazioni: accCount > 0 ? String(accCount) : "",
     hsr: hsrTotal > 0 ? hsrTotal.toFixed(0) : "",
@@ -753,7 +753,7 @@ export default function EserciziPage() {
                                 { label: "RPE", value: prog.carico.rpe, unit: "/10" },
                                 { label: "Durata", value: prog.carico.durata, unit: "min" },
                                 { label: "Training Load", value: prog.carico.interno, unit: "" },
-                                { label: "Distanza", value: prog.carico.distanzaTotale, unit: "km" },
+                                { label: "Distanza", value: prog.carico.distanzaTotale, unit: "m" },
                                 { label: "Vel. max", value: prog.carico.velocitaMax, unit: "km/h" },
                                 { label: "Vel. >18 km/h", value: prog.carico.hsr, unit: "m" },
                                 { label: "Vel. >21 km/h", value: prog.carico.velocita21, unit: "m" },
@@ -1297,9 +1297,9 @@ export default function EserciziPage() {
                   {/* Riga 2 — distanza e velocità */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza totale (km)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza totale (m)</label>
                       <input value={carico.distanzaTotale} onChange={(e) => aggiornaCarico("distanzaTotale", e.target.value)}
-                        placeholder="Es. 4.2"
+                        placeholder="Es. 4200"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
