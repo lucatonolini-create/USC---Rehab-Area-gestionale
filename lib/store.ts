@@ -330,6 +330,7 @@ export interface Carico {
   accelerazioni: string;
   decelerazioni?: string;
   sprint?: string;
+  potenzaMetabolica?: string;
   note: string;
 }
 
