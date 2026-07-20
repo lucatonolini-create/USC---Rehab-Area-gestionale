@@ -556,7 +556,7 @@ async function esportaPDFPanoramica(params: {
     const n = infortuni.length;
     const nomeDataStyle = { fontStyle: "bold" as const };
     if (n === 0) {
-      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", a.stato, "—", "—"]);
+      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", a.note || "—", a.stato, "—", "—"]);
       athleteForRowT.push(athleteIdx);
     } else {
       infortuni.forEach((inf, infIdx) => {
@@ -565,6 +565,7 @@ async function esportaPDFPanoramica(params: {
             { content: nd(a), rowSpan: n, styles: { ...nomeDataStyle, valign: "middle" as const } },
             { content: a.categoria, rowSpan: n, styles: { valign: "middle" } },
             inf.diagnosi,
+            { content: a.note || "—", rowSpan: n, styles: { valign: "middle" } },
             { content: a.stato, rowSpan: n, styles: { valign: "middle" } },
             fmtD(inf.inizio), fmtD(inf.fine),
           ]);
@@ -581,24 +582,25 @@ async function esportaPDFPanoramica(params: {
     y = secTitle("Lista completa atleti", y);
     autoTable(doc, {
       startY: y,
-      head: [["Atleta", "Categoria", "Diagnosi", "Stato", "Inizio", "Fine"]],
+      head: [["Atleta", "Categoria", "Diagnosi", "Note", "Stato", "Inizio", "Fine"]],
       body: tuttiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 38 },
-        1: { cellWidth: 22 },
-        2: { cellWidth: 72 },
-        3: { cellWidth: 26 },
-        4: { cellWidth: 16 },
-        5: { cellWidth: 16 },
+        0: { cellWidth: 28 },
+        1: { cellWidth: 16 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 40 },
+        4: { cellWidth: 20 },
+        5: { cellWidth: 14 },
+        6: { cellWidth: 14 },
       },
       didParseCell: (data: any) => {
         if (data.section === "body") {
           const ai = athleteForRowT[data.row.index];
           data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
-          if (data.column.index === 3) {
+          if (data.column.index === 4) {
             const content = typeof data.cell.raw === "object" ? (data.cell.raw as any)?.content : data.cell.raw;
             data.cell.styles.textColor = content === "Disponibile" ? [34, 139, 34] : red;
             data.cell.styles.fontStyle = "bold";
