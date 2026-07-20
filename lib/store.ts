@@ -22,6 +22,7 @@ export const OBIETTIVI_PALESTRA = [
   "Pliometria estensiva",
   "Pliometria intensiva",
   "Potenza",
+  "Upper body",
 ] as const;
 
 export const OBIETTIVI_CAMPO = [
