@@ -266,15 +266,15 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         const ca = prog.carico;
         const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
         const gps = [
-          ca?.distanzaTotale ? `Dist: ${ca.distanzaTotale}m` : "",
-          ca?.velocitaMax ? `Vmax: ${ca.velocitaMax}km/h` : "",
-          ca?.hsr ? `>16: ${ca.hsr}m` : "",
-          ca?.velocita21 ? `>20: ${ca.velocita21}m` : "",
-          ca?.velocita25 ? `>25: ${ca.velocita25}m` : "",
-          ca?.accelerazioni ? `Acc: ${ca.accelerazioni}` : "",
-          ca?.decelerazioni ? `Dec: ${ca.decelerazioni}` : "",
-          ca?.sprint ? `Spr: ${ca.sprint}` : "",
-          ca?.potenzaMetabolica ? `PM: ${ca.potenzaMetabolica}W/kg` : "",
+          ca?.distanzaTotale ? `Dist.: ${ca.distanzaTotale}m` : "",
+          ca?.velocitaMax ? `V.max: ${ca.velocitaMax}km/h` : "",
+          ca?.hsr ? `D>16km/h: ${ca.hsr}m` : "",
+          ca?.velocita21 ? `D>20km/h: ${ca.velocita21}m` : "",
+          ca?.velocita25 ? `D>25km/h: ${ca.velocita25}m` : "",
+          ca?.accelerazioni ? `N.Acc: ${ca.accelerazioni}` : "",
+          ca?.decelerazioni ? `N.Dec: ${ca.decelerazioni}` : "",
+          ca?.sprint ? `N.Spr: ${ca.sprint}` : "",
+          ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
         ].filter(Boolean).join("\n") || "—";
 
         if (esercizi.length <= 1) {
