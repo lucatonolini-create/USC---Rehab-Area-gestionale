@@ -27,12 +27,21 @@ export const OBIETTIVI_PALESTRA = [
 
 export const OBIETTIVI_CAMPO = [
   "Accelerazioni/Decelerazioni",
+  "Cambi di direzione",
   "HSR",
   "Lavoro tecnico",
   "Metabolico",
+  "Mobilità",
   "Neuromuscolare",
+  "Partita",
+  "Pliometria",
+  "Rondo",
   "RSA",
   "Sprint",
+  "SSG",
+  "Tiri in porta",
+  "Torneo 3 squadre",
+  "Warm up",
 ] as const;
 export type Piede = (typeof PIEDI)[number];
 
