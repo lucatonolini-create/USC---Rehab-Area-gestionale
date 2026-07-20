@@ -240,14 +240,14 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       ].filter(Boolean).join("\n") || "—";
 
       if (isAlt) altRowIndices.add(body.length);
-      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, tests, gps, rpe]);
+      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, gps, tests, rpe]);
       dataRowCount++;
     }
   }
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Obiettivi Palestra", "Esercizi palestra", "VAS", "Obiettivi Campo", "Esercizi campo", "Test", "GPS", "RPE"]],
+    head: [["Atleta", "Programma", "Fase", "Obiettivi Palestra", "Esercizi palestra", "VAS", "Obiettivi Campo", "Esercizi campo", "GPS", "Test", "RPE"]],
     body,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
@@ -262,8 +262,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       5:  { cellWidth: 10, halign: "center" as const },
       6:  { cellWidth: 16 },
       7:  { cellWidth: 36 },
-      8:  { cellWidth: 36 },
-      9:  { cellWidth: 40 },
+      8:  { cellWidth: 40 },
+      9:  { cellWidth: 36 },
       10: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => {

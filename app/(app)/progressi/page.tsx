@@ -358,7 +358,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       startY: y,
       body,
       bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
-      margin: { left: M, right: M },
+      margin: { left: M, right: M, top: HDR + 8 },
+      didDrawPage: () => { addHeader(`${nd(atleta)}  ·  Sessioni di lavoro`); },
       columnStyles: {
         0:  { cellWidth: 15 },
         1:  { cellWidth: 22 },
