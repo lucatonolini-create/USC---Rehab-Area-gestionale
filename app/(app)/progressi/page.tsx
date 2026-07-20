@@ -1,5 +1,4 @@
 "use client";
-// v2
 import { useEffect, useState } from "react";
 import { TrendingUp, Download, FileText, Calendar, Filter } from "lucide-react";
 import {
@@ -262,7 +261,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 12 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "*** GPS ***", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "GPS", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
@@ -361,17 +360,17 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 17 },
-        1:  { cellWidth: 24 },
-        2:  { cellWidth: 14 },
-        3:  { cellWidth: 20 },
-        4:  { cellWidth: 36 },
-        5:  { cellWidth: 11, halign: "center" as const },
-        6:  { cellWidth: 18 },
-        7:  { cellWidth: 28 },
+        0:  { cellWidth: 15 },
+        1:  { cellWidth: 22 },
+        2:  { cellWidth: 13 },
+        3:  { cellWidth: 18 },
+        4:  { cellWidth: 35 },
+        5:  { cellWidth: 10, halign: "center" as const },
+        6:  { cellWidth: 16 },
+        7:  { cellWidth: 26 },
         8:  { cellWidth: 10, halign: "center" as const },
-        9:  { cellWidth: 39 },
-        10: { cellWidth: 40 },
+        9:  { cellWidth: 35 },
+        10: { cellWidth: 57 },
         11: { cellWidth: 12, halign: "center" as const },
       },
       didParseCell: (data: any) => {
@@ -854,7 +853,7 @@ export default function ProgressiPage() {
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Progressi</h1>
-          <p className="text-gray-500 mt-1">Aggiorna e scarica la scheda riabilitativa <span className="text-xs font-bold text-red-500">[v4-GPS]</span></p>
+          <p className="text-gray-500 mt-1">Aggiorna e scarica la scheda riabilitativa</p>
         </div>
         <div className="flex bg-gray-100 rounded-xl p-1">
           {(["progressi", "report"] as PageTab[]).map((t) => (
