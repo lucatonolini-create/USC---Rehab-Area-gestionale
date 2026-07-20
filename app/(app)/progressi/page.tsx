@@ -260,9 +260,9 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
       }
       weekRowIndices.add(body.length);
-      body.push([{ content: weekLabel, colSpan: 11 }]);
+      body.push([{ content: weekLabel, colSpan: 12 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Ob. Palestra", "Es. Palestra", "VAS", "Ob. Campo", "Es. Campo", "VAS C.", "Test", "GPS", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
@@ -296,26 +296,37 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
 
         if (prog.assente) {
           absenteRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
         if (prog.riposo) {
           riposoRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
         const ca = prog.carico;
         const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
+        const gps = [
+          ca?.distanzaTotale ? `Dist.: ${ca.distanzaTotale}m` : "",
+          ca?.velocitaMax ? `V.max: ${ca.velocitaMax}km/h` : "",
+          ca?.hsr ? `D>16km/h: ${ca.hsr}m` : "",
+          ca?.velocita21 ? `D>20km/h: ${ca.velocita21}m` : "",
+          ca?.velocita25 ? `D>25km/h: ${ca.velocita25}m` : "",
+          ca?.accelerazioni ? `N.Acc: ${ca.accelerazioni}` : "",
+          ca?.decelerazioni ? `N.Dec: ${ca.decelerazioni}` : "",
+          ca?.sprint ? `N.Spr: ${ca.sprint}` : "",
+          ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
+        ].filter(Boolean).join("\n") || "—";
 
         if (esercizi.length <= 1) {
           const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
           const vas = esercizi.length === 1 ? (esercizi[0].vas || "—") : "—";
           if (isAlt) altRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, vasC, tests, rpe]);
+          body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esLine, vas, obCampo, esC, vasC, tests, gps, rpe]);
         } else {
           esercizi.forEach((e, i) => {
             const esLine = (() => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })();
@@ -332,6 +343,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
                 { content: esC, rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: vasC, rowSpan: esercizi.length, styles: { valign: "top", halign: "center" as const } },
                 { content: tests, rowSpan: esercizi.length, styles: { valign: "top" } },
+                { content: gps, rowSpan: esercizi.length, styles: { valign: "top" } },
                 { content: rpe, rowSpan: esercizi.length, styles: { valign: "middle", halign: "center" as const } },
               ]);
             } else {
@@ -349,17 +361,18 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 19 },
-        1:  { cellWidth: 28 },
-        2:  { cellWidth: 16 },
-        3:  { cellWidth: 24 },
-        4:  { cellWidth: 40 },
-        5:  { cellWidth: 13, halign: "center" as const },
-        6:  { cellWidth: 22 },
-        7:  { cellWidth: 35 },
-        8:  { cellWidth: 12, halign: "center" as const },
-        9:  { cellWidth: 46 },
-        10: { cellWidth: 14, halign: "center" as const },
+        0:  { cellWidth: 17 },
+        1:  { cellWidth: 24 },
+        2:  { cellWidth: 14 },
+        3:  { cellWidth: 20 },
+        4:  { cellWidth: 36 },
+        5:  { cellWidth: 11, halign: "center" as const },
+        6:  { cellWidth: 18 },
+        7:  { cellWidth: 28 },
+        8:  { cellWidth: 10, halign: "center" as const },
+        9:  { cellWidth: 39 },
+        10: { cellWidth: 40 },
+        11: { cellWidth: 12, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;
