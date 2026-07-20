@@ -755,9 +755,9 @@ export default function EserciziPage() {
                                 { label: "Training Load", value: prog.carico.interno, unit: "" },
                                 { label: "Distanza", value: prog.carico.distanzaTotale, unit: "m" },
                                 { label: "Vel. max", value: prog.carico.velocitaMax, unit: "km/h" },
-                                { label: "Vel. >18 km/h", value: prog.carico.hsr, unit: "m" },
-                                { label: "Vel. >21 km/h", value: prog.carico.velocita21, unit: "m" },
-                                { label: "Vel. >25 km/h", value: prog.carico.velocita25, unit: "m" },
+                                { label: "Dist. >16 km/h", value: prog.carico.hsr, unit: "m" },
+                                { label: "Dist. >20 km/h", value: prog.carico.velocita21, unit: "m" },
+                                { label: "Dist. >25 km/h", value: prog.carico.velocita25, unit: "m" },
                                 { label: "Acc. >3 m/s²", value: prog.carico.accelerazioni, unit: "" },
                                 { label: "Dec. >3 m/s²", value: prog.carico.decelerazioni, unit: "" },
                                 { label: "Sprint", value: prog.carico.sprint, unit: "" },
@@ -1313,19 +1313,19 @@ export default function EserciziPage() {
                   {/* Riga 3 — zone di velocità */}
                   <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vel. &gt;18 km/h (m)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza &gt;16 km/h (m)</label>
                       <input value={carico.hsr} onChange={(e) => aggiornaCarico("hsr", e.target.value)}
                         placeholder="Es. 350"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vel. &gt;21 km/h (m)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza &gt;20 km/h (m)</label>
                       <input value={carico.velocita21 ?? ""} onChange={(e) => aggiornaCarico("velocita21", e.target.value)}
                         placeholder="Es. 280"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Vel. &gt;25 km/h (m)</label>
+                      <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Distanza &gt;25 km/h (m)</label>
                       <input value={carico.velocita25 ?? ""} onChange={(e) => aggiornaCarico("velocita25", e.target.value)}
                         placeholder="Es. 120"
                         className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
