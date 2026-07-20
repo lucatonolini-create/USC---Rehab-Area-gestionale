@@ -253,7 +253,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     startY: HDR + 8,
     head: [["Atleta", "Programma", "Fase", "Obiettivi Palestra", "Esercizi palestra", "VAS", "Obiettivi Campo", "Esercizi campo", "VAS Campo", "GPS", "Test", "RPE"]],
     body,
-    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+    headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
     rowPageBreak: "avoid",
     margin: { left: M, right: M, top: HDR + 8 },
