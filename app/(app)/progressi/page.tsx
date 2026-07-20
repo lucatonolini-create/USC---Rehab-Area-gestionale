@@ -191,10 +191,11 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     y = secTitle("Storico infortuni", y);
     autoTable(doc, {
       startY: y,
-      head: [["#", "Tipo", "Diagnosi / Infortunio", "Inizio", "Fine", "Giorni"]],
+      head: [["#", "Tipo", "Note", "Diagnosi / Infortunio", "Inizio", "Fine", "Giorni"]],
       body: tuttiInfortuni.map((inf, i) => [
         i + 1,
         inf.tipo ?? "—",
+        atleta.note || "—",
         inf.diagnosi,
         inf.inizio ? fmtDCl(inf.inizio) : "—",
         inf.fine ? fmtDCl(inf.fine) : "—",
@@ -205,8 +206,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 8 }, 1: { cellWidth: 60 }, 2: { cellWidth: 140 },
-        3: { cellWidth: 22 }, 4: { cellWidth: 22 }, 5: { cellWidth: 17 },
+        0: { cellWidth: 8 }, 1: { cellWidth: 35 }, 2: { cellWidth: 60 }, 3: { cellWidth: 105 },
+        4: { cellWidth: 22 }, 5: { cellWidth: 22 }, 6: { cellWidth: 17 },
       },
     });
     y = (doc as any).lastAutoTable.finalY + 8;
