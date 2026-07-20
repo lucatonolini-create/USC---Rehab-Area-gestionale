@@ -3,28 +3,51 @@
 
 -- ── Atleti ───────────────────────────────────────────────────────────────────
 create table if not exists atleti (
-  id                  text primary key,
-  nome                text not null,
-  data_nascita        text default '',
-  categoria           text not null,
-  posizione           text default '',
-  piede_dominante     text default 'Destro',
-  tipo_infortunio     text,
-  infortunio          text default '',
-  inizio_rehab        text default '',
-  fine_rehab          text,
-  stato               text not null default 'In recupero',
-  progresso           integer default 0,
-  fisioterapista      text default '',
+  id                   text primary key,
+  nome                 text not null,
+  nome_completo        text,
+  data_nascita         text default '',
+  categoria            text not null,
+  posizione            text default '',
+  piede_dominante      text default 'Destro',
+  tipo_infortunio      text,
+  evento               text,
+  meccanismo           text,
+  contatto             text,
+  lato                 text,
+  posizione_infortunio text,
+  infortunio           text default '',
+  inizio_rehab         text default '',
+  fine_rehab           text,
+  stato                text not null default 'In recupero',
+  progresso            integer default 0,
+  progresso_manuale    integer,
+  fisioterapista       text default '',
   preparatore_atletico text default '',
-  telefono            text default '',
-  email               text default '',
-  note                text default '',
-  storico_infortuni   jsonb default '[]'::jsonb,
-  referti_clinici     jsonb default '[]'::jsonb,
-  progresso_manuale   integer,
-  created_at          timestamptz default now()
+  telefono             text default '',
+  email                text default '',
+  note                 text default '',
+  peso                 text,
+  altezza              text,
+  storico_infortuni    jsonb default '[]'::jsonb,
+  questionari_kinesiofobia jsonb default '[]'::jsonb,
+  referti_clinici      jsonb default '[]'::jsonb,
+  created_at           timestamptz default now()
 );
+
+-- ── Migrazione: aggiungi colonne mancanti su DB esistenti ──────────────────────
+-- Esegui questi ALTER TABLE se il DB è già stato creato con lo schema precedente.
+alter table atleti add column if not exists nome_completo        text;
+alter table atleti add column if not exists evento               text;
+alter table atleti add column if not exists meccanismo           text;
+alter table atleti add column if not exists contatto             text;
+alter table atleti add column if not exists lato                 text;
+alter table atleti add column if not exists posizione_infortunio text;
+alter table atleti add column if not exists progresso_manuale    integer;
+alter table atleti add column if not exists peso                 text;
+alter table atleti add column if not exists altezza              text;
+alter table atleti add column if not exists questionari_kinesiofobia jsonb default '[]'::jsonb;
+alter table atleti add column if not exists referti_clinici      jsonb default '[]'::jsonb;
 
 -- ── Programmi ─────────────────────────────────────────────────────────────────
 create table if not exists programmi (
@@ -47,8 +70,11 @@ create table if not exists impostazioni (
   nome_struttura   text default 'Rehab Area',
   indirizzo        text default '',
   fisioterapisti   jsonb default '[]'::jsonb,
-  preparatori      jsonb default '[]'::jsonb
+  preparatori      jsonb default '[]'::jsonb,
+  rosa             jsonb default '[]'::jsonb
 );
+
+alter table impostazioni add column if not exists rosa jsonb default '[]'::jsonb;
 
 insert into impostazioni (id) values (1) on conflict do nothing;
 

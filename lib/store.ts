@@ -535,8 +535,10 @@ export async function syncFlush(): Promise<void> {
           const { error } = await supabase.from("atleti").upsert(row);
           if (!error) {
             ok = true;
-          } else if (error.code === "PGRST204") {
-            const { referti_clinici, progresso_manuale, peso, altezza, nome_completo, ...safeRow } = row;
+          } else if (error.code === "PGRST204" || error.code === "42703") {
+            // Strip columns that may not exist in older DB schemas yet,
+            // but keep referti_clinici and progresso_manuale (they ARE in the schema).
+            const { peso, altezza, nome_completo, evento, meccanismo, contatto, lato, posizione_infortunio, questionari_kinesiofobia, ...safeRow } = row;
             const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
             ok = !e2 || isExpectedSyncError(e2.code);
           } else {
@@ -587,9 +589,10 @@ export async function pushAllLocalToSupabase(): Promise<{ ok: number; fail: numb
       const { error } = await supabase.from("atleti").upsert(row);
       if (!error) {
         ok++;
-      } else if (error.code === "PGRST204") {
-        // Some optional columns may not exist yet — retry without them
-        const { referti_clinici, progresso_manuale, peso, altezza, nome_completo, ...safeRow } = row;
+      } else if (error.code === "PGRST204" || error.code === "42703") {
+        // Strip columns that may not exist in older DB schemas yet,
+        // but keep referti_clinici and progresso_manuale (they ARE in the schema).
+        const { peso, altezza, nome_completo, evento, meccanismo, contatto, lato, posizione_infortunio, questionari_kinesiofobia, ...safeRow } = row;
         const { error: e2 } = await supabase.from("atleti").upsert(safeRow);
         if (!e2 || isExpectedSyncError(e2.code)) ok++;
         else { lastError = `atleti: ${e2.code} ${e2.message}`; fail++; }
