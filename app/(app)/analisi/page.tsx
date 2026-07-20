@@ -590,11 +590,11 @@ async function esportaPDFPanoramica(params: {
       columnStyles: {
         0: { cellWidth: 28 },
         1: { cellWidth: 16 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 40 },
+        2: { cellWidth: 44 },
+        3: { cellWidth: 36 },
         4: { cellWidth: 20 },
-        5: { cellWidth: 14 },
-        6: { cellWidth: 14 },
+        5: { cellWidth: 19 },
+        6: { cellWidth: 19 },
       },
       didParseCell: (data: any) => {
         if (data.section === "body") {
