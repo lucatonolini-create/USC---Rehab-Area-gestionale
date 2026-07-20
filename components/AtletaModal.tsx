@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
-import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, calcolaProgressoAuto, RECOVERY_DAYS, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 import PlayerCombobox from "@/components/PlayerCombobox";
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
@@ -176,61 +176,6 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             </div>
           )}
 
-          {form.stato === "Infortunato" && (() => {
-            const autoVal = calcolaProgressoAuto({
-              stato: form.stato,
-              inizioRehab: form.inizioRehab,
-              tipoInfortunio: form.tipoInfortunio,
-              refertiClinici: form.refertiClinici,
-            });
-            const isManuale = form.progressoManuale !== undefined;
-            const giorni = form.inizioRehab
-              ? Math.max(0, Math.floor((Date.now() - new Date(form.inizioRehab + "T12:00").getTime()) / 864e5))
-              : 0;
-            const expectedDays = form.tipoInfortunio ? (RECOVERY_DAYS[form.tipoInfortunio] ?? 42) : 42;
-            return (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Progresso recupero</Label>
-                  <button type="button"
-                    onClick={() => f("progressoManuale", isManuale ? undefined : autoVal)}
-                    className={`text-xs px-2.5 py-0.5 rounded-full font-semibold transition-colors ${
-                      isManuale
-                        ? "bg-orange-100 text-orange-700 hover:bg-orange-200"
-                        : "bg-green-100 text-green-700 hover:bg-green-200"
-                    }`}>
-                    {isManuale ? "Manuale" : "Automatico"}
-                  </button>
-                </div>
-                {isManuale ? (
-                  <div className="flex items-center gap-3">
-                    <input type="range" min={0} max={100}
-                      value={form.progressoManuale ?? 0}
-                      onChange={(e) => f("progressoManuale", Number(e.target.value))}
-                      className="flex-1 accent-[#C8102E]" />
-                    <span className="text-sm font-bold text-[#C8102E] w-10 text-right">
-                      {form.progressoManuale ?? 0}%
-                    </span>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <div className="flex justify-between mb-1.5">
-                      <span className="text-xs text-gray-400">Calcolato automaticamente</span>
-                      <span className="text-xs font-bold text-[#C8102E]">{autoVal}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${autoVal}%` }} />
-                    </div>
-                    <p className="text-[10px] text-gray-400 mt-1.5">
-                      {form.tipoInfortunio
-                        ? `${giorni} gg / ${expectedDays} gg previsti · ${form.tipoInfortunio}`
-                        : "Imposta la tipologia per una stima più precisa"}
-                    </p>
-                  </div>
-                )}
-              </div>
-            );
-          })()}
 
           <div>
             <Label>Note</Label>

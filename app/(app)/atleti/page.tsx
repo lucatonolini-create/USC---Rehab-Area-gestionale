@@ -921,22 +921,10 @@ export default function AtletiPage() {
                             {[atleta.posizione, atleta.tipoInfortunio].filter(Boolean).join(" · ")}
                           </p>
                         </div>
-                        <div className="shrink-0 flex flex-col items-end gap-1">
-                          <p className={`text-lg font-bold leading-none ${atleta.stato === "Disponibile" ? "text-green-500" : "text-[#C8102E]"}`}>
-                            {atleta.progresso}%
-                          </p>
+                        <div className="shrink-0 flex items-center">
                           <ChevronRight className="w-4 h-4 text-gray-200" />
                         </div>
                       </div>
-                      {atleta.stato !== "Disponibile" && (
-                        <div className="mt-3">
-                          <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full ${
-                              atleta.progresso >= 80 ? "bg-green-400" : atleta.progresso >= 50 ? "bg-yellow-400" : "bg-orange-400"
-                            }`} style={{ width: `${atleta.progresso}%` }} />
-                          </div>
-                        </div>
-                      )}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); if (confirm(`Eliminare ${nd(atleta)}?`)) elimina(atleta.id); }}
@@ -1038,23 +1026,6 @@ export default function AtletiPage() {
                     </div>
                   </div>
                 )}
-
-                <div className="bg-gray-50 rounded-xl p-3">
-                  <div className="flex justify-between mb-1.5">
-                    <p className="text-xs text-gray-400">Progresso recupero</p>
-                    <div className="flex items-center gap-1.5">
-                      {selected.progressoManuale !== undefined && (
-                        <span className="text-[10px] bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-full font-medium">
-                          Manuale
-                        </span>
-                      )}
-                      <p className="text-xs font-bold text-[#C8102E]">{selected.progresso}%</p>
-                    </div>
-                  </div>
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-[#C8102E] rounded-full" style={{ width: `${selected.progresso}%` }} />
-                  </div>
-                </div>
 
                 {/* Referti clinici */}
                 {selected.stato === "Infortunato" && (
@@ -1308,14 +1279,6 @@ export default function AtletiPage() {
                           <p className="text-xs text-gray-400">
                             Dal {fmtData(selected.inizioRehab)} <span className="text-orange-400 font-medium">· in corso</span>
                           </p>
-                          <div className="pt-1">
-                            <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                              <span>Recupero</span><span className="font-semibold text-orange-500">{selected.progresso}%</span>
-                            </div>
-                            <div className="h-1.5 bg-orange-100 rounded-full overflow-hidden">
-                              <div className="h-full bg-orange-400 rounded-full transition-all" style={{ width: `${selected.progresso}%` }} />
-                            </div>
-                          </div>
                         </div>
                       </div>
                     )}
