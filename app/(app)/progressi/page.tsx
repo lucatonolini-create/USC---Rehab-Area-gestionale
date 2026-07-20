@@ -178,9 +178,10 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     body: [
       ["Piede dominante", atleta.piedeDominante || "—"],
       ["Stato attuale", atleta.stato],
+      ...(atleta.note ? [["Note", atleta.note]] : [] as any),
     ],
     theme: "striped",
-    styles: { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize", halign: "left", valign: "middle" },
+    styles: { fontSize: 8.5, cellPadding: 3, overflow: "linebreak", halign: "left", valign: "middle" },
     columnStyles: { 0: { cellWidth: 58, fontStyle: "bold", textColor: dark }, 1: { textColor: dark } },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
