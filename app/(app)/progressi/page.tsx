@@ -47,7 +47,6 @@ function esportaCSV(atleta: Atleta, programmi: Programma[]) {
   rows.push(["Inizio riabilitazione", fmt(atleta.inizioRehab)]);
   rows.push(["Fine riabilitazione", fmt(atleta.fineRehab)]);
   rows.push(["Stato attuale", atleta.stato]);
-  rows.push(["Progresso recupero", `${atleta.progresso}%`]);
   if (atleta.note) rows.push(["Note", atleta.note]);
   rows.push([]);
 
@@ -408,15 +407,15 @@ function esportaCSVReportMensile(
   const rows: string[][] = [];
   rows.push([`U.S. CREMONESE – REHAB AREA – Report ${nomeP}${filtroCat !== "Tutte" ? ` – ${filtroCat}` : ""}`]);
   rows.push([]);
-  rows.push(["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "Progresso"]);
+  rows.push(["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato"]);
 
   atletiMese.forEach(a => {
     const infortuni = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
     if (infortuni.length === 0) {
-      rows.push([nd(a), a.categoria ?? "—", "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      rows.push([nd(a), a.categoria ?? "—", "—", "—", "—", "—", "—", a.stato]);
     } else {
       infortuni.forEach(inf => {
-        rows.push([nd(a), a.categoria ?? "—", inf.diagnosi, inf.tipo ?? "—", inf.inizio ? fmt(inf.inizio) : "—", inf.fine ? fmt(inf.fine) : "—", inf.inizio ? gg(inf.inizio, inf.fine) : "—", a.stato, `${a.progresso}%`]);
+        rows.push([nd(a), a.categoria ?? "—", inf.diagnosi, inf.tipo ?? "—", inf.inizio ? fmt(inf.inizio) : "—", inf.fine ? fmt(inf.fine) : "—", inf.inizio ? gg(inf.inizio, inf.fine) : "—", a.stato]);
       });
     }
   });
@@ -627,7 +626,7 @@ async function esportaPDFReportMensile(
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      pdfRows.push([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      pdfRows.push([nd(a), a.categoria, "—", "—", "—", "—", "—", a.stato]);
       athleteForRowP.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
@@ -645,7 +644,6 @@ async function esportaPDFReportMensile(
           inf.fine ? fmtDP(inf.fine) : "—",
           inf.inizio ? ggP(inf.inizio, inf.fine) : "—",
           a.stato,
-          `${a.progresso}%`,
         );
         pdfRows.push(row);
         athleteForRowP.push(athleteIdx);
@@ -655,15 +653,15 @@ async function esportaPDFReportMensile(
 
   autoTable(doc, {
     startY: y,
-    head: [["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "%"]],
+    head: [["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato"]],
     body: pdfRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 30 }, 1: { cellWidth: 20 }, 2: { cellWidth: 66 },
-      3: { cellWidth: 56, overflow: "ellipsize" }, 4: { cellWidth: 20 }, 5: { cellWidth: 20 },
-      6: { cellWidth: 14 }, 7: { cellWidth: 23 }, 8: { cellWidth: 12 },
+      0: { cellWidth: 34 }, 1: { cellWidth: 20 }, 2: { cellWidth: 72 },
+      3: { cellWidth: 60, overflow: "ellipsize" }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
+      6: { cellWidth: 16 }, 7: { cellWidth: 30 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
