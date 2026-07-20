@@ -18,7 +18,7 @@ const TIPI_INFORTUNIO = [
   "Lesione meniscale o cartilaginea","Malattia","Muscolare: Strappo/Stiramento/Crampo",
   "Tendineo: Tendinopatia/Lesione/Borsite","Vescica",
 ];
-const EVENTI_INFORTUNIO = ["Allenamento", "Partita"];
+const EVENTI_INFORTUNIO = ["Allenamento", "Extra Campo", "Partita"];
 const MECCANISMI_INFORTUNIO = [
   "Caduta/Tuffo","Calciato","Cambio direzione/Pivot","Colpo di testa",
   "Contrasto effettuato","Contrasto subito","Corsa/Sprint","Dribbling",

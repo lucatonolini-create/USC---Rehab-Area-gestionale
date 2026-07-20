@@ -56,7 +56,7 @@ export const TIPI_INFORTUNIO = [
 ] as const;
 export type TipoInfortunio = (typeof TIPI_INFORTUNIO)[number];
 
-export const EVENTI_INFORTUNIO = ["Allenamento", "Partita"] as const;
+export const EVENTI_INFORTUNIO = ["Allenamento", "Extra Campo", "Partita"] as const;
 export type EventoInfortunio = (typeof EVENTI_INFORTUNIO)[number];
 
 export const MECCANISMI_INFORTUNIO = [
