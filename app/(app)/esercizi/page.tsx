@@ -247,7 +247,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "GPS", "RPE"]],
+    head: [["Atleta", "Programma", "Fase", "Obiettivi Palestra", "Esercizi palestra", "VAS", "Obiettivi Campo", "Esercizi campo", "Test", "GPS", "RPE"]],
     body,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },

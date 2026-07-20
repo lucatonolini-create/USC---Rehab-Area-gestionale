@@ -216,7 +216,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 12 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Obiettivi Palestra", "Es. Palestra", "VAS", "Obiettivi Campo", "Es. Campo", "GPS", "VAS Campo", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Obiettivi Palestra", "Esercizi Palestra", "VAS", "Obiettivi Campo", "Esercizi Campo", "GPS", "VAS Campo", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
