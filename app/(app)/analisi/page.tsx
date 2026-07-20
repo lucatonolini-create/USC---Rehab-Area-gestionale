@@ -959,7 +959,7 @@ async function esportaPDFReport(
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", "—", "—", "—", a.stato]);
+      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", a.note || "—", "—", "—", "—", a.stato]);
       athleteForRowA.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
@@ -973,6 +973,7 @@ async function esportaPDFReport(
         row.push(
           inf.diagnosi,
           inf.tipo ?? "—",
+          a.note || "—",
           inf.inizio ? fmtDPdf(inf.inizio) : "—",
           inf.fine ? fmtDPdf(inf.fine) : "—",
           inf.inizio ? ggPdf(inf.inizio, inf.fine) : "—",
@@ -986,15 +987,15 @@ async function esportaPDFReport(
 
   autoTable(doc, {
     startY: y,
-    head: [["Atleta", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato"]],
+    head: [["Atleta", "Categoria", "Infortunio", "Tipo", "Note", "Inizio", "Fine", "Giorni", "Stato"]],
     body: analisiRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 34 }, 1: { cellWidth: 22 }, 2: { cellWidth: 64 },
-      3: { cellWidth: 58, overflow: "ellipsize" }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
-      6: { cellWidth: 16 }, 7: { cellWidth: 26 },
+      0: { cellWidth: 28 }, 1: { cellWidth: 16 }, 2: { cellWidth: 50 },
+      3: { cellWidth: 50 }, 4: { cellWidth: 50 }, 5: { cellWidth: 18 },
+      6: { cellWidth: 18 }, 7: { cellWidth: 13 }, 8: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
