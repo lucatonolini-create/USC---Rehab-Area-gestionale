@@ -67,34 +67,6 @@ function esportaCSV(atleta: Atleta, programmi: Programma[]) {
         });
       }
     });
-
-    const gpsRows = programmi.filter(p => {
-      const ca = p.carico;
-      return ca && (ca.rpe || ca.distanzaTotale || ca.hsr || ca.velocita21 || ca.velocita25 || ca.accelerazioni || ca.decelerazioni || ca.sprint || ca.potenzaMetabolica);
-    });
-    if (gpsRows.length > 0) {
-      rows.push([]);
-      rows.push(["DATI GPS / CARICO"]);
-      rows.push(["Data", "Programma", "RPE", "Durata (min)", "Distanza (m)", "Vel. max (km/h)", "Dist. >16 km/h (m)", "Dist. >20 km/h (m)", "Dist. >25 km/h (m)", "Acc.", "Dec.", "Sprint", "Pot. Metabolica (W/kg)"]);
-      gpsRows.forEach(prog => {
-        const ca = prog.carico;
-        const dataProg = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "—";
-        rows.push([
-          dataProg, prog.nome ?? "—",
-          ca.rpe ? `${ca.rpe}/10` : "—",
-          ca.durata || "—",
-          ca.distanzaTotale || "—",
-          ca.velocitaMax || "—",
-          ca.hsr || "—",
-          ca.velocita21 || "—",
-          ca.velocita25 || "—",
-          ca.accelerazioni || "—",
-          ca.decelerazioni || "—",
-          ca.sprint || "—",
-          ca.potenzaMetabolica || "—",
-        ]);
-      });
-    }
   }
 
   csvDownload(rows, `${nd(atleta).replace(/ /g, "_")}_rehab.csv`);
@@ -337,8 +309,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         }
 
         const ca = prog.carico;
-        const rpeStr = ca?.rpe ? `${ca.rpe}/10` : "—";
-        const rpe = [rpeStr, ca?.potenzaMetabolica ? `PM ${ca.potenzaMetabolica} W/kg` : ""].filter(Boolean).join("\n");
+        const rpe = ca?.rpe ? `${ca.rpe}/10` : "—";
 
         if (esercizi.length <= 1) {
           const esLine = esercizi.length === 1 ? (() => { const e = esercizi[0]; const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; })() : "—";
