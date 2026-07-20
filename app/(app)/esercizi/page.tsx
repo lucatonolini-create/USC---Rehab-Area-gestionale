@@ -128,6 +128,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
   const gray: [number, number, number] = [130, 130, 130];
   const logoDataUrl = await getLogoDataUrl();
   const dataFmt = new Date(data + "T12:00").toLocaleDateString("it-IT");
+  const dataConGiorno = (() => { const s = new Date(data + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }); return s.charAt(0).toUpperCase() + s.slice(1); })();
   const M = 14; const W = 297; const H = 210; const HDR = 30;
 
   const addHeader = () => {
@@ -136,9 +137,11 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
     const tx = logoDataUrl ? 30 : M;
     doc.setTextColor(...red); doc.setFontSize(13); doc.setFont("helvetica", "bold");
-    doc.text("U.S. Cremonese – Programmi del Giorno", tx, 14);
-    doc.setFontSize(9); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(dataFmt, tx, 22);
+    doc.text("U.S. Cremonese – Rehab Area", tx, 13);
+    doc.setFontSize(8.5); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
+    doc.text("Programmi del Giorno", tx, 19);
+    doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
+    doc.text(dataConGiorno, tx, 26);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
     doc.text(new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), W - M, 14, { align: "right" });
   };
