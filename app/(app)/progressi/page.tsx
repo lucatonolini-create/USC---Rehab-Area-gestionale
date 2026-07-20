@@ -200,7 +200,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         inf.fine ? fmtDCl(inf.fine) : "—",
         inf.inizio ? ggCl(inf.inizio, inf.fine) : "—",
       ]),
-      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
       bodyStyles: { fontSize: 8.5, cellPadding: 3, halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
@@ -362,6 +362,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 7;
+          data.cell.styles.halign = "center";
+          data.cell.styles.valign = "middle";
           data.cell.styles.cellPadding = { top: 2.5, bottom: 2.5, left: 2, right: 1 };
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];

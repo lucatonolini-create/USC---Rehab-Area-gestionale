@@ -133,7 +133,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   let y = 0;
   const bS = { fontSize: 8.5, cellPadding: 3, overflow: "ellipsize" as const, halign: "left" as const, valign: "middle" as const };
   const aS = { fillColor: [250, 250, 250] as [number, number, number] };
-  const hS = (fill: [number, number, number]) => ({ fillColor: fill, textColor: [255, 255, 255] as [number, number, number], fontSize: 7.5, halign: "left" as const, valign: "middle" as const });
+  const hS = (fill: [number, number, number]) => ({ fillColor: fill, textColor: [255, 255, 255] as [number, number, number], fontSize: 7.5, halign: "center" as const, valign: "middle" as const });
   const checkPage = (need: number, sub?: string) => { if (y + need > H - 18) { doc.addPage(); addHeader(sub); y = HDR + 8; } };
   const miniLabel = (text: string) => { doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); doc.setTextColor(...gray); doc.text(text, M, y); y += 3; };
 
@@ -344,6 +344,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
           data.cell.styles.fontSize = 5.8;
+          data.cell.styles.halign = "center";
+          data.cell.styles.valign = "middle";
           data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1.5, right: 1 };
         } else if (absenteRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [255, 237, 213];
@@ -489,7 +491,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       startY: y,
       head: [["Diagnosi / Infortunio", "Inizio", "Fine", "Sessioni"]],
       body: storicoBody,
-      headStyles: { fillColor: red, textColor: 255, fontSize: 7.5 },
+      headStyles: { fillColor: red, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
