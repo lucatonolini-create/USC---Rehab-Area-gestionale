@@ -181,7 +181,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
   for (const cat of [...categoriePres, ...altreCategorie]) {
     const lista = perCategoria.get(cat) ?? [];
     catRowIndices.add(body.length);
-    body.push([{ content: cat, colSpan: 10 }]);
+    body.push([{ content: cat, colSpan: 11 }]);
 
     for (const { atleta, prog } of lista) {
       const nomeAtleta = nd(atleta);
@@ -189,17 +189,17 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
       if (prog.assente) {
         absenteRowIndices.add(body.length);
-        body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
         dataRowCount++; continue;
       }
       if (prog.riposo) {
         riposoRowIndices.add(body.length);
-        body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
         dataRowCount++; continue;
       }
       if (prog.squadra) {
         squadraRowIndices.add(body.length);
-        body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 9, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
         dataRowCount++; continue;
       }
 
@@ -226,31 +226,45 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       }).join("\n") || "—";
       const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
 
+      const ca = prog.carico;
+      const gps = [
+        ca?.distanzaTotale ? `Dist ${ca.distanzaTotale}m` : "",
+        ca?.velocitaMax ? `Vmax ${ca.velocitaMax}km/h` : "",
+        ca?.hsr ? `>16: ${ca.hsr}m` : "",
+        ca?.velocita21 ? `>20: ${ca.velocita21}m` : "",
+        ca?.velocita25 ? `>25: ${ca.velocita25}m` : "",
+        ca?.accelerazioni ? `Acc ${ca.accelerazioni}` : "",
+        ca?.decelerazioni ? `Dec ${ca.decelerazioni}` : "",
+        ca?.sprint ? `Sprint ${ca.sprint}` : "",
+        ca?.potenzaMetabolica ? `PM ${ca.potenzaMetabolica}W/kg` : "",
+      ].filter(Boolean).join("\n") || "—";
+
       if (isAlt) altRowIndices.add(body.length);
-      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, tests, rpe]);
+      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, tests, rpe, gps]);
       dataRowCount++;
     }
   }
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "RPE"]],
+    head: [["Atleta", "Programma", "Fase", "Ob. Palestra", "Esercizi palestra", "VAS", "Ob. Campo", "Esercizi campo", "Test", "RPE", "GPS"]],
     body,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
     rowPageBreak: "avoid",
     margin: { left: M, right: M, top: HDR + 8 },
     columnStyles: {
-      0: { cellWidth: 26, fontStyle: "bold" },
-      1: { cellWidth: 26 },
-      2: { cellWidth: 26 },
-      3: { cellWidth: 24 },
-      4: { cellWidth: 40 },
-      5: { cellWidth: 12, halign: "center" as const },
-      6: { cellWidth: 22 },
-      7: { cellWidth: 36 },
-      8: { cellWidth: 44 },
-      9: { cellWidth: 13, halign: "center" as const },
+      0:  { cellWidth: 24, fontStyle: "bold" },
+      1:  { cellWidth: 22 },
+      2:  { cellWidth: 20 },
+      3:  { cellWidth: 18 },
+      4:  { cellWidth: 36 },
+      5:  { cellWidth: 10, halign: "center" as const },
+      6:  { cellWidth: 16 },
+      7:  { cellWidth: 28 },
+      8:  { cellWidth: 36 },
+      9:  { cellWidth: 11, halign: "center" as const },
+      10: { cellWidth: 48 },
     },
     didDrawPage: () => {
       addHeader();
