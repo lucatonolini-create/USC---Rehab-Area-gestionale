@@ -854,7 +854,7 @@ export default function ProgressiPage() {
       <div className="mb-6 flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Progressi</h1>
-          <p className="text-gray-500 mt-1">Aggiorna e scarica la scheda riabilitativa</p>
+          <p className="text-gray-500 mt-1">Aggiorna e scarica la scheda riabilitativa <span className="text-xs font-bold text-red-500">[v4-GPS]</span></p>
         </div>
         <div className="flex bg-gray-100 rounded-xl p-1">
           {(["progressi", "report"] as PageTab[]).map((t) => (
