@@ -210,7 +210,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         return parts.join(" ");
       });
       const esC = campoLines.join("\n") || "—";
-      const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
+      const rpeStr = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
+      const rpe = [rpeStr, prog.carico?.potenzaMetabolica ? `PM ${prog.carico.potenzaMetabolica} W/kg` : ""].filter(Boolean).join("\n");
       const esercizi = prog.esercizi ?? [];
 
       const testLines = (prog.tests ?? []).map((t) => {
