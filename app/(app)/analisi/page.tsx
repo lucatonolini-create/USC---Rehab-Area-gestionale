@@ -600,15 +600,15 @@ async function esportaPDFPanoramica(params: {
       head: [["Atleta", "Categoria", "Diagnosi", "Stato", "Inizio", "Fine"]],
       body: tuttiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
+      bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 26 },
-        2: { cellWidth: 60 },
-        3: { cellWidth: 28 },
-        4: { cellWidth: 18 },
-        5: { cellWidth: 18 },
+        0: { cellWidth: 38 },
+        1: { cellWidth: 22 },
+        2: { cellWidth: 72 },
+        3: { cellWidth: 26 },
+        4: { cellWidth: 16 },
+        5: { cellWidth: 16 },
       },
       didParseCell: (data: any) => {
         if (data.section === "body") {
