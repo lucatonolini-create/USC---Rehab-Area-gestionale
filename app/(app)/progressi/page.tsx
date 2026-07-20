@@ -178,7 +178,6 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     body: [
       ["Piede dominante", atleta.piedeDominante || "—"],
       ["Stato attuale", atleta.stato],
-      ...(atleta.note ? [["Note", atleta.note]] : [] as any),
     ],
     theme: "striped",
     styles: { fontSize: 8.5, cellPadding: 3, overflow: "linebreak", halign: "left", valign: "middle" },
