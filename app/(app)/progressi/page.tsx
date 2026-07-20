@@ -141,7 +141,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       doc.setPage(i);
       doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
       doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
-      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text("U.S. Cremonese · Rehab Area", M, H - 7);
       doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
     }
   };
@@ -484,7 +484,7 @@ async function esportaPDFReportMensile(
       doc.setPage(i);
       doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
       doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
-      doc.text("U.S. Cremonese · Rehab Area – Documento riservato", M, H - 7);
+      doc.text("U.S. Cremonese · Rehab Area", M, H - 7);
       doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
     }
   };
