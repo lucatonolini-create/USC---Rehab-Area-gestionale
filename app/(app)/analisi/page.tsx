@@ -179,16 +179,6 @@ function esportaCSVPanoramica(params: {
   params.trendMensile.forEach(({ label, count }) => rows.push([label, String(count)]));
   rows.push([]);
 
-  rows.push(["PROGRESSI MEDI PER CATEGORIA"]);
-  rows.push(["Categoria", "Attivi", "Guariti", "Progresso medio"]);
-  CATEGORIE.forEach(cat => {
-    const lista = params.atleti.filter(a => a.categoria === cat);
-    if (!lista.length) return;
-    const nAttivi = lista.filter(a => a.stato !== "Disponibile").length;
-    const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
-    rows.push([cat, String(nAttivi), String(lista.length - nAttivi), `${media}%`]);
-  });
-
   csvDownload(rows, `USC_Analisi_${oggi.replace(/\//g, "-")}.csv`);
 }
 
@@ -214,15 +204,15 @@ function esportaCSVReport(
   rows.push([`U.S. CREMONESE – REHAB AREA – Report ${subtitle}`]);
   rows.push([`Totale atleti: ${atletiMese.length}`, "", `Generato il ${oggi}`]);
   rows.push([]);
-  rows.push(["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "Progresso %"]);
+  rows.push(["Nome", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato"]);
 
   atletiMese.forEach(a => {
     const infortuni = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
     if (infortuni.length === 0) {
-      rows.push([nd(a), a.categoria ?? "—", "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      rows.push([nd(a), a.categoria ?? "—", "—", "—", "—", "—", "—", a.stato]);
     } else {
       infortuni.forEach(inf => {
-        rows.push([nd(a), a.categoria ?? "—", inf.diagnosi, inf.tipo ?? "—", inf.inizio ? fmt(inf.inizio) : "—", inf.fine ? fmt(inf.fine) : "—", inf.inizio ? gg(inf.inizio, inf.fine) : "—", a.stato, `${a.progresso}%`]);
+        rows.push([nd(a), a.categoria ?? "—", inf.diagnosi, inf.tipo ?? "—", inf.inizio ? fmt(inf.inizio) : "—", inf.fine ? fmt(inf.fine) : "—", inf.inizio ? gg(inf.inizio, inf.fine) : "—", a.stato]);
       });
     }
   });
@@ -561,29 +551,6 @@ async function esportaPDFPanoramica(params: {
     y = (doc as any).lastAutoTable.finalY + 8;
   }
 
-  const progressiRows = CATEGORIE.map((cat) => {
-    const lista = params.atleti.filter((a) => a.categoria === cat);
-    if (!lista.length) return null;
-    const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
-    const nAttivi = lista.filter((a) => a.stato !== "Disponibile").length;
-    return [cat, `${nAttivi} attivi / ${lista.length - nAttivi} guariti`, `${media}%`];
-  }).filter(Boolean) as any[][];
-
-  if (progressiRows.length > 0) {
-    if (y > 220) { doc.addPage(); addHeader(); y = HDR + 12; }
-    y = secTitle("Progresso medio di recupero per categoria", y);
-    autoTable(doc, {
-      startY: y,
-      head: [["Categoria", "Atleti (attivi / guariti)", "Progresso medio"]],
-      body: progressiRows,
-      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
-      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
-      alternateRowStyles: { fillColor: [250, 250, 250] },
-      margin: { left: M, right: M },
-      columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {} },
-    });
-  }
-
   // Lista completa atleti (tutti, inclusi guariti) – una riga per infortunio
   const fmtD = (d?: string) => d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—";
 
@@ -605,7 +572,7 @@ async function esportaPDFPanoramica(params: {
     const n = infortuni.length;
     const nomeDataStyle = { fontStyle: "bold" as const };
     if (n === 0) {
-      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", a.stato, "—", "—", `${a.progresso}%`]);
+      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", a.stato, "—", "—"]);
       athleteForRowT.push(athleteIdx);
     } else {
       infortuni.forEach((inf, infIdx) => {
@@ -616,7 +583,6 @@ async function esportaPDFPanoramica(params: {
             inf.diagnosi,
             { content: a.stato, rowSpan: n, styles: { valign: "middle" } },
             fmtD(inf.inizio), fmtD(inf.fine),
-            { content: `${a.progresso}%`, rowSpan: n, styles: { valign: "middle" } },
           ]);
         } else {
           tuttiRows.push([inf.diagnosi, fmtD(inf.inizio), fmtD(inf.fine)]);
@@ -631,19 +597,18 @@ async function esportaPDFPanoramica(params: {
     y = secTitle("Lista completa atleti", y);
     autoTable(doc, {
       startY: y,
-      head: [["Atleta", "Categoria", "Diagnosi", "Stato", "Inizio", "Fine", "%"]],
+      head: [["Atleta", "Categoria", "Diagnosi", "Stato", "Inizio", "Fine"]],
       body: tuttiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 36 },
-        1: { cellWidth: 22 },
-        2: { cellWidth: 52 },
-        3: { cellWidth: 24 },
-        4: { cellWidth: 16 },
-        5: { cellWidth: 16 },
-        6: { cellWidth: 16 },
+        0: { cellWidth: 40 },
+        1: { cellWidth: 26 },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 28 },
+        4: { cellWidth: 18 },
+        5: { cellWidth: 18 },
       },
       didParseCell: (data: any) => {
         if (data.section === "body") {
@@ -1010,7 +975,7 @@ async function esportaPDFReport(
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", "—", "—", "—", a.stato, `${a.progresso}%`]);
+      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", "—", "—", "—", a.stato]);
       athleteForRowA.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
@@ -1028,7 +993,6 @@ async function esportaPDFReport(
           inf.fine ? fmtDPdf(inf.fine) : "—",
           inf.inizio ? ggPdf(inf.inizio, inf.fine) : "—",
           a.stato,
-          `${a.progresso}%`,
         );
         analisiRows.push(row);
         athleteForRowA.push(athleteIdx);
@@ -1038,15 +1002,15 @@ async function esportaPDFReport(
 
   autoTable(doc, {
     startY: y,
-    head: [["Atleta", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato", "%"]],
+    head: [["Atleta", "Categoria", "Infortunio", "Tipo", "Inizio", "Fine", "Giorni", "Stato"]],
     body: analisiRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5 },
     bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 32 }, 1: { cellWidth: 20 }, 2: { cellWidth: 62 },
-      3: { cellWidth: 56, overflow: "ellipsize" }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
-      6: { cellWidth: 14 }, 7: { cellWidth: 24 }, 8: { cellWidth: 12 },
+      0: { cellWidth: 34 }, 1: { cellWidth: 22 }, 2: { cellWidth: 64 },
+      3: { cellWidth: 58, overflow: "ellipsize" }, 4: { cellWidth: 22 }, 5: { cellWidth: 22 },
+      6: { cellWidth: 16 }, 7: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
@@ -1539,40 +1503,6 @@ export default function AnalisiPage() {
             </div>
           </div>
 
-          {/* Progressi medi */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
-            <h2 className="font-bold text-gray-900 mb-1">Progresso medio di recupero per categoria</h2>
-            <p className="text-xs text-gray-400 mb-5">Tutti gli atleti – inclusi guariti (100%)</p>
-            {atleti.length === 0 ? (
-              <p className="text-gray-400 text-sm text-center py-6">Nessun atleta ancora</p>
-            ) : (
-              <div className="space-y-3">
-                {CATEGORIE.map((cat) => {
-                  const lista = atleti.filter((a) => a.categoria === cat);
-                  if (!lista.length) return null;
-                  const media = Math.round(lista.reduce((s, a) => s + a.progresso, 0) / lista.length);
-                  const nAttivi = lista.filter((a) => a.stato !== "Disponibile").length;
-                  const nGuariti = lista.length - nAttivi;
-                  return (
-                    <div key={cat}>
-                      <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span className="font-semibold">{cat}</span>
-                        <span className="font-bold text-[#C8102E]">{media}%
-                          {nGuariti > 0 && <span className="text-gray-400 font-normal ml-1">({nAttivi} attivi · {nGuariti} guariti)</span>}
-                        </span>
-                      </div>
-                      <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all duration-500 ${
-                          media >= 75 ? "bg-green-500" : media >= 40 ? "bg-yellow-400" : "bg-orange-500"
-                        }`} style={{ width: `${media}%` }} />
-                      </div>
-                    </div>
-                  );
-                }).filter(Boolean)}
-              </div>
-            )}
-          </div>
-
           {/* Lista completa atleti */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="p-5 border-b border-gray-100 flex items-center justify-between">
@@ -1589,17 +1519,16 @@ export default function AnalisiPage() {
               </div>
             ) : (
               <>
-                <div className="hidden md:grid grid-cols-5 px-5 py-2 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <div className="hidden md:grid grid-cols-4 px-5 py-2 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   <span className="col-span-2">Atleta</span>
                   <span>Infortunio</span>
                   <span className="text-center">Stato</span>
-                  <span className="text-right">Progresso</span>
                 </div>
                 <div className="divide-y divide-gray-50">
                   {[...atleti]
                     .sort((a, b) => a.stato === b.stato ? nd(a).localeCompare(nd(b)) : a.stato === "Infortunato" ? -1 : 1)
                     .map((a) => (
-                      <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-center px-5 py-4 hover:bg-gray-50 gap-2">
+                      <div key={a.id} className="grid grid-cols-1 md:grid-cols-4 items-center px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {nd(a).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
@@ -1614,13 +1543,6 @@ export default function AnalisiPage() {
                         </p>
                         <div className="flex md:justify-center">
                           <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>{a.stato}</span>
-                        </div>
-                        <div className="flex flex-col items-end gap-1">
-                          <span className="text-sm font-bold text-gray-900">{a.progresso}%</span>
-                          <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                            <div className={`h-full rounded-full ${a.progresso >= 75 ? "bg-green-500" : a.progresso >= 40 ? "bg-yellow-400" : "bg-orange-500"}`}
-                              style={{ width: `${a.progresso}%` }} />
-                          </div>
                         </div>
                       </div>
                     ))}
@@ -1735,17 +1657,16 @@ export default function AnalisiPage() {
               </div>
             ) : (
               <>
-                <div className="hidden md:grid grid-cols-5 px-5 py-2 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                <div className="hidden md:grid grid-cols-4 px-5 py-2 bg-gray-50 text-xs font-semibold text-gray-400 uppercase tracking-wide">
                   <span className="col-span-2">Atleta</span>
                   <span>Infortunio</span>
                   <span className="text-center">Stato</span>
-                  <span className="text-right">Progresso</span>
                 </div>
                 <div className="divide-y divide-gray-50">
                   {atletiMese.map((a) => {
                     const infortuni = infortunitNelPeriodo(a, mesiPeriodo);
                     return (
-                      <div key={a.id} className="grid grid-cols-1 md:grid-cols-5 items-start px-5 py-4 hover:bg-gray-50 gap-2">
+                      <div key={a.id} className="grid grid-cols-1 md:grid-cols-4 items-start px-5 py-4 hover:bg-gray-50 gap-2">
                         <div className="col-span-2 flex items-center gap-3">
                           <div className="w-8 h-8 bg-[#2B2B2B] rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {nd(a).trim().split(/\s+/).filter(Boolean).slice(0,2).map((w:string)=>(w[0]??"").toUpperCase()).join("")}
@@ -1775,9 +1696,6 @@ export default function AnalisiPage() {
                           <span className={`text-xs px-2 py-1 rounded-full font-medium ${statoColor[a.stato]}`}>
                             {a.stato}
                           </span>
-                        </div>
-                        <div className="md:text-right">
-                          <span className="text-lg font-bold text-[#C8102E]">{a.progresso}%</span>
                         </div>
                       </div>
                     );
