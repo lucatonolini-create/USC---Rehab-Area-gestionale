@@ -13,6 +13,7 @@ export const OBIETTIVI_PALESTRA = [
   "Compound",
   "Controllo motorio",
   "Core",
+  "Eccentriche",
   "Forza esplosiva",
   "Forza massima",
   "Forza strutturale",
