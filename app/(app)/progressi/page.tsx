@@ -1023,7 +1023,7 @@ export default function ProgressiPage() {
               <div className="divide-y divide-gray-50">
                 {/* Raggruppamento per categoria */}
                 {CATEGORIE.map((cat) => {
-                  const lista = atletiMese.filter((a) => a.categoria === cat);
+                  const lista = atletiMese.filter((a) => a.categoria === cat).sort((a, b) => nd(a).localeCompare(nd(b), "it"));
                   if (!lista.length) return null;
                   return (
                     <div key={cat}>
