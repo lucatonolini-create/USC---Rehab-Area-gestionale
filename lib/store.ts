@@ -137,6 +137,7 @@ export interface QuestionarioKinesiofobia {
   data: string;
   risposte: number[];
   punteggio: number;
+  tipoTest?: "TSK" | "AFAQ";
   infortunioId?: string;
   infortunioLabel?: string;
 }

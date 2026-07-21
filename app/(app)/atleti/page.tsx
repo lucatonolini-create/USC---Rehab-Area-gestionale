@@ -539,12 +539,13 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     // RTS evaluations for this injury
     if (injQRTS.length > 0) {
       checkPage(20, sub);
-      y = secTitle("Valutazione psicologica – RTS Score (ACL-RSI adattato)", y);
+      y = secTitle("Valutazione psicologica – TSK / AFAQ", y);
       autoTable(doc, {
         startY: y,
-        head: [["Data", "Punteggio", "Interpretazione"]],
+        head: [["Data", "Test", "Punteggio", "Interpretazione"]],
         body: [...injQRTS].sort((a, b) => a.data.localeCompare(b.data)).map((q) => [
           new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
+          q.tipoTest ?? "—",
           `${q.punteggio} / 100`,
           interpretaRTS(q.punteggio),
         ]),
@@ -552,7 +553,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         bodyStyles: bS,
         alternateRowStyles: aS,
         margin: { left: M, right: M },
-        columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 28, fontStyle: "bold" } },
+        columnStyles: { 0: { cellWidth: 28 }, 1: { cellWidth: 20, fontStyle: "bold" }, 2: { cellWidth: 28, fontStyle: "bold" } },
       });
       y = (doc as any).lastAutoTable.finalY + 6;
       if (injQRTS.length >= 2) drawChart(injQRTS, sub);
@@ -623,6 +624,7 @@ export default function AtletiPage() {
   const [nuovaDataRTS, setNuovaDataRTS] = useState(new Date().toISOString().split("T")[0]);
   const [nuovoPunteggioRTS, setNuovoPunteggioRTS] = useState("");
   const [nuovoInfRTS, setNuovoInfRTS] = useState("__corrente__");
+  const [nuovoTipoTestRTS, setNuovoTipoTestRTS] = useState<"TSK" | "AFAQ">("TSK");
   const [copiatoLink, setCopiatoLink] = useState<1 | 2 | null>(null);
 
   useEffect(() => {
@@ -1197,11 +1199,11 @@ export default function AtletiPage() {
                 {(() => {
                   const RTS_LINKS = [
                     {
-                      label: "Questionario RTS – Form 1",
+                      label: "TSK",
                       url: "https://forms.office.com/Pages/ResponsePage.aspx?id=CREOqWwXdkiWTKzKjAALjNSS0wTFlW1DpdKz-oP2BAVUMTNNNlNYM0RJUE44RVZQMEgyQkJBVk5YTy4u",
                     },
                     {
-                      label: "Questionario RTS – Form 2",
+                      label: "AFAQ",
                       url: "https://forms.office.com/pages/responsepage.aspx?id=CREOqWwXdkiWTKzKjAALjNSS0wTFlW1DpdKz-oP2BAVUOE8yTDdPMkpLNUdLTTlQQkVMTFQwTzlaMC4u&route=shorturl",
                     },
                   ] as const;
@@ -1222,6 +1224,7 @@ export default function AtletiPage() {
                     if (!nuovaDataRTS || isNaN(p) || p < 0 || p > 100) return;
                     const nuovoQ: QuestionarioKinesiofobia = {
                       id: uid(), data: nuovaDataRTS, risposte: [], punteggio: p,
+                      tipoTest: nuovoTipoTestRTS,
                       infortunioId: nuovoInfRTS || undefined,
                     };
                     const aggiornati = [...(selected.questionariKinesiofobia ?? []), nuovoQ];
@@ -1281,6 +1284,11 @@ export default function AtletiPage() {
                         {mostraPunteggioRTS && (
                           <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3 space-y-2">
                             <div className="flex gap-2">
+                              <select value={nuovoTipoTestRTS} onChange={(e) => setNuovoTipoTestRTS(e.target.value as "TSK" | "AFAQ")}
+                                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white font-semibold">
+                                <option value="TSK">TSK</option>
+                                <option value="AFAQ">AFAQ</option>
+                              </select>
                               <input type="date" value={nuovaDataRTS} onChange={(e) => setNuovaDataRTS(e.target.value)}
                                 className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
                               <input type="number" min={0} max={100} placeholder="Punteggio (0–100)"
@@ -1312,6 +1320,7 @@ export default function AtletiPage() {
                               return (
                                 <div key={q.id} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-3 py-2">
                                   <div>
+                                    {q.tipoTest && <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mr-2">{q.tipoTest}</span>}
                                     <span className={`text-sm font-bold ${colore}`}>{q.punteggio}/100</span>
                                     <span className="text-xs text-gray-400 ml-2">{new Date(q.data + "T12:00").toLocaleDateString("it-IT")}</span>
                                     {inf && <p className="text-[11px] text-gray-400 mt-0.5">{inf.label}</p>}
