@@ -220,7 +220,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
   // ── Sessioni: tabella settimanale compatta ──────────────────────────────────
   if (programmi.length > 0) {
     doc.addPage();
-    addHeader(`${nd(atleta)}  ·  Sessioni di lavoro`);
+    addHeader(`${nd(atleta)}  ·  ${atleta.categoria}`);
     y = HDR + 8;
     y = secTitle(`Sessioni di lavoro — ${programmi.length} sessioni`, y);
 
@@ -333,7 +333,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       body,
       bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M, top: HDR + 8 },
-      didDrawPage: () => { addHeader(`${nd(atleta)}  ·  Sessioni di lavoro`); },
+      didDrawPage: () => { addHeader(`${nd(atleta)}  ·  ${atleta.categoria}`); },
       columnStyles: {
         0:  { cellWidth: 15 },
         1:  { cellWidth: 22 },
