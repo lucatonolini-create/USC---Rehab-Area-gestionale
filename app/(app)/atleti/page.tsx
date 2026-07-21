@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X } from "lucide-react";
+import { Plus, Search, User, ChevronRight, Phone, Mail, Trash2, AlertTriangle, CheckCircle2, Clock, Pencil, RotateCcw, FileDown, X, ExternalLink, Copy, Check } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertAtleta, deleteAtleta, uid, nd,
   subscribeToAtleti, subscribeToProgrammi, subscribeToIntakeInsert,
@@ -12,7 +12,6 @@ import {
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
-import QuestionarioTSK from "@/components/QuestionarioTSK";
 
 const MAPPING_KEY = "perf_athlete_mapping";
 function getPerfId(rehabId: string): string | null {
@@ -620,6 +619,11 @@ export default function AtletiPage() {
   const [programmiAtleta, setProgrammiAtleta] = useState<Programma[]>([]);
   const [nuovoReferto, setNuovoReferto] = useState<{ data: string; tipo: TipoReferto | ""; esito: EsitoReferto | ""; note: string } | null>(null);
   const [editingRefertoId, setEditingRefertoId] = useState<string | null>(null);
+  const [mostraPunteggioRTS, setMostraPunteggioRTS] = useState(false);
+  const [nuovaDataRTS, setNuovaDataRTS] = useState(new Date().toISOString().split("T")[0]);
+  const [nuovoPunteggioRTS, setNuovoPunteggioRTS] = useState("");
+  const [nuovoInfRTS, setNuovoInfRTS] = useState("__corrente__");
+  const [copiatoLink, setCopiatoLink] = useState<1 | 2 | null>(null);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -1189,21 +1193,141 @@ export default function AtletiPage() {
               </div>
             ) : tab === "cartella" ? (
               <div className="space-y-5">
-                <QuestionarioTSK
-                  questionari={selected.questionariKinesiofobia ?? []}
-                  atletaNome={selected.nome}
-                  infortuni={[
+                {/* ── Questionari RTS (link Office Forms) ── */}
+                {(() => {
+                  const RTS_LINKS = [
+                    {
+                      label: "Questionario RTS – Form 1",
+                      url: "https://forms.office.com/Pages/ResponsePage.aspx?id=CREOqWwXdkiWTKzKjAALjNSS0wTFlW1DpdKz-oP2BAVUMTNNNlNYM0RJUE44RVZQMEgyQkJBVk5YTy4u",
+                    },
+                    {
+                      label: "Questionario RTS – Form 2",
+                      url: "https://forms.office.com/pages/responsepage.aspx?id=CREOqWwXdkiWTKzKjAALjNSS0wTFlW1DpdKz-oP2BAVUOE8yTDdPMkpLNUdLTTlQQkVMTFQwTzlaMC4u&route=shorturl",
+                    },
+                  ] as const;
+
+                  const infortuniOpts = [
                     ...(selected.stato === "Infortunato" && (selected.infortunio || selected.inizioRehab) ? [{
                       id: "__corrente__",
-                      label: `In corso: ${selected.infortunio || "—"}${selected.inizioRehab ? ` · dal ${new Date(selected.inizioRehab + "T12:00").toLocaleDateString("it-IT")}` : ""}`,
+                      label: `In corso: ${selected.infortunio || "—"}`,
                     }] : []),
                     ...[...(selected.storicoInfortuni ?? [])].reverse().map((inf) => ({
                       id: inf.id,
-                      label: `${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""} · ${inf.inizioRehab ? new Date(inf.inizioRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"} → ${inf.fineRehab ? new Date(inf.fineRehab + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"}`,
+                      label: `${inf.diagnosi}${inf.tipo ? ` (${inf.tipo})` : ""}`,
                     })),
-                  ]}
-                  onSalva={salvaQuestionnaire}
-                />
+                  ];
+
+                  const punteggioSalva = async () => {
+                    const p = parseInt(nuovoPunteggioRTS, 10);
+                    if (!nuovaDataRTS || isNaN(p) || p < 0 || p > 100) return;
+                    const nuovoQ: QuestionarioKinesiofobia = {
+                      id: uid(), data: nuovaDataRTS, risposte: [], punteggio: p,
+                      infortunioId: nuovoInfRTS || undefined,
+                    };
+                    const aggiornati = [...(selected.questionariKinesiofobia ?? []), nuovoQ];
+                    await salvaQuestionnaire(aggiornati);
+                    setNuovoPunteggioRTS("");
+                    setNuovaDataRTS(new Date().toISOString().split("T")[0]);
+                    setMostraPunteggioRTS(false);
+                  };
+
+                  const eliminaPunteggio = async (id: string) => {
+                    const aggiornati = (selected.questionariKinesiofobia ?? []).filter((q) => q.id !== id);
+                    await salvaQuestionnaire(aggiornati);
+                  };
+
+                  const copia = (idx: 1 | 2, url: string) => {
+                    navigator.clipboard.writeText(url);
+                    setCopiatoLink(idx);
+                    setTimeout(() => setCopiatoLink(null), 2000);
+                  };
+
+                  return (
+                    <div className="space-y-3">
+                      <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Questionari RTS</p>
+                      {RTS_LINKS.map((lnk, i) => (
+                        <div key={i} className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2">
+                          <p className="text-xs font-semibold text-gray-700">{lnk.label}</p>
+                          <p className="text-[11px] text-gray-400 break-all leading-relaxed">{lnk.url}</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => copia((i + 1) as 1 | 2, lnk.url)}
+                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 transition-colors"
+                            >
+                              {copiatoLink === i + 1 ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                              {copiatoLink === i + 1 ? "Copiato!" : "Copia link"}
+                            </button>
+                            <a
+                              href={lnk.url} target="_blank" rel="noopener noreferrer"
+                              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#C8102E] text-white hover:bg-[#a50d26] transition-colors"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              Apri form
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Punteggi registrati */}
+                      <div className="pt-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-bold text-gray-500 uppercase tracking-widest">Punteggi RTS registrati</p>
+                          <button onClick={() => setMostraPunteggioRTS((v) => !v)}
+                            className="text-xs font-semibold text-[#C8102E] flex items-center gap-1">
+                            <Plus className="w-3.5 h-3.5" /> Aggiungi
+                          </button>
+                        </div>
+
+                        {mostraPunteggioRTS && (
+                          <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3 space-y-2">
+                            <div className="flex gap-2">
+                              <input type="date" value={nuovaDataRTS} onChange={(e) => setNuovaDataRTS(e.target.value)}
+                                className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
+                              <input type="number" min={0} max={100} placeholder="Punteggio (0–100)"
+                                value={nuovoPunteggioRTS} onChange={(e) => setNuovoPunteggioRTS(e.target.value)}
+                                className="w-36 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
+                            </div>
+                            {infortuniOpts.length > 0 && (
+                              <select value={nuovoInfRTS} onChange={(e) => setNuovoInfRTS(e.target.value)}
+                                className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white">
+                                {infortuniOpts.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+                              </select>
+                            )}
+                            <div className="flex gap-2 justify-end">
+                              <button onClick={() => setMostraPunteggioRTS(false)}
+                                className="text-xs text-gray-500 px-3 py-1.5 rounded-lg border border-gray-200 bg-white">Annulla</button>
+                              <button onClick={punteggioSalva}
+                                className="text-xs font-semibold text-white px-3 py-1.5 rounded-lg bg-[#C8102E] hover:bg-[#a50d26]">Salva</button>
+                            </div>
+                          </div>
+                        )}
+
+                        {(selected.questionariKinesiofobia ?? []).length === 0 ? (
+                          <p className="text-xs text-gray-400 italic">Nessun punteggio registrato</p>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {[...(selected.questionariKinesiofobia ?? [])].sort((a, b) => b.data.localeCompare(a.data)).map((q) => {
+                              const colore = q.punteggio >= 75 ? "text-green-600" : q.punteggio >= 56 ? "text-orange-500" : "text-red-600";
+                              const inf = infortuniOpts.find((o) => o.id === q.infortunioId);
+                              return (
+                                <div key={q.id} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-3 py-2">
+                                  <div>
+                                    <span className={`text-sm font-bold ${colore}`}>{q.punteggio}/100</span>
+                                    <span className="text-xs text-gray-400 ml-2">{new Date(q.data + "T12:00").toLocaleDateString("it-IT")}</span>
+                                    {inf && <p className="text-[11px] text-gray-400 mt-0.5">{inf.label}</p>}
+                                  </div>
+                                  <button onClick={() => eliminaPunteggio(q.id)} className="text-gray-300 hover:text-red-400 transition-colors">
+                                    <X className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="border-t border-gray-100 pt-4">
                   <CartellaClinaca
                     atletaId={selected.id}
