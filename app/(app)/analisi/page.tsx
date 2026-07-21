@@ -259,7 +259,6 @@ async function esportaPDFPanoramica(params: {
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
     doc.text("Analisi Rehab Area", tx, 19);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
@@ -645,7 +644,6 @@ async function esportaPDFReport(
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
     doc.text("Report", tx, 19);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {

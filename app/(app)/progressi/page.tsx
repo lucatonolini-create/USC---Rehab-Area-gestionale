@@ -124,7 +124,6 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     doc.text("Scheda Riabilitativa", tx, 19);
     if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 24); }
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
@@ -445,7 +444,6 @@ async function esportaPDFReportMensile(
     doc.setTextColor(...red); doc.setFontSize(11); doc.setFont("helvetica", "bold");
     doc.text("U.S. Cremonese – Report", tx, 13);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 13, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {

@@ -143,7 +143,6 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
     doc.text(dataConGiorno, tx, 26);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), W - M, 14, { align: "right" });
   };
 
   const addFooter = () => {
@@ -337,7 +336,6 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
     doc.text(`Periodo: ${periodoLabel}`, tx, 26);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), W - M, 14, { align: "right" });
   };
 
   const addFooter = () => {

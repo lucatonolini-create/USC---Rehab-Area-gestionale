@@ -102,7 +102,6 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.text("Scheda Completa Atleta", tx, 19);
     if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 24); }
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
-    doc.text(oggi, W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number, fill?: [number, number, number]) => {
