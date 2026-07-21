@@ -28,6 +28,7 @@ export const OBIETTIVI_PALESTRA = [
 
 export const OBIETTIVI_CAMPO = [
   "Accelerazioni/Decelerazioni",
+  "Attivazione muscolare",
   "Cambi di direzione",
   "HSR",
   "Lavoro tecnico",
