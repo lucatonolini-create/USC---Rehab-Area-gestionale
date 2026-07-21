@@ -273,7 +273,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           ca?.decelerazioni ? `N.Dec: ${ca.decelerazioni}` : "",
           ca?.sprint ? `N.Spr: ${ca.sprint}` : "",
           ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
-        ].filter(Boolean).join("\n") || "—";
+        ].filter(Boolean).map((s) => `- ${s}`).join("\n") || "—";
 
         const esText = esercizi.map((e, i) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`; }).join("\n") || "—";
         const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
