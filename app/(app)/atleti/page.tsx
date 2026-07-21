@@ -622,9 +622,9 @@ export default function AtletiPage() {
   const [editingRefertoId, setEditingRefertoId] = useState<string | null>(null);
   const [mostraPunteggioRTS, setMostraPunteggioRTS] = useState(false);
   const [nuovaDataRTS, setNuovaDataRTS] = useState(new Date().toISOString().split("T")[0]);
-  const [nuovoPunteggioRTS, setNuovoPunteggioRTS] = useState("");
+  const [nuovoPunteggioTSK, setNuovoPunteggioTSK] = useState("");
+  const [nuovoPunteggioAFAQ, setNuovoPunteggioAFAQ] = useState("");
   const [nuovoInfRTS, setNuovoInfRTS] = useState("__corrente__");
-  const [nuovoTipoTestRTS, setNuovoTipoTestRTS] = useState<"TSK" | "AFAQ">("TSK");
   const [copiatoLink, setCopiatoLink] = useState<1 | 2 | null>(null);
 
   useEffect(() => {
@@ -1220,16 +1220,18 @@ export default function AtletiPage() {
                   ];
 
                   const punteggioSalva = async () => {
-                    const p = parseInt(nuovoPunteggioRTS, 10);
-                    if (!nuovaDataRTS || isNaN(p) || p < 0 || p > 100) return;
-                    const nuovoQ: QuestionarioKinesiofobia = {
-                      id: uid(), data: nuovaDataRTS, risposte: [], punteggio: p,
-                      tipoTest: nuovoTipoTestRTS,
-                      infortunioId: nuovoInfRTS || undefined,
-                    };
-                    const aggiornati = [...(selected.questionariKinesiofobia ?? []), nuovoQ];
+                    const pTSK = nuovoPunteggioTSK !== "" ? parseInt(nuovoPunteggioTSK, 10) : null;
+                    const pAFAQ = nuovoPunteggioAFAQ !== "" ? parseInt(nuovoPunteggioAFAQ, 10) : null;
+                    if (!nuovaDataRTS || (pTSK === null && pAFAQ === null)) return;
+                    const nuovi: QuestionarioKinesiofobia[] = [];
+                    if (pTSK !== null && !isNaN(pTSK))
+                      nuovi.push({ id: uid(), data: nuovaDataRTS, risposte: [], punteggio: pTSK, tipoTest: "TSK", infortunioId: nuovoInfRTS || undefined });
+                    if (pAFAQ !== null && !isNaN(pAFAQ))
+                      nuovi.push({ id: uid(), data: nuovaDataRTS, risposte: [], punteggio: pAFAQ, tipoTest: "AFAQ", infortunioId: nuovoInfRTS || undefined });
+                    const aggiornati = [...(selected.questionariKinesiofobia ?? []), ...nuovi];
                     await salvaQuestionnaire(aggiornati);
-                    setNuovoPunteggioRTS("");
+                    setNuovoPunteggioTSK("");
+                    setNuovoPunteggioAFAQ("");
                     setNuovaDataRTS(new Date().toISOString().split("T")[0]);
                     setMostraPunteggioRTS(false);
                   };
@@ -1283,17 +1285,21 @@ export default function AtletiPage() {
 
                         {mostraPunteggioRTS && (
                           <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3 space-y-2">
+                            <input type="date" value={nuovaDataRTS} onChange={(e) => setNuovaDataRTS(e.target.value)}
+                              className="w-full text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
                             <div className="flex gap-2">
-                              <select value={nuovoTipoTestRTS} onChange={(e) => setNuovoTipoTestRTS(e.target.value as "TSK" | "AFAQ")}
-                                className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white font-semibold">
-                                <option value="TSK">TSK</option>
-                                <option value="AFAQ">AFAQ</option>
-                              </select>
-                              <input type="date" value={nuovaDataRTS} onChange={(e) => setNuovaDataRTS(e.target.value)}
-                                className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
-                              <input type="number" min={0} max={100} placeholder="Punteggio (0–100)"
-                                value={nuovoPunteggioRTS} onChange={(e) => setNuovoPunteggioRTS(e.target.value)}
-                                className="w-36 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white" />
+                              <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide w-10">TSK</span>
+                                <input type="number" min={0} max={100} placeholder="0–100"
+                                  value={nuovoPunteggioTSK} onChange={(e) => setNuovoPunteggioTSK(e.target.value)}
+                                  className="flex-1 text-xs bg-transparent outline-none" />
+                              </div>
+                              <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
+                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide w-10">AFAQ</span>
+                                <input type="number" min={0} max={100} placeholder="0–100"
+                                  value={nuovoPunteggioAFAQ} onChange={(e) => setNuovoPunteggioAFAQ(e.target.value)}
+                                  className="flex-1 text-xs bg-transparent outline-none" />
+                              </div>
                             </div>
                             {infortuniOpts.length > 0 && (
                               <select value={nuovoInfRTS} onChange={(e) => setNuovoInfRTS(e.target.value)}
