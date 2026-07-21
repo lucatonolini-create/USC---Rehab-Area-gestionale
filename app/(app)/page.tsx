@@ -59,9 +59,10 @@ export default function Dashboard() {
   const inRecupero = atleti.filter((a) => a.stato === "Infortunato").length;
   const guariti    = atleti.filter((a) => a.stato === "Disponibile").length;
 
-  const atletiFiltrati = filtroCategoria === "Tutti"
+  const atletiFiltrati = (filtroCategoria === "Tutti"
     ? atleti
-    : atleti.filter((a) => a.categoria === filtroCategoria);
+    : atleti.filter((a) => a.categoria === filtroCategoria)
+  ).slice().sort((a, b) => nd(a).localeCompare(nd(b), "it"));
 
   const infortunatiIds = new Set(atleti.filter((a) => a.stato === "Infortunato").map((a) => a.id));
   const programmiReali = programmi.filter((p) => !p.riposo);
