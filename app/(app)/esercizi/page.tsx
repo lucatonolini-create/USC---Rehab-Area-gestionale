@@ -302,6 +302,208 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
   doc.save(`USC_Programmi_${data}.pdf`);
 }
 
+async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti: Atleta[], tuttiProgrammi: Programma[]) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
+  const progNelPeriodo = tuttiProgrammi.filter((p) => p.data >= dataInizio && p.data <= dataFine);
+  if (progNelPeriodo.length === 0) return;
+
+  const perData = new Map<string, Programma[]>();
+  for (const prog of progNelPeriodo) {
+    if (!perData.has(prog.data)) perData.set(prog.data, []);
+    perData.get(prog.data)!.push(prog);
+  }
+  const dateOrdinate = Array.from(perData.keys()).sort();
+
+  const doc = new jsPDF({ orientation: "landscape" });
+  const red: [number, number, number] = [200, 16, 46];
+  const dark: [number, number, number] = [43, 43, 43];
+  const gray: [number, number, number] = [130, 130, 130];
+  const logoDataUrl = await getLogoDataUrl();
+  const fmtD = (d: string) => new Date(d + "T12:00").toLocaleDateString("it-IT");
+  const periodoLabel = `${fmtD(dataInizio)} – ${fmtD(dataFine)}`;
+  const M = 14; const W = 297; const H = 210; const HDR = 30;
+
+  const addHeader = () => {
+    doc.setFillColor(247, 247, 247); doc.rect(0, 0, W, HDR, "F");
+    doc.setDrawColor(...red); doc.setLineWidth(0.4); doc.line(0, HDR, W, HDR);
+    if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", 4, 4, 22, 22);
+    const tx = logoDataUrl ? 30 : M;
+    doc.setTextColor(...red); doc.setFontSize(13); doc.setFont("helvetica", "bold");
+    doc.text("U.S. Cremonese – Rehab Area", tx, 13);
+    doc.setFontSize(8.5); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
+    doc.text("Programmi di Lavoro", tx, 19);
+    doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
+    doc.text(`Periodo: ${periodoLabel}`, tx, 26);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.text(new Date().toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }), W - M, 14, { align: "right" });
+  };
+
+  const addFooter = () => {
+    const tot = doc.getNumberOfPages();
+    for (let i = 1; i <= tot; i++) {
+      doc.setPage(i);
+      doc.setDrawColor(210, 210, 210); doc.setLineWidth(0.3); doc.line(M, H - 12, W - M, H - 12);
+      doc.setFont("helvetica", "normal"); doc.setFontSize(7); doc.setTextColor(...gray);
+      doc.text("U.S. Cremonese · Rehab Area", M, H - 7);
+      doc.text(`Pagina ${i} di ${tot}`, W - M, H - 7, { align: "right" });
+    }
+  };
+
+  addHeader();
+
+  const body: any[] = [];
+  const dateRowIndices = new Set<number>();
+  const catRowIndices = new Set<number>();
+  const absenteRowIndices = new Set<number>();
+  const riposoRowIndices = new Set<number>();
+  const squadraRowIndices = new Set<number>();
+  const altRowIndices = new Set<number>();
+  const CATEGORIE_ORD = ["U19", "U17", "U16", "U15", "U14"];
+
+  for (const data of dateOrdinate) {
+    const progDelGiorno = perData.get(data) ?? [];
+    const dataConGiorno = (() => { const s = new Date(data + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }); return s.charAt(0).toUpperCase() + s.slice(1); })();
+    dateRowIndices.add(body.length);
+    body.push([{ content: dataConGiorno, colSpan: 12 }]);
+
+    const perCategoria = new Map<string, { atleta: Atleta; prog: Programma }[]>();
+    for (const prog of progDelGiorno) {
+      const atleta = atleti.find((a) => a.id === prog.atletaId);
+      if (!atleta) continue;
+      const cat = atleta.categoria ?? "—";
+      if (!perCategoria.has(cat)) perCategoria.set(cat, []);
+      perCategoria.get(cat)!.push({ atleta, prog });
+    }
+
+    const categoriePres = CATEGORIE_ORD.filter((c) => perCategoria.has(c));
+    const altreCategorie = Array.from(perCategoria.keys()).filter((c) => !CATEGORIE_ORD.includes(c)).sort();
+    let dataRowCount = 0;
+
+    for (const cat of [...categoriePres, ...altreCategorie]) {
+      const lista = perCategoria.get(cat) ?? [];
+      catRowIndices.add(body.length);
+      body.push([{ content: cat, colSpan: 12 }]);
+
+      for (const { atleta, prog } of lista) {
+        const nomeAtleta = nd(atleta);
+        const isAlt = dataRowCount % 2 === 1;
+
+        if (prog.assente) {
+          absenteRowIndices.add(body.length);
+          body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          dataRowCount++; continue;
+        }
+        if (prog.riposo) {
+          riposoRowIndices.add(body.length);
+          body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          dataRowCount++; continue;
+        }
+        if (prog.squadra) {
+          squadraRowIndices.add(body.length);
+          body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          dataRowCount++; continue;
+        }
+
+        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
+        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+        const esC = (prog.esercizicampo ?? []).map((c, i) => {
+          const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
+          return `${i + 1}. ${parts.join(" ")}`;
+        }).join("\n") || "—";
+        const vasC = (prog.esercizicampo ?? []).map((c: any, i: number) => `${i + 1}. ${c.vas || "—"}`).join("\n") || "—";
+        const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
+        const esercizi = prog.esercizi ?? [];
+        const testLines = (prog.tests ?? []).map((t) => {
+          const vals = [t.risultato, t.risultatoSx ? `Sx ${t.risultatoSx}` : "", t.risultatoDx ? `Dx ${t.risultatoDx}` : ""].filter(Boolean);
+          return `${t.nome}${vals.length ? `: ${vals.join(" / ")}` : ""}`;
+        });
+        const tests = testLines.join("\n") || "—";
+        const esText = esercizi.map((e, i) => {
+          const sx = [e.serie, e.reps].filter(Boolean).join("×");
+          return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`;
+        }).join("\n") || "—";
+        const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
+        const ca = prog.carico;
+        const gps = [
+          ca?.distanzaTotale ? `Dist.: ${ca.distanzaTotale}m` : "",
+          ca?.velocitaMax ? `V.max: ${ca.velocitaMax}km/h` : "",
+          ca?.hsr ? `D>16km/h: ${ca.hsr}m` : "",
+          ca?.velocita21 ? `D>20km/h: ${ca.velocita21}m` : "",
+          ca?.velocita25 ? `D>25km/h: ${ca.velocita25}m` : "",
+          ca?.accelerazioni ? `N.Acc: ${ca.accelerazioni}` : "",
+          ca?.decelerazioni ? `N.Dec: ${ca.decelerazioni}` : "",
+          ca?.sprint ? `N.Spr: ${ca.sprint}` : "",
+          ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
+        ].filter(Boolean).join("\n") || "—";
+
+        if (isAlt) altRowIndices.add(body.length);
+        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
+        dataRowCount++;
+      }
+    }
+  }
+
+  autoTable(doc, {
+    startY: HDR + 8,
+    head: [["Atleta", "Programma", "Fase", "Obiettivi Palestra", "Esercizi palestra", "VAS", "Obiettivi Campo", "Esercizi campo", "VAS Campo", "GPS", "Test", "RPE"]],
+    body,
+    headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
+    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
+    rowPageBreak: "avoid",
+    margin: { left: M, right: M, top: HDR + 8 },
+    columnStyles: {
+      0:  { cellWidth: 24, fontStyle: "bold" },
+      1:  { cellWidth: 22 },
+      2:  { cellWidth: 18 },
+      3:  { cellWidth: 18 },
+      4:  { cellWidth: 36 },
+      5:  { cellWidth: 10, halign: "center" as const },
+      6:  { cellWidth: 22 },
+      7:  { cellWidth: 36 },
+      8:  { cellWidth: 14, halign: "center" as const },
+      9:  { cellWidth: 26 },
+      10: { cellWidth: 32 },
+      11: { cellWidth: 11, halign: "center" as const },
+    },
+    didDrawPage: () => { addHeader(); },
+    didParseCell: (data: any) => {
+      if (data.section === "head") return;
+      if (dateRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [43, 43, 43];
+        data.cell.styles.textColor = [255, 255, 255];
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.fontSize = 8.5;
+        data.cell.styles.cellPadding = { top: 4, bottom: 4, left: 5, right: 2 };
+      } else if (catRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [200, 16, 46];
+        data.cell.styles.textColor = [255, 255, 255];
+        data.cell.styles.fontStyle = "bold";
+        data.cell.styles.fontSize = 8;
+        data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 5, right: 2 };
+      } else if (absenteRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [255, 237, 213];
+        data.cell.styles.textColor = [154, 52, 18];
+      } else if (riposoRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [219, 234, 254];
+        data.cell.styles.textColor = [30, 64, 175];
+      } else if (squadraRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [254, 226, 226];
+        data.cell.styles.textColor = [153, 27, 27];
+      } else if (altRowIndices.has(data.row.index)) {
+        data.cell.styles.fillColor = [243, 244, 246];
+      } else {
+        data.cell.styles.fillColor = [255, 255, 255];
+      }
+    },
+  });
+
+  addFooter();
+  const fmtFile = (d: string) => d.replace(/-/g, "");
+  doc.save(`USC_Programmi_${fmtFile(dataInizio)}_${fmtFile(dataFine)}.pdf`);
+}
+
 function parseGpsCsv(text: string): Partial<Carico> {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return {};
@@ -349,6 +551,9 @@ export default function EserciziPage() {
   const gpsInputRef = useRef<HTMLInputElement>(null);
   const [dataGiorno, setDataGiorno] = useState(new Date().toISOString().slice(0, 10));
   const [esportandoGiorno, setEsportandoGiorno] = useState(false);
+  const [dataInizioIntervallo, setDataInizioIntervallo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [dataFineIntervallo, setDataFineIntervallo] = useState(() => new Date().toISOString().slice(0, 10));
+  const [esportandoIntervallo, setEsportandoIntervallo] = useState(false);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -540,6 +745,44 @@ export default function EserciziPage() {
             <Plus className="w-4 h-4" /> Nuovo programma
           </button>
         </div>
+      </div>
+
+      {/* PDF intervallo */}
+      <div className="mb-6 flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-gray-500 font-medium shrink-0">PDF periodo:</span>
+        <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm">
+          <span className="text-xs text-gray-400">Da</span>
+          <input
+            type="date"
+            value={dataInizioIntervallo}
+            onChange={(e) => setDataInizioIntervallo(e.target.value)}
+            className="text-sm text-gray-700 focus:outline-none bg-transparent"
+          />
+        </div>
+        <div className="flex items-center gap-1.5 border border-gray-200 rounded-xl px-3 py-2 bg-white shadow-sm">
+          <span className="text-xs text-gray-400">A</span>
+          <input
+            type="date"
+            value={dataFineIntervallo}
+            onChange={(e) => setDataFineIntervallo(e.target.value)}
+            className="text-sm text-gray-700 focus:outline-none bg-transparent"
+          />
+        </div>
+        <button
+          disabled={esportandoIntervallo}
+          onClick={async () => {
+            setEsportandoIntervallo(true);
+            try {
+              const tutti = await loadProgrammi();
+              await esportaPDFIntervallo(dataInizioIntervallo, dataFineIntervallo, atleti, tutti);
+            } finally {
+              setEsportandoIntervallo(false);
+            }
+          }}
+          className="flex items-center gap-1.5 border border-red-200 text-[#C8102E] px-3 py-2 rounded-xl text-sm font-medium hover:bg-red-50 disabled:opacity-50 shrink-0 whitespace-nowrap bg-white shadow-sm">
+          <FileText className="w-4 h-4" />
+          {esportandoIntervallo ? "Generazione…" : "PDF periodo"}
+        </button>
       </div>
 
       {atleti.length === 0 ? (
