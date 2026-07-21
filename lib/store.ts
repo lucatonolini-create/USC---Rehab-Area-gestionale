@@ -323,6 +323,7 @@ export interface TestFisiometrico {
 
 export interface Carico {
   rpe: string;
+  rpeCampo?: string;
   interno: string;
   esterno?: string;
   durata: string;

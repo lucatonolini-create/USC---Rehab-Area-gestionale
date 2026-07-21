@@ -1128,6 +1128,18 @@ export default function EserciziPage() {
                       })}
                     </div>
                   )}
+
+                  {/* RPE campo */}
+                  <div className="mt-4 bg-orange-50 border border-orange-100 rounded-xl p-4">
+                    <ScaleInput
+                      label={`RPE campo: ${carico.rpeCampo || 0}/10`}
+                      value={carico.rpeCampo ?? ""}
+                      max={10}
+                      onChange={(v) => aggiornaCarico("rpeCampo", v)}
+                      color="text-orange-500"
+                    />
+                    <p className="text-xs text-orange-400 mt-2">Valutazione dello sforzo percepito a fine seduta campo</p>
+                  </div>
                 </div>
               )}
 
