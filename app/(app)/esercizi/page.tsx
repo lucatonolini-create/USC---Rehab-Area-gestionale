@@ -267,8 +267,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       7:  { cellWidth: 36 },
       8:  { cellWidth: 12, halign: "center" as const },
       9:  { cellWidth: 24 },
-      10: { cellWidth: 30 },
-      11: { cellWidth:  9, halign: "center" as const },
+      10: { cellWidth: 28 },
+      11: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => {
       addHeader();
@@ -464,8 +464,8 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
       7:  { cellWidth: 36 },
       8:  { cellWidth: 12, halign: "center" as const },
       9:  { cellWidth: 24 },
-      10: { cellWidth: 30 },
-      11: { cellWidth:  9, halign: "center" as const },
+      10: { cellWidth: 28 },
+      11: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => { addHeader(); },
     didParseCell: (data: any) => {
