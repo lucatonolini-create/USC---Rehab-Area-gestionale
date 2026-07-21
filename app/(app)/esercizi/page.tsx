@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull, FileText } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, upsertAtleta, deleteProgramma, uid, nd, calcolaProgressoAuto,
@@ -555,6 +555,8 @@ export default function EserciziPage() {
   const [dataFineIntervallo, setDataFineIntervallo] = useState(() => new Date().toISOString().slice(0, 10));
   const [esportandoIntervallo, setEsportandoIntervallo] = useState(false);
 
+  const atletiOrdinati = useMemo(() => [...atleti].sort((a, b) => nd(a).localeCompare(nd(b), "it")), [atleti]);
+
   useEffect(() => {
     loadAtleti().then(setAtleti);
     const unsubAtleti = subscribeToAtleti(() => loadAtleti().then(setAtleti));
@@ -793,7 +795,7 @@ export default function EserciziPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {atleti.map((atleta) => {
+          {atletiOrdinati.map((atleta) => {
             const isOpen = atletaAperto === atleta.id;
             const lista = programmiPerAtleta[atleta.id] ?? [];
             return (
@@ -1087,7 +1089,7 @@ export default function EserciziPage() {
                     }}
                     className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white">
                     <option value="">Seleziona atleta...</option>
-                    {atleti.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
+                    {atletiOrdinati.map((a) => <option key={a.id} value={a.id}>{nd(a)} ({a.categoria})</option>)}
                   </select>
                 </div>
                 <div className="shrink-0">
