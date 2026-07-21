@@ -3,7 +3,7 @@ import { getDB } from "./db";
 
 export type Stato = "Infortunato" | "Disponibile";
 
-export const CATEGORIE = ["U19", "U17", "U16", "U15", "U14"] as const;
+export const CATEGORIE = ["1ª Squadra", "U19", "U17", "U16", "U15", "U14", "Altra squadra", "Provino"] as const;
 export type Categoria = (typeof CATEGORIE)[number];
 
 export const PIEDI = ["Ambidestro", "Destro", "Sinistro"] as const;

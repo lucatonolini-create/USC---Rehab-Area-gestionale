@@ -269,7 +269,7 @@ function ListaPersonale({
   );
 }
 
-const CATEGORIE = ["U14", "U15", "U16", "U17", "U19"];
+const CATEGORIE = ["1ª Squadra", "U19", "U17", "U16", "U15", "U14", "Altra squadra", "Provino"];
 const RUOLI_ROSA = ["Attaccante", "Centrocampista", "Difensore", "Portiere"];
 
 function RosaSection({

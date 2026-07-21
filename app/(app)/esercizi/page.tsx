@@ -165,7 +165,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
   const squadraRowIndices = new Set<number>();
   const altRowIndices = new Set<number>();
 
-  const CATEGORIE_ORD = ["U19", "U17", "U16", "U15", "U14"];
+  const CATEGORIE_ORD = ["1ª Squadra", "U19", "U17", "U16", "U15", "U14", "Altra squadra", "Provino"];
   const perCategoria = new Map<string, { atleta: Atleta; prog: Programma }[]>();
 
   for (const prog of progDelGiorno) {
@@ -358,7 +358,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
   const riposoRowIndices = new Set<number>();
   const squadraRowIndices = new Set<number>();
   const altRowIndices = new Set<number>();
-  const CATEGORIE_ORD = ["U19", "U17", "U16", "U15", "U14"];
+  const CATEGORIE_ORD = ["1ª Squadra", "U19", "U17", "U16", "U15", "U14", "Altra squadra", "Provino"];
 
   for (const data of dateOrdinate) {
     const progDelGiorno = perData.get(data) ?? [];
