@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Save, Plus, Trash2, Check, RefreshCw, AlertCircle, Bell, BellOff, Send, Pencil, X } from "lucide-react";
 import { loadImpostazioni, saveImpostazioni, pushAllLocalToSupabase, type Impostazioni, type GiocatoreRosa } from "@/lib/store";
 
@@ -380,6 +380,9 @@ export default function ImpostazioniPage() {
   const [salvato, setSalvato] = useState(false);
   const [syncState, setSyncState] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [syncMsg, setSyncMsg] = useState("");
+  const formRef = useRef(form);
+  formRef.current = form;
+
   useEffect(() => {
     loadImpostazioni().then(async (imp) => {
       try {
@@ -487,7 +490,11 @@ export default function ImpostazioniPage() {
           </p>
           <RosaSection
             rosa={form.rosa}
-            onChange={(r) => setForm({ ...form, rosa: r })}
+            onChange={(r) => {
+              const nuovoForm = { ...formRef.current, rosa: r };
+              setForm(nuovoForm);
+              saveImpostazioni(nuovoForm);
+            }}
           />
         </div>
 
