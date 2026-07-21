@@ -954,7 +954,8 @@ async function esportaPDFReport(
 
   const analisiRows: any[][] = [];
   const athleteForRowA: number[] = [];
-  atletiMese.forEach((a, athleteIdx) => {
+  const atletiMeseOrdA = [...atletiMese].sort((a, b) => nd(a).localeCompare(nd(b), "it"));
+  atletiMeseOrdA.forEach((a, athleteIdx) => {
     const tuttiInf = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
     const infortuni = filtroTipoInf
       ? tuttiInf.filter((inf) => (inf.tipo ?? "") === filtroTipoInf)

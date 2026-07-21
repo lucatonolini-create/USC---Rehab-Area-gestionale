@@ -606,7 +606,8 @@ async function esportaPDFReportMensile(
 
   const pdfRows: any[][] = [];
   const athleteForRowP: number[] = [];
-  atletiMese.forEach((a, athleteIdx) => {
+  const atletiMeseOrd = [...atletiMese].sort((a, b) => nd(a).localeCompare(nd(b), "it"));
+  atletiMeseOrd.forEach((a, athleteIdx) => {
     const tuttiInf = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
     const infortuni = filtroInf
       ? tuttiInf.filter((inf) => {
