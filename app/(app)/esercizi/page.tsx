@@ -208,12 +208,11 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
       const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
       const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
-      const campoLines = (prog.esercizicampo ?? []).map((c) => {
+      const esC = (prog.esercizicampo ?? []).map((c, i) => {
         const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
-        return parts.join(" ");
-      });
-      const esC = campoLines.join("\n") || "—";
-      const vasC = (prog.esercizicampo ?? []).map((c: any) => c.vas || "—").join("\n") || "—";
+        return `${i + 1}. ${parts.join(" ")}`;
+      }).join("\n") || "—";
+      const vasC = (prog.esercizicampo ?? []).map((c: any, i: number) => `${i + 1}. ${c.vas || "—"}`).join("\n") || "—";
       const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
       const esercizi = prog.esercizi ?? [];
 
@@ -224,11 +223,11 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       const tests = testLines.join("\n") || "—";
 
       // Esercizi uniti in celle multi-riga: un atleta = una riga, niente rowSpan
-      const esText = esercizi.map((e) => {
+      const esText = esercizi.map((e, i) => {
         const sx = [e.serie, e.reps].filter(Boolean).join("×");
-        return sx ? `${e.nome} ${sx}` : e.nome;
+        return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`;
       }).join("\n") || "—";
-      const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
+      const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
 
       const ca = prog.carico;
       const gps = [
