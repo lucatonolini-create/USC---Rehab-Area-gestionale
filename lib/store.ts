@@ -30,6 +30,7 @@ export const OBIETTIVI_CAMPO = [
   "Accelerazioni/Decelerazioni",
   "Attivazione muscolare",
   "Cambi di direzione",
+  "Forza",
   "HSR",
   "Lavoro tecnico",
   "Metabolico",
