@@ -514,7 +514,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     const injQRTS = (atleta.questionariKinesiofobia ?? []).filter((q) => q.infortunioId === inj.id);
     const giorni = inj.fine ? ggPersi(inj.inizio, inj.fine) : ggPersi(inj.inizio, today);
     const injLabel = `${inj.diagnosi}${inj.tipo ? ` (${inj.tipo})` : ""}`;
-    const sub = `${nd(atleta)}  ·  ${injLabel}`;
+    const sub = `${nd(atleta)}  ·  ${atleta.categoria}`;
 
     doc.addPage();
     addHeader(sub);
