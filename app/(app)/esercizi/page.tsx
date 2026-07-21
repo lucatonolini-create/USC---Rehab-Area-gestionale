@@ -182,7 +182,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
   let dataRowCount = 0;
   for (const cat of [...categoriePres, ...altreCategorie]) {
-    const lista = perCategoria.get(cat) ?? [];
+    const lista = (perCategoria.get(cat) ?? []).sort((a, b) => nd(a.atleta).localeCompare(nd(b.atleta), "it"));
     catRowIndices.add(body.length);
     body.push([{ content: cat, colSpan: 12 }]);
 
@@ -382,7 +382,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     let dataRowCount = 0;
 
     for (const cat of [...categoriePres, ...altreCategorie]) {
-      const lista = perCategoria.get(cat) ?? [];
+      const lista = (perCategoria.get(cat) ?? []).sort((a, b) => nd(a.atleta).localeCompare(nd(b.atleta), "it"));
       catRowIndices.add(body.length);
       body.push([{ content: cat, colSpan: 12 }]);
 
