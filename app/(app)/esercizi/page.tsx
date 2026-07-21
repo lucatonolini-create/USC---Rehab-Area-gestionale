@@ -240,7 +240,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         ca?.decelerazioni ? `N.Dec: ${ca.decelerazioni}` : "",
         ca?.sprint ? `N.Spr: ${ca.sprint}` : "",
         ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
-      ].filter(Boolean).join("\n") || "—";
+      ].filter(Boolean).map((s) => `- ${s}`).join("\n") || "—";
 
       if (isAlt) altRowIndices.add(body.length);
       body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
@@ -265,8 +265,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       5:  { cellWidth: 10, halign: "center" as const },
       6:  { cellWidth: 28 },
       7:  { cellWidth: 36 },
-      8:  { cellWidth: 12, halign: "center" as const },
-      9:  { cellWidth: 24 },
+      8:  { cellWidth: 13, halign: "center" as const },
+      9:  { cellWidth: 23 },
       10: { cellWidth: 28 },
       11: { cellWidth: 11, halign: "center" as const },
     },
@@ -436,7 +436,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
           ca?.decelerazioni ? `N.Dec: ${ca.decelerazioni}` : "",
           ca?.sprint ? `N.Spr: ${ca.sprint}` : "",
           ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
-        ].filter(Boolean).join("\n") || "—";
+        ].filter(Boolean).map((s) => `- ${s}`).join("\n") || "—";
 
         if (isAlt) altRowIndices.add(body.length);
         body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
@@ -462,8 +462,8 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
       5:  { cellWidth: 10, halign: "center" as const },
       6:  { cellWidth: 28 },
       7:  { cellWidth: 36 },
-      8:  { cellWidth: 12, halign: "center" as const },
-      9:  { cellWidth: 24 },
+      8:  { cellWidth: 13, halign: "center" as const },
+      9:  { cellWidth: 23 },
       10: { cellWidth: 28 },
       11: { cellWidth: 11, halign: "center" as const },
     },
