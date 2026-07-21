@@ -601,7 +601,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
           q.tipoTest ?? "—",
           `${q.punteggio} / 100`,
-          interp + (inj ? `\n(${inj.diagnosi})` : ""),
+          interp,
         ];
       }),
       headStyles: hS(dark),
