@@ -277,11 +277,12 @@ function RosaSection({
   onChange,
 }: {
   rosa: GiocatoreRosa[];
-  onChange: (r: GiocatoreRosa[]) => void;
+  onChange: (r: GiocatoreRosa[]) => Promise<void> | void;
 }) {
   const vuotoForm: GiocatoreRosa = { nome: "", categoria: "", ruolo: "" };
   const [selectedNome, setSelectedNome] = useState("");
   const [form, setForm] = useState<GiocatoreRosa>(vuotoForm);
+  const [stato, setStato] = useState<"idle" | "ok" | "error">("idle");
 
   const sorted = [...rosa].sort((a, b) => a.nome.localeCompare(b.nome));
 
@@ -291,24 +292,30 @@ function RosaSection({
     setForm(g ? { ...g } : vuotoForm);
   };
 
-  const salva = () => {
+  const salva = async () => {
     if (!form.nome.trim() || !form.categoria || !form.ruolo) return;
     const nome = form.nome.trim();
+    let nuovaRosa: GiocatoreRosa[];
     if (selectedNome) {
-      // modifica esistente
-      onChange(rosa.map((g) => g.nome === selectedNome ? { ...form, nome } : g));
+      nuovaRosa = rosa.map((g) => g.nome === selectedNome ? { ...form, nome } : g);
     } else {
-      // nuovo
       if (rosa.some((g) => g.nome.toLowerCase() === nome.toLowerCase())) return;
-      onChange([...rosa, { ...form, nome }]);
+      nuovaRosa = [...rosa, { ...form, nome }];
+    }
+    try {
+      await onChange(nuovaRosa);
+      setStato("ok");
+    } catch {
+      setStato("error");
     }
     setSelectedNome("");
     setForm(vuotoForm);
+    setTimeout(() => setStato("idle"), 2500);
   };
 
-  const rimuovi = () => {
+  const rimuovi = async () => {
     if (!selectedNome) return;
-    onChange(rosa.filter((g) => g.nome !== selectedNome));
+    await onChange(rosa.filter((g) => g.nome !== selectedNome));
     setSelectedNome("");
     setForm(vuotoForm);
   };
@@ -354,14 +361,22 @@ function RosaSection({
           </div>
         </div>
 
-        <div className="flex gap-2 pt-1">
+        <div className="flex gap-2 pt-1 items-center">
           <button onClick={salva}
             disabled={!form.nome.trim() || !form.categoria || !form.ruolo}
-            className="flex items-center gap-2 bg-[#C8102E] text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40 transition-colors">
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-40 ${
+              stato === "ok" ? "bg-green-500 text-white" :
+              stato === "error" ? "bg-orange-500 text-white" :
+              "bg-[#C8102E] text-white hover:bg-red-800"
+            }`}>
             <Check className="w-4 h-4" />
-            {selectedNome ? "Salva modifiche" : "Aggiungi giocatore"}
+            {stato === "ok"
+              ? "Salvato!"
+              : stato === "error"
+              ? "Errore"
+              : selectedNome ? "Salva modifiche" : "Aggiungi giocatore"}
           </button>
-          {selectedNome && (
+          {selectedNome && stato === "idle" && (
             <button onClick={rimuovi}
               className="flex items-center gap-2 border border-red-200 text-red-500 px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-red-50 transition-colors">
               <Trash2 className="w-4 h-4" /> Elimina
@@ -490,10 +505,10 @@ export default function ImpostazioniPage() {
           </p>
           <RosaSection
             rosa={form.rosa}
-            onChange={(r) => {
+            onChange={async (r) => {
               const nuovoForm = { ...formRef.current, rosa: r };
               setForm(nuovoForm);
-              saveImpostazioni(nuovoForm);
+              await saveImpostazioni(nuovoForm);
             }}
           />
         </div>
