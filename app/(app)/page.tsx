@@ -180,21 +180,9 @@ export default function Dashboard() {
                     </p>
                   </div>
                   <div className="shrink-0 flex flex-col items-end gap-1">
-                    <p className={`text-lg font-bold leading-none ${atleta.stato === "Disponibile" ? "text-green-500" : "text-[#C8102E]"}`}>
-                      {atleta.progresso}%
-                    </p>
                     <ChevronRight className="w-4 h-4 text-gray-200" />
                   </div>
                 </div>
-                {atleta.stato !== "Disponibile" && (
-                  <div className="mt-3">
-                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div className={`h-full rounded-full ${
-                        atleta.progresso >= 80 ? "bg-green-400" : atleta.progresso >= 50 ? "bg-yellow-400" : "bg-orange-400"
-                      }`} style={{ width: `${atleta.progresso}%` }} />
-                    </div>
-                  </div>
-                )}
               </button>
             ))}
           </div>
