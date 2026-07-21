@@ -856,7 +856,7 @@ export default function ProgressiPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {atleti.map((atleta) => {
+            {[...atleti].sort((a, b) => nd(a).localeCompare(nd(b), "it")).map((atleta) => {
               const nProg = programmi.filter((p) => p.atletaId === atleta.id).length;
               return (
                 <div key={atleta.id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
