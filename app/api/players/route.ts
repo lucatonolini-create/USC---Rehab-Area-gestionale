@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { ROSA } from "@/lib/players";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   // Start with the full static roster as base
   const merged: { nome: string; categoria: string; ruolo: string }[] = ROSA.map((g) => ({
@@ -38,5 +40,8 @@ export async function GET() {
     }
   } catch {}
 
-  return NextResponse.json(merged.sort((a, b) => a.nome.localeCompare(b.nome)));
+  return NextResponse.json(
+    merged.sort((a, b) => a.nome.localeCompare(b.nome)),
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }

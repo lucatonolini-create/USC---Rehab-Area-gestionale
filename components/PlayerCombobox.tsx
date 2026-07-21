@@ -19,12 +19,11 @@ export default function PlayerCombobox({ value, onSelect, placeholder = "Cerca g
 
   useEffect(() => { setQuery(value); }, [value]);
 
-  useEffect(() => {
-    fetch("/api/players")
+  const aggiornaPlayers = () => {
+    fetch("/api/players", { cache: "no-store" })
       .then((r) => r.json())
       .then((data: Giocatore[]) => {
         if (!Array.isArray(data)) return;
-        // Merge API players into the static ROSA (never replace it)
         setPlayers((prev) => {
           const merged = [...prev];
           for (const p of data) {
@@ -36,7 +35,9 @@ export default function PlayerCombobox({ value, onSelect, placeholder = "Cerca g
         });
       })
       .catch(() => {});
-  }, []);
+  };
+
+  useEffect(() => { aggiornaPlayers(); }, []);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -57,7 +58,7 @@ export default function PlayerCombobox({ value, onSelect, placeholder = "Cerca g
       <input
         value={query}
         onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => { setOpen(true); aggiornaPlayers(); }}
         placeholder={placeholder}
         required={required}
         autoComplete="off"
