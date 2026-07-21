@@ -240,12 +240,11 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
         const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
 
-        const campoEsLines = (prog.esercizicampo ?? []).map((c) => {
+        const esC = (prog.esercizicampo ?? []).map((c, i) => {
           const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
-          return parts.join(" ");
-        });
-        const esC = campoEsLines.join("\n") || "—";
-        const vasC = (prog.esercizicampo ?? []).map((c) => c.vas || "—").join("\n") || "—";
+          return `${i + 1}. ${parts.join(" ")}`;
+        }).join("\n") || "—";
+        const vasC = (prog.esercizicampo ?? []).map((c, i) => `${i + 1}. ${c.vas || "—"}`).join("\n") || "—";
 
         const testLines = (prog.tests ?? []).map((t) => {
           const isSL = t.nome === "SL Drop Jump";
@@ -276,8 +275,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
         ].filter(Boolean).join("\n") || "—";
 
-        const esText = esercizi.map((e) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; }).join("\n") || "—";
-        const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
+        const esText = esercizi.map((e, i) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`; }).join("\n") || "—";
+        const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
         if (isAlt) altRowIndices.add(body.length);
         body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
         dataRowCount++;
