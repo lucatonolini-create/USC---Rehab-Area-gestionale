@@ -642,7 +642,7 @@ async function esportaPDFReport(
     doc.setTextColor(...red); doc.setFontSize(14); doc.setFont("helvetica", "bold");
     doc.text("U.S. Cremonese", tx, 15);
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
-    doc.text("Report", tx, 19);
+    doc.text("Report Rehab Area", tx, 19);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
   };
 
