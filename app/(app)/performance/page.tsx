@@ -470,7 +470,11 @@ export default function PerformancePage() {
       bodyStyles: { fontSize: 6.5, cellPadding: 1.8, halign: "center", valign: "middle", overflow: "linebreak" },
       columnStyles: tblCols,
       alternateRowStyles: { fillColor: [249, 249, 249] },
-      margin: { left: M, right: M, top: M },
+      margin: { left: M, right: M, top: 18 },
+      didDrawPage: (() => {
+        let first = true;
+        return () => { if (first) { first = false; } else { addHeader(true); } };
+      })(),
     });
 
     // ── Grafici — pagine successive alle tabelle ───────────────────────────
@@ -479,12 +483,12 @@ export default function PerformancePage() {
     const GAP_Y = 5;
 
     doc.addPage();
-    y = M;
+    y = addHeader(true);
 
     for (let i = 0; i < activeMetrics.length; i += 2) {
       if (y + CHART_H > PH - M) {
         doc.addPage();
-        y = M;
+        y = addHeader(true);
       }
       drawChart(activeMetrics[i], M, y, CHART_W, CHART_H);
       if (i + 1 < activeMetrics.length) {
