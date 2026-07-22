@@ -356,6 +356,7 @@ export interface Programma {
   riposo?: boolean;
   squadra?: boolean;
   noteAssenza?: string;
+  noteFisioterapia?: string;
 }
 
 export interface GiocatoreRosa {
@@ -460,6 +461,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     _esercizicampo, _infortunio_id, _infortunio_label,
     _riposo, _assente, _squadra, _note_assenza,
     _obiettivi_palestra, _obiettivi_campo,
+    _note_fisioterapia,
     ...caricoClean
   } = caricoRaw;
 
@@ -496,6 +498,7 @@ function rowToProgramma(r: Record<string, unknown>): Programma {
     riposo: isRiposo,
     squadra: isSquadra,
     noteAssenza,
+    noteFisioterapia: (_note_fisioterapia as string | undefined) ?? undefined,
   };
 }
 
@@ -513,6 +516,7 @@ function programmaToRow(p: Programma): Record<string, unknown> {
   if (p.assente)     caricoExtended._assente      = true;
   if (p.squadra)     caricoExtended._squadra      = true;
   if (p.noteAssenza) caricoExtended._note_assenza = p.noteAssenza;
+  if (p.noteFisioterapia) caricoExtended._note_fisioterapia = p.noteFisioterapia;
   return {
     id: p.id,
     atleta_id: p.atletaId,

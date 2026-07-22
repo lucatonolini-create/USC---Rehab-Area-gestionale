@@ -213,9 +213,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         weekLabel = `SETTIMANA  ${mon.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} – ${sun.toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "numeric" })}`;
       }
       weekRowIndices.add(body.length);
-      body.push([{ content: weekLabel, colSpan: 12 }]);
+      body.push([{ content: weekLabel, colSpan: 13 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Obiettivi Palestra", "Esercizi Palestra", "VAS", "Obiettivi Campo", "Esercizi Campo", "VAS Campo", "GPS", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Obiettivi Palestra", "Esercizi Palestra", "VAS", "Obiettivi Campo", "Esercizi Campo", "VAS Campo", "GPS", "Test", "RPE", "Fisio"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
@@ -225,14 +225,14 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
         if (prog.assente) {
           absenteRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "ASSENTE" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
 
         if (prog.riposo) {
           riposoRowIndices.add(body.length);
-          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 10, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([dataStr, prog.nome ?? "—", { content: "RIPOSO" + (prog.noteAssenza ? `\n${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++;
           continue;
         }
@@ -277,8 +277,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
         const esText = esercizi.map((e, i) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`; }).join("\n") || "—";
         const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
+        const fisio = prog.noteFisioterapia?.trim() || "—";
         if (isAlt) altRowIndices.add(body.length);
-        body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
+        body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe, fisio]);
         dataRowCount++;
       }
     });
@@ -294,14 +295,15 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         1:  { cellWidth: 16 },
         2:  { cellWidth: 10 },
         3:  { cellWidth: 13 },
-        4:  { cellWidth: 24 },
+        4:  { cellWidth: 21 },
         5:  { cellWidth: 9, halign: "center" as const },
         6:  { cellWidth: 13 },
-        7:  { cellWidth: 26 },
+        7:  { cellWidth: 23 },
         8:  { cellWidth: 13, halign: "center" as const },
-        9:  { cellWidth: 26 },
+        9:  { cellWidth: 22 },
         10: { cellWidth: 12 },
         11: { cellWidth: 8, halign: "center" as const },
+        12: { cellWidth: 10 },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;

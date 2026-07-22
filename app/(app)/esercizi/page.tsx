@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull, FileText } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull, FileText, Heart } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, upsertAtleta, deleteProgramma, uid, nd, calcolaProgressoAuto,
   subscribeToAtleti, subscribeToProgrammi,
@@ -27,6 +27,7 @@ const progVuoto: Omit<Programma, "id"> = {
   riposo: false,
   squadra: false,
   noteAssenza: "",
+  noteFisioterapia: "",
 };
 
 function ScaleInput({ label, value, max, onChange, color }: {
@@ -184,7 +185,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
   for (const cat of [...categoriePres, ...altreCategorie]) {
     const lista = (perCategoria.get(cat) ?? []).sort((a, b) => nd(a.atleta).localeCompare(nd(b.atleta), "it"));
     catRowIndices.add(body.length);
-    body.push([{ content: cat, colSpan: 12 }]);
+    body.push([{ content: cat, colSpan: 13 }]);
 
     for (const { atleta, prog } of lista) {
       const nomeAtleta = nd(atleta);
@@ -192,17 +193,17 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
       if (prog.assente) {
         absenteRowIndices.add(body.length);
-        body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 12, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
         dataRowCount++; continue;
       }
       if (prog.riposo) {
         riposoRowIndices.add(body.length);
-        body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 12, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
         dataRowCount++; continue;
       }
       if (prog.squadra) {
         squadraRowIndices.add(body.length);
-        body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+        body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 12, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
         dataRowCount++; continue;
       }
 
@@ -242,15 +243,16 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
       ].filter(Boolean).map((s) => `- ${s}`).join("\n") || "—";
 
+      const fisio = prog.noteFisioterapia?.trim() || "—";
       if (isAlt) altRowIndices.add(body.length);
-      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
+      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe, fisio]);
       dataRowCount++;
     }
   }
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE"]],
+    head: [["Atleta", "Programma", "Fase", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE", "Fisio\nterapia"]],
     body,
     headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
@@ -261,14 +263,15 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       1:  { cellWidth: 20 },
       2:  { cellWidth: 14 },
       3:  { cellWidth: 26 },
-      4:  { cellWidth: 36 },
+      4:  { cellWidth: 31 },
       5:  { cellWidth: 10, halign: "center" as const },
       6:  { cellWidth: 28 },
-      7:  { cellWidth: 36 },
+      7:  { cellWidth: 31 },
       8:  { cellWidth: 13, halign: "center" as const },
-      9:  { cellWidth: 23 },
-      10: { cellWidth: 28 },
+      9:  { cellWidth: 19 },
+      10: { cellWidth: 24 },
       11: { cellWidth: 11, halign: "center" as const },
+      12: { cellWidth: 18 },
     },
     didDrawPage: () => {
       addHeader();
@@ -366,7 +369,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     const progDelGiorno = perData.get(data) ?? [];
     const dataConGiorno = (() => { const s = new Date(data + "T12:00").toLocaleDateString("it-IT", { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" }); return s.charAt(0).toUpperCase() + s.slice(1); })();
     dateRowIndices.add(body.length);
-    body.push([{ content: dataConGiorno, colSpan: 12 }]);
+    body.push([{ content: dataConGiorno, colSpan: 13 }]);
 
     const perCategoria = new Map<string, { atleta: Atleta; prog: Programma }[]>();
     for (const prog of progDelGiorno) {
@@ -384,7 +387,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     for (const cat of [...categoriePres, ...altreCategorie]) {
       const lista = (perCategoria.get(cat) ?? []).sort((a, b) => nd(a.atleta).localeCompare(nd(b.atleta), "it"));
       catRowIndices.add(body.length);
-      body.push([{ content: cat, colSpan: 12 }]);
+      body.push([{ content: cat, colSpan: 13 }]);
 
       for (const { atleta, prog } of lista) {
         const nomeAtleta = nd(atleta);
@@ -392,17 +395,17 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
 
         if (prog.assente) {
           absenteRowIndices.add(body.length);
-          body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([nomeAtleta, { content: "ASSENTE" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 12, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++; continue;
         }
         if (prog.riposo) {
           riposoRowIndices.add(body.length);
-          body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([nomeAtleta, { content: "RIPOSO" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 12, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++; continue;
         }
         if (prog.squadra) {
           squadraRowIndices.add(body.length);
-          body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 11, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
+          body.push([nomeAtleta, { content: "SQUADRA" + (prog.noteAssenza ? ` – ${prog.noteAssenza}` : ""), colSpan: 12, styles: { halign: "center" as const, fontStyle: "bold" as const } }]);
           dataRowCount++; continue;
         }
 
@@ -438,8 +441,9 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
           ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
         ].filter(Boolean).map((s) => `- ${s}`).join("\n") || "—";
 
+        const fisio = prog.noteFisioterapia?.trim() || "—";
         if (isAlt) altRowIndices.add(body.length);
-        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
+        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe, fisio]);
         dataRowCount++;
       }
     }
@@ -447,7 +451,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE"]],
+    head: [["Atleta", "Programma", "Fase", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE", "Fisio\nterapia"]],
     body,
     headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
@@ -458,14 +462,15 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
       1:  { cellWidth: 20 },
       2:  { cellWidth: 14 },
       3:  { cellWidth: 26 },
-      4:  { cellWidth: 36 },
+      4:  { cellWidth: 31 },
       5:  { cellWidth: 10, halign: "center" as const },
       6:  { cellWidth: 28 },
-      7:  { cellWidth: 36 },
+      7:  { cellWidth: 31 },
       8:  { cellWidth: 13, halign: "center" as const },
-      9:  { cellWidth: 23 },
-      10: { cellWidth: 28 },
+      9:  { cellWidth: 19 },
+      10: { cellWidth: 24 },
       11: { cellWidth: 11, halign: "center" as const },
+      12: { cellWidth: 18 },
     },
     didDrawPage: () => { addHeader(); },
     didParseCell: (data: any) => {
@@ -535,7 +540,7 @@ function parseGpsCsv(text: string): Partial<Carico> {
   };
 }
 
-type FormSection = "esercizi" | "campo" | "test" | "carico";
+type FormSection = "esercizi" | "campo" | "test" | "carico" | "fisioterapia";
 
 export default function EserciziPage() {
   const [atleti, setAtleti] = useState<Atleta[]>([]);
@@ -1208,13 +1213,15 @@ export default function EserciziPage() {
                   )}
                 </div>
               </div>
-              <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-                {([
-                  { key: "esercizi" as FormSection, label: "Palestra", icon: Dumbbell,     count: form.esercizi.length },
-                  { key: "campo"    as FormSection, label: "Campo",    icon: Footprints,   count: esercizicampo.length },
-                  { key: "test"     as FormSection, label: "Test",     icon: FlaskConical, count: tests.length },
-                  { key: "carico"   as FormSection, label: "GPS",      icon: Gauge,        count: null },
-                ]).map(({ key, label, icon: Icon, count }) => (
+              {(() => {
+                const tabs = [
+                  { key: "fisioterapia" as FormSection, label: "Fisio",       icon: Heart,        count: null },
+                  { key: "esercizi"     as FormSection, label: "Palestra",    icon: Dumbbell,     count: form.esercizi.length },
+                  { key: "campo"        as FormSection, label: "Campo",       icon: Footprints,   count: esercizicampo.length },
+                  { key: "carico"       as FormSection, label: "GPS",         icon: Gauge,        count: null },
+                  { key: "test"         as FormSection, label: "Test",        icon: FlaskConical, count: tests.length },
+                ];
+                const renderTab = ({ key, label, icon: Icon, count }: typeof tabs[number]) => (
                   <button key={key} className={tabClass(key)} onClick={() => setSezioneAttiva(key)}>
                     <span className="flex flex-col items-center gap-0.5">
                       <Icon className="w-4 h-4 shrink-0" />
@@ -1226,8 +1233,14 @@ export default function EserciziPage() {
                       </span>
                     </span>
                   </button>
-                ))}
-              </div>
+                );
+                return (
+                  <div className="flex flex-col bg-gray-100 rounded-xl p-1 gap-1">
+                    <div className="flex gap-1">{tabs.slice(0, 3).map(renderTab)}</div>
+                    <div className="flex gap-1">{tabs.slice(3).map(renderTab)}</div>
+                  </div>
+                );
+              })()}
 
               {/* Sezione Esercizi */}
               {sezioneAttiva === "esercizi" && (
@@ -1635,6 +1648,32 @@ export default function EserciziPage() {
                       placeholder="Note aggiuntive"
                       className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]" />
                   </div>
+                </div>
+              )}
+              {sezioneAttiva === "fisioterapia" && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Note Fisioterapia</label>
+                    {!form.noteFisioterapia && (
+                      <button onClick={() => setForm({ ...form, noteFisioterapia: " " })}
+                        className="text-[#C8102E] text-xs font-semibold hover:underline">+ Aggiungi</button>
+                    )}
+                  </div>
+                  {form.noteFisioterapia ? (
+                    <textarea
+                      value={form.noteFisioterapia.trimStart()}
+                      onChange={(e) => setForm({ ...form, noteFisioterapia: e.target.value })}
+                      placeholder="Descrivi le attività svolte con il fisioterapista…"
+                      rows={6}
+                      autoFocus
+                      className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none"
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      <Heart className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                      Nessuna nota. Clicca "+ Aggiungi" per inserire.
+                    </div>
+                  )}
                 </div>
               )}
               </>}
