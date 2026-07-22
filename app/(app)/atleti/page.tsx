@@ -288,7 +288,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 6, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 5.5, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
         0:  { cellWidth: 14 },
@@ -311,13 +311,13 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           data.cell.styles.fillColor = [200, 16, 46];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 7;
+          data.cell.styles.fontSize = 6.5;
           data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 4, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 5.8;
+          data.cell.styles.fontSize = 5.3;
           data.cell.styles.halign = "center";
           data.cell.styles.valign = "middle";
           data.cell.styles.cellPadding = { top: 2, bottom: 2, left: 1.5, right: 1 };
