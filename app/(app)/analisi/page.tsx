@@ -546,17 +546,17 @@ async function esportaPDFPanoramica(params: {
   const athleteForRowT: number[] = [];
 
   atletiOrdinati.forEach((a, athleteIdx) => {
-    const infortuni: Array<{ diagnosi: string; inizio?: string; fine?: string }> = [];
+    const infortuni: Array<{ diagnosi: string; tipo?: string; inizio?: string; fine?: string }> = [];
     if (a.infortunio || a.inizioRehab)
-      infortuni.push({ diagnosi: a.infortunio || "—", inizio: a.inizioRehab, fine: a.fineRehab });
+      infortuni.push({ diagnosi: a.infortunio || "—", tipo: a.tipoInfortunio, inizio: a.inizioRehab, fine: a.fineRehab });
     (a.storicoInfortuni ?? []).forEach((s) =>
-      infortuni.push({ diagnosi: s.diagnosi, inizio: s.inizioRehab, fine: s.fineRehab })
+      infortuni.push({ diagnosi: s.diagnosi, tipo: s.tipo, inizio: s.inizioRehab, fine: s.fineRehab })
     );
 
     const n = infortuni.length;
     const nomeDataStyle = { fontStyle: "bold" as const };
     if (n === 0) {
-      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", a.note || "—", a.stato, "—", "—"]);
+      tuttiRows.push([{ content: nd(a), styles: nomeDataStyle }, a.categoria, "—", "—", a.meccanismo || "—", a.note || "—", a.stato, "—", "—"]);
       athleteForRowT.push(athleteIdx);
     } else {
       infortuni.forEach((inf, infIdx) => {
@@ -565,12 +565,14 @@ async function esportaPDFPanoramica(params: {
             { content: nd(a), rowSpan: n, styles: { ...nomeDataStyle, valign: "middle" as const } },
             { content: a.categoria, rowSpan: n, styles: { valign: "middle" } },
             inf.diagnosi,
+            (inf.tipo || "—").replace(/\//g, "/ "),
+            { content: a.meccanismo || "—", rowSpan: n, styles: { valign: "middle" } },
             { content: a.note || "—", rowSpan: n, styles: { valign: "middle" } },
             { content: a.stato, rowSpan: n, styles: { valign: "middle" } },
             fmtD(inf.inizio), fmtD(inf.fine),
           ]);
         } else {
-          tuttiRows.push([inf.diagnosi, fmtD(inf.inizio), fmtD(inf.fine)]);
+          tuttiRows.push([inf.diagnosi, (inf.tipo || "—").replace(/\//g, "/ "), fmtD(inf.inizio), fmtD(inf.fine)]);
         }
         athleteForRowT.push(athleteIdx);
       });
@@ -582,25 +584,27 @@ async function esportaPDFPanoramica(params: {
     y = secTitle("Lista completa atleti", y);
     autoTable(doc, {
       startY: y,
-      head: [["Atleta", "Categoria", "Diagnosi", "Note", "Stato", "Inizio", "Fine"]],
+      head: [["Atleta", "Categoria", "Diagnosi", "Tipo", "Meccanismo", "Note", "Stato", "Inizio", "Fine"]],
       body: tuttiRows,
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-      bodyStyles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
+      bodyStyles: { fontSize: 7, cellPadding: 2, overflow: "linebreak", halign: "left", valign: "middle" },
       margin: { left: M, right: M },
       columnStyles: {
-        0: { cellWidth: 28 },
-        1: { cellWidth: 16 },
-        2: { cellWidth: 44 },
-        3: { cellWidth: 36 },
-        4: { cellWidth: 20 },
-        5: { cellWidth: 19 },
-        6: { cellWidth: 19 },
+        0: { cellWidth: 22 },
+        1: { cellWidth: 13 },
+        2: { cellWidth: 34 },
+        3: { cellWidth: 26 },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 20 },
+        6: { cellWidth: 17 },
+        7: { cellWidth: 14 },
+        8: { cellWidth: 14 },
       },
       didParseCell: (data: any) => {
         if (data.section === "body") {
           const ai = athleteForRowT[data.row.index];
           data.cell.styles.fillColor = ai % 2 !== 0 ? [248, 248, 248] : [255, 255, 255];
-          if (data.column.index === 4) {
+          if (data.column.index === 6) {
             const content = typeof data.cell.raw === "object" ? (data.cell.raw as any)?.content : data.cell.raw;
             data.cell.styles.textColor = content === "Disponibile" ? [34, 139, 34] : red;
             data.cell.styles.fontStyle = "bold";
