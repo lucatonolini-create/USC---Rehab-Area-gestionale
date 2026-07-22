@@ -654,6 +654,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
         type MetricCol = { label: string; unit: string; dec: number; w: number; get: (s: CaricoSession) => number | null };
         const allMetricCols: MetricCol[] = [
+          { label: "Durata\n(min)",    unit: "min",  dec: 0, w: 14, get: (s) => s.durata },
           { label: "RPE\n(/10)",       unit: "/10",  dec: 1, w: 14, get: (s) => s.rpe },
           { label: "Car.Int.\n(UA)",   unit: "UA",   dec: 0, w: 16, get: (s) => s.interno },
           { label: "Dist.\n(m)",       unit: "m",    dec: 0, w: 16, get: (s) => s.distanza },
