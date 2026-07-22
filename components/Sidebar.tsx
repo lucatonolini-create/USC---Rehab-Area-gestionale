@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, LogOut, HeartPulse, Link2,
+  LayoutDashboard, Users, Dumbbell, TrendingUp, Settings, Menu, X, ChevronLeft, BarChart2, LogOut, HeartPulse, Link2, Activity,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getIntakeBadgeCount, resetIntakeBadge } from "@/components/IntakeNotifier";
@@ -16,6 +16,7 @@ const navItems = [
   { href: "/esercizi",     label: "Programmi",    icon: Dumbbell },
   { href: "/progressi",    label: "Progressi",    icon: TrendingUp },
   { href: "/analisi",        label: "Analisi",        icon: BarChart2   },
+  { href: "/performance",   label: "Performance",   icon: Activity    },
   { href: "/epidemiologia", label: "Epidemiologia", icon: HeartPulse  },
   { href: "/segnalazioni", label: "Link",           icon: Link2      },
   { href: "/impostazioni", label: "Impostazioni", icon: Settings },
