@@ -123,7 +123,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
     doc.text("Scheda Riabilitativa", tx, 19);
     if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 24); }
-    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(175, 175, 175);
+    doc.text("Stagione 2026-2027", W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {
@@ -445,7 +446,8 @@ async function esportaPDFReportMensile(
     doc.text("U.S. Cremonese", tx, 15);
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
     doc.text("Report Rehab Area", tx, 19);
-    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(175, 175, 175);
+    doc.text("Stagione 2026-2027", W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number) => {

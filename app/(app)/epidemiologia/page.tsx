@@ -144,6 +144,9 @@ async function esportaPDFEpi(params: {
     if (params.filtroAnno !== "Tutti") parts.push(params.filtroAnno);
     if (params.filtroMese !== "Tutti") parts.push(MESI_FULL[parseInt(params.filtroMese) - 1]);
     doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
+    doc.setTextColor(255, 220, 220);
+    doc.text("Stagione 2026-2027", W - 14, 9, { align: "right" });
+    doc.setTextColor(255, 255, 255);
     doc.text(parts.length > 0 ? parts.join("  •  ") : "Tutti i dati", W - 14, 14, { align: "right" });
     doc.setTextColor(...dark);
   }

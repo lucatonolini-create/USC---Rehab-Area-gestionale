@@ -142,7 +142,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     doc.text("Programmi Giornalieri", tx, 19);
     doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
     doc.text(dataConGiorno, tx, 26);
-    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(175, 175, 175);
+    doc.text("Stagione 2026-2027", W - M, 14, { align: "right" });
   };
 
   const addFooter = () => {
@@ -335,7 +336,8 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     doc.text("Programmi di Lavoro", tx, 19);
     doc.setFontSize(9.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...dark);
     doc.text(`Periodo: ${periodoLabel}`, tx, 26);
-    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(175, 175, 175);
+    doc.text("Stagione 2026-2027", W - M, 14, { align: "right" });
   };
 
   const addFooter = () => {

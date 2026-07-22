@@ -101,7 +101,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...gray);
     doc.text("Scheda Completa Atleta", tx, 19);
     if (subtitle) { doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(subtitle, tx, 24); }
-    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(175, 175, 175);
+    doc.text("Stagione 2026-2027", W - M, 15, { align: "right" });
   };
 
   const secTitle = (text: string, y: number, fill?: [number, number, number]) => {
