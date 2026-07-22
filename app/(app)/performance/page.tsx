@@ -418,27 +418,8 @@ export default function PerformancePage() {
       });
     }
 
-    // ── Pagina 1: header + tabella riepilogo + tabella sessioni ───────────────
+    // ── Pagina 1: header + tabella sessioni + tabella riepilogo ───────────────
     let y = addHeader();
-
-    // Tabella riepilogo (prime 6 metriche attive)
-    const statCols = activeMetrics.slice(0, 6);
-    if (statCols.length) {
-      autoTable(doc, {
-        startY: y,
-        head: [statCols.map((m) => `${m.label}${m.unit ? ` (${m.unit})` : ""}`)],
-        body: [
-          statCols.map((m) => `Ultima: ${lastVal(m.key, m.dec)}`),
-          statCols.map((m) => `Media: ${avgVal(m.key, m.dec)}`),
-          statCols.map((m) => `Max: ${maxVal(m.key, m.dec)}`),
-        ],
-        headStyles: { fillColor: DARK_RGB, textColor: 255, fontSize: 7, halign: "center" },
-        bodyStyles: { fontSize: 7, cellPadding: 2, halign: "center" },
-        alternateRowStyles: { fillColor: [249, 249, 249] },
-        margin: { left: M, right: M },
-      });
-      y = (doc as any).lastAutoTable.finalY + 6;
-    }
 
     // Tabella sessioni (inizia nella pagina 1, può andare in overflow)
     const tblGps = activeMetrics.filter((m) => m.key !== "rpe" && m.key !== "interno" && m.key !== "durata");
@@ -476,6 +457,31 @@ export default function PerformancePage() {
         return () => { if (first) { first = false; } else { addHeader(true); } };
       })(),
     });
+    y = (doc as any).lastAutoTable.finalY + 6;
+
+    // Tabella riepilogo Ultima / Media / Max (prime 6 metriche attive)
+    const statCols = activeMetrics.slice(0, 6);
+    if (statCols.length) {
+      // Se non c'è spazio sufficiente, vai su nuova pagina
+      if (y + 30 > PH - M) {
+        doc.addPage();
+        y = addHeader(true);
+      }
+      autoTable(doc, {
+        startY: y,
+        head: [statCols.map((m) => `${m.label}${m.unit ? ` (${m.unit})` : ""}`)],
+        body: [
+          statCols.map((m) => `Ultima: ${lastVal(m.key, m.dec)}`),
+          statCols.map((m) => `Media: ${avgVal(m.key, m.dec)}`),
+          statCols.map((m) => `Max: ${maxVal(m.key, m.dec)}`),
+        ],
+        headStyles: { fillColor: DARK_RGB, textColor: 255, fontSize: 7, halign: "center" },
+        bodyStyles: { fontSize: 7, cellPadding: 2, halign: "center" },
+        alternateRowStyles: { fillColor: [249, 249, 249] },
+        margin: { left: M, right: M },
+      });
+      y = (doc as any).lastAutoTable.finalY + 6;
+    }
 
     // ── Grafici — pagine successive alle tabelle ───────────────────────────
     const CHART_W = (269 - 6) / 2;
