@@ -416,10 +416,10 @@ export default function PerformancePage() {
       });
     }
 
-    // ── Page 1: header + stats summary + charts ────────────────────────────
+    // ── Pagina 1: header + tabella riepilogo + tabella sessioni ───────────────
     let y = addHeader();
 
-    // Stats summary table (first 6 active metrics)
+    // Tabella riepilogo (prime 6 metriche attive)
     const statCols = activeMetrics.slice(0, 6);
     if (statCols.length) {
       autoTable(doc, {
@@ -435,27 +435,10 @@ export default function PerformancePage() {
         alternateRowStyles: { fillColor: [249, 249, 249] },
         margin: { left: M, right: M },
       });
-      y = (doc as any).lastAutoTable.finalY + 8;
+      y = (doc as any).lastAutoTable.finalY + 6;
     }
 
-    // Charts grid — 2 per row, each ~131.5mm wide × 48mm tall
-    const CHART_W = (269 - 6) / 2;
-    const CHART_H = 48;
-    const GAP_Y = 5;
-
-    for (let i = 0; i < activeMetrics.length; i += 2) {
-      if (y + CHART_H > PH - M) {
-        doc.addPage();
-        y = addHeader(true);
-      }
-      drawChart(activeMetrics[i], M, y, CHART_W, CHART_H);
-      if (i + 1 < activeMetrics.length) {
-        drawChart(activeMetrics[i + 1], M + CHART_W + 6, y, CHART_W, CHART_H);
-      }
-      y += CHART_H + GAP_Y;
-    }
-
-    // ── Sessions data table — always on a fresh page ───────────────────────
+    // Tabella sessioni (inizia nella pagina 1, può andare in overflow)
     const tblGps = activeMetrics.filter((m) => m.key !== "rpe" && m.key !== "interno" && m.key !== "durata");
     const tblBase = [METRICS.find((m) => m.key === "rpe")!, METRICS.find((m) => m.key === "interno")!]
       .filter(Boolean).filter((m) => activeMetrics.includes(m));
@@ -468,9 +451,8 @@ export default function PerformancePage() {
     };
     tblMetrics.forEach((_, i) => { tblCols[i + 3] = { cellWidth: tblMW }; });
 
-    doc.addPage();
     autoTable(doc, {
-      startY: 18,
+      startY: y,
       head: [["Data", "Programma", "Fase", ...tblMetrics.map((m) => `${m.shortLabel}${m.unit ? `\n(${m.unit})` : ""}`)]],
       body: sessions.map((s) => [
         s.dateLabel || s.data,
@@ -485,6 +467,26 @@ export default function PerformancePage() {
       margin: { left: M, right: M, top: 18 },
       didDrawPage: () => { addHeader(true); },
     });
+
+    // ── Grafici — pagine successive alle tabelle ───────────────────────────
+    const CHART_W = (269 - 6) / 2;
+    const CHART_H = 48;
+    const GAP_Y = 5;
+
+    doc.addPage();
+    y = addHeader(true);
+
+    for (let i = 0; i < activeMetrics.length; i += 2) {
+      if (y + CHART_H > PH - M) {
+        doc.addPage();
+        y = addHeader(true);
+      }
+      drawChart(activeMetrics[i], M, y, CHART_W, CHART_H);
+      if (i + 1 < activeMetrics.length) {
+        drawChart(activeMetrics[i + 1], M + CHART_W + 6, y, CHART_W, CHART_H);
+      }
+      y += CHART_H + GAP_Y;
+    }
 
     // Page numbers
     const pages = (doc as any).internal.getNumberOfPages();
