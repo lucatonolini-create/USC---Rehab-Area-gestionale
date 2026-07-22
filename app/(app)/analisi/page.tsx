@@ -343,10 +343,10 @@ async function esportaPDFPanoramica(params: {
       startY: y,
       head: [["Tipo infortunio", "N° atleti", "% sul totale"]],
       body: params.perTipoInfortunio.map(({ nome, count }) => [
-        nome, count, params.atleti.length > 0 ? `${Math.round((count / params.atleti.length) * 100)}%` : "—",
+        nome.replace(/\//g, "/ "), count, params.atleti.length > 0 ? `${Math.round((count / params.atleti.length) * 100)}%` : "—",
       ]),
       headStyles: { fillColor: [160, 160, 160], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
+      bodyStyles: { fontSize: 8.5, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: { 0: { fontStyle: "bold", textColor: dark }, 1: {}, 2: {} },
