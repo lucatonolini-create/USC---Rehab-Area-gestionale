@@ -635,29 +635,26 @@ export default function PerformancePage() {
         {sessions.length > 0 && (
           <>
             {/* ── KPI strip ──────────────────────────────────────────────────── */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-5">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 mb-5">
               <div className="bg-white rounded-xl border border-gray-200 p-4">
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Sessioni</p>
                 <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
               </div>
-              {(["rpe", "distanza", "hsr", "vel21", "acc", "potenza"] as (keyof Session)[])
-                .map((k) => {
-                  const m = METRICS.find((x) => x.key === k);
-                  if (!m || !activeMetrics.includes(m)) return null;
-                  const t = trend(k);
-                  return (
-                    <div key={k} className="bg-white rounded-xl border border-gray-200 p-4">
-                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
-                        {m.shortLabel}{m.unit && ` (${m.unit})`}
-                      </p>
-                      <div className="flex items-end gap-1.5">
-                        <span className="text-2xl font-bold text-gray-900">{lastVal(k, m.dec)}</span>
-                        <TrendIcon t={t} />
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5">media {avgVal(k, m.dec)}</p>
+              {activeMetrics.map((m) => {
+                const t = trend(m.key);
+                return (
+                  <div key={m.key} className="bg-white rounded-xl border border-gray-200 p-4">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">
+                      {m.shortLabel}{m.unit && ` (${m.unit})`}
+                    </p>
+                    <div className="flex items-end gap-1.5">
+                      <span className="text-2xl font-bold text-gray-900">{lastVal(m.key, m.dec)}</span>
+                      <TrendIcon t={t} />
                     </div>
-                  );
-                })}
+                    <p className="text-xs text-gray-400 mt-0.5">media {avgVal(m.key, m.dec)}</p>
+                  </div>
+                );
+              })}
             </div>
 
             {/* ── GRAFICI ────────────────────────────────────────────────────── */}
