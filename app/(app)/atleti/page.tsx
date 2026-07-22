@@ -645,9 +645,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           sprint: pn(ca?.sprint), potenza: pn(ca?.potenzaMetabolica),
         };
       });
-      const hasCarico = caricoSessions.some(
-        (s) => s.rpe !== null || s.interno !== null || s.distanza !== null
-      );
+      // Section only appears if internal-load data (RPE or Carico Interno) exists.
+      // GPS columns in the table are added dynamically if collected; otherwise only RPE/interno show.
+      const hasCarico = caricoSessions.some((s) => s.rpe !== null || s.interno !== null);
       if (hasCarico) {
         checkPage(20, sub);
         y = secTitle("Analisi Carico e Performance", y);
