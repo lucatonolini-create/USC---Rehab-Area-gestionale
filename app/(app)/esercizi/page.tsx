@@ -1059,6 +1059,16 @@ export default function EserciziPage() {
                           </div>
                         )}
 
+                        {/* Fisioterapia */}
+                        {prog.noteFisioterapia?.trim() && (
+                          <div className="mb-4">
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
+                              <Heart className="w-3.5 h-3.5" /> Fisioterapia
+                            </p>
+                            <p className="text-sm text-gray-700 bg-pink-50 border border-pink-100 rounded-xl px-3 py-2.5 whitespace-pre-wrap">{prog.noteFisioterapia.trim()}</p>
+                          </div>
+                        )}
+
                         <div className="flex items-center gap-3 pt-2 border-t border-gray-100">
                           <button onClick={() => apriModifica(prog)}
                             className="flex items-center gap-1.5 text-[#C8102E] text-sm font-medium hover:underline">
