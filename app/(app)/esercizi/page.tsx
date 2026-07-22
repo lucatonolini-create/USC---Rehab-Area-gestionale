@@ -207,8 +207,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         dataRowCount++; continue;
       }
 
-      const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
-      const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+      const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join("\n").replace(/\//g, "/ ") : "—";
+      const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join("\n").replace(/\//g, "/ ") : "—";
       const esC = (prog.esercizicampo ?? []).map((c, i) => {
         const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
         return `${i + 1}. ${parts.join(" ")}`;
@@ -259,15 +259,15 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     rowPageBreak: "avoid",
     margin: { left: M, right: M, top: HDR + 8 },
     columnStyles: {
-      0:  { cellWidth: 24, fontStyle: "bold" },
-      1:  { cellWidth: 20 },
-      2:  { cellWidth: 14 },
-      3:  { cellWidth: 18 },
+      0:  { cellWidth: 22, fontStyle: "bold" },
+      1:  { cellWidth: 24 },
+      2:  { cellWidth: 16 },
+      3:  { cellWidth: 16 },
       4:  { cellWidth: 26 },
-      5:  { cellWidth: 29 },
+      5:  { cellWidth: 28 },
       6:  { cellWidth: 13, halign: "center" as const },
       7:  { cellWidth: 28 },
-      8:  { cellWidth: 29 },
+      8:  { cellWidth: 28 },
       9:  { cellWidth: 16, halign: "center" as const },
       10: { cellWidth: 17 },
       11: { cellWidth: 24 },
@@ -409,8 +409,8 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
           dataRowCount++; continue;
         }
 
-        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
-        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join("\n").replace(/\//g, "/ ") : "—";
+        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join("\n").replace(/\//g, "/ ") : "—";
         const esC = (prog.esercizicampo ?? []).map((c, i) => {
           const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
           return `${i + 1}. ${parts.join(" ")}`;
@@ -458,17 +458,17 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     rowPageBreak: "avoid",
     margin: { left: M, right: M, top: HDR + 8 },
     columnStyles: {
-      0:  { cellWidth: 24, fontStyle: "bold" },
-      1:  { cellWidth: 20 },
-      2:  { cellWidth: 14 },
-      3:  { cellWidth: 18 },
+      0:  { cellWidth: 22, fontStyle: "bold" },
+      1:  { cellWidth: 24 },
+      2:  { cellWidth: 16 },
+      3:  { cellWidth: 16 },
       4:  { cellWidth: 26 },
-      5:  { cellWidth: 31 },
-      6:  { cellWidth: 10, halign: "center" as const },
+      5:  { cellWidth: 28 },
+      6:  { cellWidth: 13, halign: "center" as const },
       7:  { cellWidth: 28 },
-      8:  { cellWidth: 31 },
-      9:  { cellWidth: 13, halign: "center" as const },
-      10: { cellWidth: 19 },
+      8:  { cellWidth: 28 },
+      9:  { cellWidth: 16, halign: "center" as const },
+      10: { cellWidth: 17 },
       11: { cellWidth: 24 },
       12: { cellWidth: 11, halign: "center" as const },
     },

@@ -237,8 +237,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           continue;
         }
 
-        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join(", ") : "—";
-        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join(", ") : "—";
+        const obP = prog.obiettiviPalestra?.length ? prog.obiettiviPalestra.join("\n").replace(/\//g, "/ ") : "—";
+        const obCampo = prog.obiettiviCampo?.length ? prog.obiettiviCampo.join("\n").replace(/\//g, "/ ") : "—";
 
         const esC = (prog.esercizicampo ?? []).map((c, i) => {
           const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
@@ -291,18 +291,18 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       bodyStyles: { fontSize: 6, cellPadding: 1.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M },
       columnStyles: {
-        0:  { cellWidth: 12 },
-        1:  { cellWidth: 16 },
-        2:  { cellWidth: 10 },
+        0:  { cellWidth: 14 },
+        1:  { cellWidth: 18 },
+        2:  { cellWidth: 12 },
         3:  { cellWidth: 10 },
-        4:  { cellWidth: 13 },
-        5:  { cellWidth: 19 },
-        6:  { cellWidth: 12, halign: "center" as const },
-        7:  { cellWidth: 13 },
-        8:  { cellWidth: 21 },
-        9:  { cellWidth: 16, halign: "center" as const },
-        10: { cellWidth: 20 },
-        11: { cellWidth: 12 },
+        4:  { cellWidth: 18 },
+        5:  { cellWidth: 17 },
+        6:  { cellWidth: 10, halign: "center" as const },
+        7:  { cellWidth: 18 },
+        8:  { cellWidth: 17 },
+        9:  { cellWidth: 9, halign: "center" as const },
+        10: { cellWidth: 15 },
+        11: { cellWidth: 16 },
         12: { cellWidth: 8, halign: "center" as const },
       },
       didParseCell: (data: any) => {
