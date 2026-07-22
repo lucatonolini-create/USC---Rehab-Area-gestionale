@@ -254,8 +254,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
     startY: HDR + 8,
     head: [["Atleta", "Programma", "Fase", "Fisio", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE"]],
     body,
-    headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
+    headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7, halign: "center", valign: "middle" },
+    bodyStyles: { fontSize: 7, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
     rowPageBreak: "avoid",
     margin: { left: M, right: M, top: HDR + 8 },
     columnStyles: {
@@ -282,7 +282,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         data.cell.styles.fillColor = [200, 16, 46];
         data.cell.styles.textColor = [255, 255, 255];
         data.cell.styles.fontStyle = "bold";
-        data.cell.styles.fontSize = 8;
+        data.cell.styles.fontSize = 7.5;
         data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 5, right: 2 };
       } else if (absenteRowIndices.has(data.row.index)) {
         data.cell.styles.fillColor = [255, 237, 213];
@@ -453,8 +453,8 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
     startY: HDR + 8,
     head: [["Atleta", "Programma", "Fase", "Fisio", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE"]],
     body,
-    headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
+    headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7, halign: "center", valign: "middle" },
+    bodyStyles: { fontSize: 7, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
     rowPageBreak: "avoid",
     margin: { left: M, right: M, top: HDR + 8 },
     columnStyles: {
@@ -479,13 +479,13 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
         data.cell.styles.fillColor = [43, 43, 43];
         data.cell.styles.textColor = [255, 255, 255];
         data.cell.styles.fontStyle = "bold";
-        data.cell.styles.fontSize = 8.5;
+        data.cell.styles.fontSize = 8;
         data.cell.styles.cellPadding = { top: 4, bottom: 4, left: 5, right: 2 };
       } else if (catRowIndices.has(data.row.index)) {
         data.cell.styles.fillColor = [200, 16, 46];
         data.cell.styles.textColor = [255, 255, 255];
         data.cell.styles.fontStyle = "bold";
-        data.cell.styles.fontSize = 8;
+        data.cell.styles.fontSize = 7.5;
         data.cell.styles.cellPadding = { top: 3, bottom: 3, left: 5, right: 2 };
       } else if (absenteRowIndices.has(data.row.index)) {
         data.cell.styles.fillColor = [255, 237, 213];

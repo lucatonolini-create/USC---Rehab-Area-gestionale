@@ -180,7 +180,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       ["Stato attuale", atleta.stato],
     ],
     theme: "striped",
-    styles: { fontSize: 8.5, cellPadding: 3, overflow: "linebreak", halign: "left", valign: "middle" },
+    styles: { fontSize: 8, cellPadding: 3, overflow: "linebreak", halign: "left", valign: "middle" },
     columnStyles: { 0: { cellWidth: 58, fontStyle: "bold", textColor: dark }, 1: { textColor: dark } },
     alternateRowStyles: { fillColor: [250, 250, 250] },
     margin: { left: M, right: M },
@@ -200,8 +200,8 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         inf.fine ? fmtDCl(inf.fine) : "—",
         inf.inizio ? ggCl(inf.inizio, inf.fine) : "—",
       ]),
-      headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-      bodyStyles: { fontSize: 8.5, cellPadding: 3, halign: "left", valign: "middle" },
+      headStyles: { fillColor: dark, textColor: 255, fontSize: 7, halign: "center", valign: "middle" },
+      bodyStyles: { fontSize: 8, cellPadding: 3, halign: "left", valign: "middle" },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: M },
       columnStyles: {
@@ -333,7 +333,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
     autoTable(doc, {
       startY: y,
       body,
-      bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
+      bodyStyles: { fontSize: 7, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "middle" as const },
       margin: { left: M, right: M, top: HDR + 8 },
       didDrawPage: () => { addHeader(`${nd(atleta)}  ·  ${atleta.categoria}`); },
       columnStyles: {
@@ -357,13 +357,13 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           data.cell.styles.fillColor = [200, 16, 46];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 8;
+          data.cell.styles.fontSize = 7.5;
           data.cell.styles.cellPadding = { top: 3.5, bottom: 3.5, left: 5, right: 2 };
         } else if (subHeaderRowIndices.has(data.row.index)) {
           data.cell.styles.fillColor = [110, 110, 110];
           data.cell.styles.textColor = [255, 255, 255];
           data.cell.styles.fontStyle = "bold";
-          data.cell.styles.fontSize = 7;
+          data.cell.styles.fontSize = 6.5;
           data.cell.styles.halign = "center";
           data.cell.styles.valign = "middle";
           data.cell.styles.cellPadding = { top: 2.5, bottom: 2.5, left: 2, right: 1 };
@@ -495,7 +495,7 @@ async function esportaPDFReportMensile(
     y = secTitle("Riepilogo per categoria", y);
     autoTable(doc, {
       startY: y, body: [...catRows, totCat], theme: "striped",
-      styles: { fontSize: 8.5, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
+      styles: { fontSize: 8, cellPadding: 2.5, overflow: "ellipsize", halign: "left", valign: "middle" },
       columnStyles: { 0: { cellWidth: 45, fontStyle: "bold", textColor: dark }, 1: { cellWidth: 25, textColor: dark } },
       alternateRowStyles: { fillColor: [250, 250, 250] },
       margin: { left: M, right: W / 2 },
@@ -653,8 +653,8 @@ async function esportaPDFReportMensile(
     startY: y,
     head: [["Nome", "Categoria", "Infortunio", "Tipo", "Meccanismo", "Note", "Inizio", "Fine", "Giorni", "Stato"]],
     body: pdfRows,
-    headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-    bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
+    headStyles: { fillColor: dark, textColor: 255, fontSize: 7, halign: "center", valign: "middle" },
+    bodyStyles: { fontSize: 7, cellPadding: 2, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
       0: { cellWidth: 26 }, 1: { cellWidth: 18 }, 2: { cellWidth: 46 },
