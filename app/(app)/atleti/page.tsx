@@ -714,9 +714,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         });
         y = (doc as any).lastAutoTable.finalY + 8;
 
-        // Dual-axis chart: bars=minutaggio (right axis), RPE line (left axis), TL dashed line (own scale)
+        // Dual-axis chart: bars=Training Load (left axis, UA), RPE line (right axis, 0-10)
         const chartSessions = caricoSessions.filter(
-          (s) => s.rpe !== null || s.durata !== null || s.interno !== null
+          (s) => s.rpe !== null || s.interno !== null
         );
         if (chartSessions.length >= 1) {
           checkPage(74, sub);
@@ -726,53 +726,57 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           doc.text("Andamento Training Load", M, y + 2);
           doc.setFillColor(249, 250, 251); doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.3);
           doc.rect(cX, cY, cW, cH, "FD");
-          const PAD = { top: 5, right: 20, bottom: 10, left: 17 };
+          const PAD = { top: 5, right: 18, bottom: 10, left: 20 };
           const plotX = cX + PAD.left; const plotW = cW - PAD.left - PAD.right;
           const plotY = cY + PAD.top; const plotH = cH - PAD.top - PAD.bottom;
 
-          const durVals = chartSessions.map((s) => s.durata).filter((v): v is number => v !== null);
-          const maxDur = durVals.length ? Math.ceil(Math.max(...durVals) / 20) * 20 : 120;
           const tlVals = chartSessions.map((s) => s.interno).filter((v): v is number => v !== null);
-          const maxTL = tlVals.length ? Math.max(...tlVals) : 1;
+          const rawMaxTL = tlVals.length ? Math.max(...tlVals) : 400;
+          const maxTL = Math.ceil(rawMaxTL / 100) * 100 || 100;
           const maxRPE = 10;
 
-          const barW = Math.min(plotW / n * 0.55, 14);
-          const gX = (i: number) => plotX + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
-          const gY_rpe = (v: number) => plotY + plotH - (v / maxRPE) * plotH;
-          const gY_dur = (v: number) => plotY + plotH - (v / maxDur) * plotH;
+          const barW = Math.min((plotW / n) * 0.6, 14);
+          const gX = (i: number) => plotX + (i + 0.5) * (plotW / n);
           const gY_tl  = (v: number) => plotY + plotH - (v / maxTL)  * plotH;
+          const gY_rpe = (v: number) => plotY + plotH - (v / maxRPE) * plotH;
 
-          // Left Y-axis: RPE (red, 0-10)
+          // Grid lines
+          for (let t = 0; t <= 5; t++) {
+            const gy = plotY + (t / 5) * plotH;
+            doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.15);
+            doc.line(plotX, gy, plotX + plotW, gy);
+          }
+
+          // Left Y-axis: Training Load (dark)
+          for (let t = 0; t <= 4; t++) {
+            const tlv = Math.round((maxTL / 4) * t);
+            const ty = gY_tl(tlv);
+            doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
+            doc.text(`${tlv}`, plotX - 1.5, ty + 1.5, { align: "right" });
+          }
+          doc.setFontSize(4.5); doc.setFont("helvetica", "bold");
+          doc.setTextColor(...dark); doc.text("TL (UA)", plotX - 1.5, plotY - 1, { align: "right" });
+
+          // Right Y-axis: RPE (red, 0-10)
           for (let t = 0; t <= 5; t++) {
             const rv = t * 2;
             const ty = gY_rpe(rv);
-            doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.2);
-            doc.line(plotX, ty, plotX + plotW, ty);
             doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(200, 16, 46);
-            doc.text(`${rv}`, plotX - 1.5, ty + 1.5, { align: "right" });
+            doc.text(`${rv}`, plotX + plotW + 1.5, ty + 1.5, { align: "left" });
           }
-          // Right Y-axis: minutes (blue)
-          for (let t = 0; t <= 4; t++) {
-            const dv = Math.round((maxDur / 4) * t);
-            const ty = plotY + plotH - (t / 4) * plotH;
-            doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(37, 99, 235);
-            doc.text(`${dv}`, plotX + plotW + 1.5, ty + 1.5, { align: "left" });
-          }
-          // Axis unit labels
-          doc.setFontSize(5); doc.setFont("helvetica", "bold");
-          doc.setTextColor(200, 16, 46); doc.text("RPE", plotX - 1.5, plotY - 1, { align: "right" });
-          doc.setTextColor(37, 99, 235); doc.text("min", plotX + plotW + 1.5, plotY - 1, { align: "left" });
+          doc.setFontSize(4.5); doc.setFont("helvetica", "bold");
+          doc.setTextColor(200, 16, 46); doc.text("RPE", plotX + plotW + 1.5, plotY - 1, { align: "left" });
 
-          // Bars: minutaggio (right axis, light blue)
+          // Bars: Training Load (dark navy/slate)
           chartSessions.forEach((s, i) => {
-            if (s.durata === null) return;
+            if (s.interno === null) return;
             const bx = gX(i) - barW / 2;
-            const bh = (s.durata / maxDur) * plotH;
-            doc.setFillColor(191, 219, 254); doc.setDrawColor(96, 165, 250); doc.setLineWidth(0.2);
+            const bh = (s.interno / maxTL) * plotH;
+            doc.setFillColor(55, 65, 81); doc.setDrawColor(37, 47, 63); doc.setLineWidth(0.15);
             doc.rect(bx, plotY + plotH - bh, barW, bh, "FD");
           });
 
-          // RPE line (left axis, red solid)
+          // RPE line (right axis, red solid)
           doc.setDrawColor(200, 16, 46); doc.setLineWidth(0.9); doc.setLineDashPattern([], 0);
           let rpeI = -1; let rpeYv = 0;
           chartSessions.forEach((s, i) => {
@@ -787,29 +791,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
             const px = gX(i); const py = gY_rpe(s.rpe);
             doc.circle(px, py, 1.1, "FD");
             doc.setFontSize(5); doc.setFont("helvetica", "bold"); doc.setTextColor(200, 16, 46);
-            doc.text(`${s.rpe.toFixed(1)}`, px, py - 2.8, { align: "center" });
+            doc.text(`${s.rpe.toFixed(1)}`, px, py - 2.5, { align: "center" });
           });
-
-          // Training Load dashed line (own scale, purple) with value labels
-          if (tlVals.length >= 1) {
-            doc.setDrawColor(88, 28, 135); doc.setLineWidth(1.1); doc.setLineDashPattern([2, 1.5], 0);
-            let tlI = -1; let tlYv = 0;
-            chartSessions.forEach((s, i) => {
-              if (s.interno === null) return;
-              const py = gY_tl(s.interno);
-              if (tlI >= 0) doc.line(gX(tlI), tlYv, gX(i), py);
-              tlI = i; tlYv = py;
-            });
-            doc.setLineDashPattern([], 0);
-            doc.setFillColor(88, 28, 135); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
-            chartSessions.forEach((s, i) => {
-              if (s.interno === null) return;
-              const px = gX(i); const py = gY_tl(s.interno);
-              doc.circle(px, py, 1, "FD");
-              doc.setFontSize(4.5); doc.setFont("helvetica", "bold"); doc.setTextColor(88, 28, 135);
-              doc.text(`${Math.round(s.interno)} UA`, px, py + 4.5, { align: "center" });
-            });
-          }
 
           // X-axis dates
           const step = n <= 12 ? 1 : n <= 24 ? 2 : Math.ceil(n / 12);
@@ -820,27 +803,17 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
           // Legend
           const legY = cY + cH + 9;
-          const legs: Array<{ label: string; isBar: boolean; fill: [number,number,number]; stroke: [number,number,number]; dash: boolean }> = [
-            { label: `Minutaggio (max ${maxDur} min)`,            isBar: true,  fill: [191, 219, 254], stroke: [96, 165, 250],  dash: false },
-            { label: `RPE (scala 0-10)`,                          isBar: false, fill: [200, 16, 46],   stroke: [200, 16, 46],   dash: false },
-            { label: `Training Load — valori in UA`,              isBar: false, fill: [88, 28, 135],   stroke: [88, 28, 135],   dash: true  },
-          ];
-          let lx = cX;
-          for (const leg of legs) {
-            if (leg.isBar) {
-              doc.setFillColor(...leg.fill); doc.setDrawColor(...leg.stroke); doc.setLineWidth(0.2);
-              doc.rect(lx, legY - 2.5, 9, 4.5, "FD");
-            } else {
-              doc.setDrawColor(...leg.stroke); doc.setLineWidth(0.7);
-              if (leg.dash) doc.setLineDashPattern([2, 1.5], 0);
-              doc.line(lx, legY, lx + 9, legY);
-              if (leg.dash) doc.setLineDashPattern([], 0);
-              doc.setFillColor(...leg.fill); doc.circle(lx + 4.5, legY, 0.9, "F");
-            }
-            doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
-            doc.text(leg.label, lx + 11, legY + 1.5);
-            lx += doc.getTextWidth(leg.label) + 16;
-          }
+          doc.setFillColor(55, 65, 81); doc.setDrawColor(37, 47, 63); doc.setLineWidth(0.15);
+          doc.rect(cX, legY - 2.5, 9, 4.5, "FD");
+          doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
+          doc.text("Training Load (UA)", cX + 11, legY + 1.5);
+          const leg2X = cX + 60;
+          doc.setDrawColor(200, 16, 46); doc.setLineWidth(0.9); doc.setLineDashPattern([], 0);
+          doc.line(leg2X, legY, leg2X + 9, legY);
+          doc.setFillColor(200, 16, 46); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
+          doc.circle(leg2X + 4.5, legY, 0.9, "FD");
+          doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
+          doc.text("RPE (scala 0-10)", leg2X + 11, legY + 1.5);
           y = legY + 10;
         }
       }
