@@ -591,6 +591,24 @@ export default function EserciziPage() {
     setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
   };
 
+  const copiaDaPrecedente = () => {
+    if (!form.atletaId) return;
+    const lista = programmiPerAtleta[form.atletaId] ?? [];
+    if (!lista.length) return;
+    const precedente = [...lista].sort((a, b) => b.data.localeCompare(a.data))[0];
+    setForm((prev) => ({
+      ...prev,
+      nome: precedente.nome,
+      fase: precedente.fase,
+      esercizi: (precedente.esercizi ?? []).map((e) => ({ ...e })),
+      esercizicampo: (precedente.esercizicampo ?? []).map((c) => ({ ...c })),
+      obiettiviPalestra: [...(precedente.obiettiviPalestra ?? [])],
+      obiettiviCampo: [...(precedente.obiettiviCampo ?? [])],
+      tests: (precedente.tests ?? []).map((t) => ({ ...t })),
+      noteFisioterapia: precedente.noteFisioterapia ?? "",
+    }));
+  };
+
   const apriModifica = (p: Programma) => {
     const { id, ...rest } = p;
     setForm({ ...rest, esercizi: rest.esercizi.map((e) => ({ ...e })), esercizicampo: (rest.esercizicampo ?? []).map((c) => ({ ...c })), tests: (rest.tests ?? []).map((t) => ({ ...t })), carico: rest.carico ?? { ...caricoVuoto } });
@@ -1075,7 +1093,17 @@ export default function EserciziPage() {
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-lg font-bold text-gray-900">{editId ? "Modifica Programma" : "Nuovo Programma"}</h2>
-              <button onClick={() => setMostraForm(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              <div className="flex items-center gap-3">
+                {!editId && form.atletaId && (programmiPerAtleta[form.atletaId]?.length ?? 0) > 0 && (
+                  <button
+                    onClick={copiaDaPrecedente}
+                    className="text-xs font-semibold text-[#C8102E] border border-[#C8102E] rounded-lg px-3 py-1.5 hover:bg-[#C8102E] hover:text-white transition-colors"
+                  >
+                    Copia da precedente
+                  </button>
+                )}
+                <button onClick={() => setMostraForm(false)}><X className="w-5 h-5 text-gray-400" /></button>
+              </div>
             </div>
 
             <div className="p-5 overflow-y-auto flex-1 space-y-5">
