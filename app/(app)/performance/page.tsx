@@ -88,17 +88,18 @@ interface MetricDef {
 }
 
 const METRICS: MetricDef[] = [
-  { key: "rpe",      label: "RPE",                shortLabel: "RPE",      unit: "",        color: "#C8102E", dec: 1 },
-  { key: "interno",  label: "Carico Interno",      shortLabel: "Carico",   unit: "UA",      color: "#7c3aed", dec: 0 },
-  { key: "distanza", label: "Distanza Totale",     shortLabel: "Distanza", unit: "m",       color: "#2563eb", dec: 0 },
-  { key: "hsr",      label: "HSR",                 shortLabel: "HSR",      unit: "m",       color: "#0891b2", dec: 0 },
-  { key: "velMax",   label: "Velocità Max",        shortLabel: "Vel. Max", unit: "km/h",    color: "#059669", dec: 1 },
-  { key: "vel21",    label: "Distanza >21 km/h",  shortLabel: ">21 km/h", unit: "m",       color: "#16a34a", dec: 0 },
-  { key: "vel25",    label: "Distanza >25 km/h",  shortLabel: ">25 km/h", unit: "m",       color: "#15803d", dec: 0 },
-  { key: "acc",      label: "Accelerazioni",       shortLabel: "Acc.",     unit: "",        color: "#d97706", dec: 0 },
-  { key: "dec",      label: "Decelerazioni",       shortLabel: "Dec.",     unit: "",        color: "#ea580c", dec: 0 },
-  { key: "sprint",   label: "Sprint",              shortLabel: "Sprint",   unit: "",        color: "#db2777", dec: 0 },
-  { key: "potenza",  label: "Potenza Metabolica",  shortLabel: "Potenza",  unit: "W/kg",    color: "#65a30d", dec: 1 },
+  { key: "rpe",      label: "RPE",                 shortLabel: "RPE",       unit: "",        color: "#C8102E", dec: 1 },
+  { key: "durata",   label: "Durata",              shortLabel: "Durata",    unit: "min",     color: "#6b7280", dec: 0 },
+  { key: "interno",  label: "Carico Interno",       shortLabel: "Car. Int.", unit: "UA",      color: "#7c3aed", dec: 0 },
+  { key: "distanza", label: "Distanza Totale",      shortLabel: "Distanza",  unit: "m",       color: "#2563eb", dec: 0 },
+  { key: "hsr",      label: "D>16 km/h",           shortLabel: "D>16",      unit: "m",       color: "#0891b2", dec: 0 },
+  { key: "vel21",    label: "D>20 km/h",           shortLabel: "D>20",      unit: "m",       color: "#16a34a", dec: 0 },
+  { key: "vel25",    label: "D>25 km/h",           shortLabel: "D>25",      unit: "m",       color: "#15803d", dec: 0 },
+  { key: "velMax",   label: "Velocità Max",         shortLabel: "Vel. Max",  unit: "km/h",    color: "#059669", dec: 1 },
+  { key: "acc",      label: "Accelerazioni",        shortLabel: "Acc.",      unit: "",        color: "#d97706", dec: 0 },
+  { key: "dec",      label: "Decelerazioni",        shortLabel: "Dec.",      unit: "",        color: "#ea580c", dec: 0 },
+  { key: "sprint",   label: "Sprint",               shortLabel: "Sprint",    unit: "",        color: "#db2777", dec: 0 },
+  { key: "potenza",  label: "Potenza Metabolica",   shortLabel: "Potenza",   unit: "W/kg",    color: "#65a30d", dec: 1 },
 ];
 
 // ── SVG Chart ────────────────────────────────────────────────────────────────
@@ -519,7 +520,7 @@ export default function PerformancePage() {
                 <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Sessioni</p>
                 <p className="text-2xl font-bold text-gray-900">{sessions.length}</p>
               </div>
-              {(["rpe", "distanza", "hsr", "velMax", "acc"] as (keyof Session)[])
+              {(["rpe", "distanza", "hsr", "vel21", "acc", "potenza"] as (keyof Session)[])
                 .map((k) => {
                   const m = METRICS.find((x) => x.key === k);
                   if (!m || !activeMetrics.includes(m)) return null;
