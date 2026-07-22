@@ -183,7 +183,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
 
   type CaricoSession = {
     dateLabel: string;
-    rpe: number | null; interno: number | null; durata: number | null;
+    dateFull: string;
+    fase: string;
+    rpe: number | null; interno: number | null;
     distanza: number | null; hsr: number | null; vel21: number | null;
     vel25: number | null; velMax: number | null; acc: number | null;
     dec: number | null; sprint: number | null; potenza: number | null;
@@ -634,7 +636,9 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         const ca = p.carico;
         return {
           dateLabel: p.data ? new Date(p.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }) : "—",
-          rpe: pn(ca?.rpe), interno: pn(ca?.interno), durata: pn(ca?.durata),
+          dateFull: p.data ? fmtD(p.data) : "—",
+          fase: p.fase ?? "—",
+          rpe: pn(ca?.rpe), interno: pn(ca?.interno),
           distanza: pn(ca?.distanzaTotale), hsr: pn(ca?.hsr),
           vel21: pn(ca?.velocita21), vel25: pn(ca?.velocita25), velMax: pn(ca?.velocitaMax),
           acc: pn(ca?.accelerazioni), dec: pn(ca?.decelerazioni),
@@ -646,52 +650,69 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       );
       if (hasCarico) {
         checkPage(20, sub);
-        y = secTitle("Analisi Carico e Performance", y);
+        y = secTitle(`Analisi Carico e Performance — ${injLabel}`, y);
 
-        const perfMetrics: Array<{ label: string; unit: string; dec: number; get: (s: CaricoSession) => number | null }> = [
-          { label: "RPE",            unit: "/10",  dec: 1, get: (s) => s.rpe },
-          { label: "Carico Interno", unit: "UA",   dec: 0, get: (s) => s.interno },
-          { label: "Durata",         unit: "min",  dec: 0, get: (s) => s.durata },
-          { label: "Distanza Tot.",  unit: "m",    dec: 0, get: (s) => s.distanza },
-          { label: "D>16 km/h",      unit: "m",    dec: 0, get: (s) => s.hsr },
-          { label: "D>20 km/h",      unit: "m",    dec: 0, get: (s) => s.vel21 },
-          { label: "D>25 km/h",      unit: "m",    dec: 0, get: (s) => s.vel25 },
-          { label: "Vel. Max",       unit: "km/h", dec: 1, get: (s) => s.velMax },
-          { label: "Accelerazioni",  unit: "",     dec: 0, get: (s) => s.acc },
-          { label: "Decelerazioni",  unit: "",     dec: 0, get: (s) => s.dec },
-          { label: "Sprint",         unit: "",     dec: 0, get: (s) => s.sprint },
-          { label: "Potenza Metab.", unit: "W/kg", dec: 1, get: (s) => s.potenza },
+        type MetricCol = { label: string; unit: string; dec: number; w: number; get: (s: CaricoSession) => number | null };
+        const allMetricCols: MetricCol[] = [
+          { label: "RPE",       unit: "/10",  dec: 1, w: 12, get: (s) => s.rpe },
+          { label: "Car. Int.", unit: "UA",   dec: 0, w: 14, get: (s) => s.interno },
+          { label: "Dist.",     unit: "m",    dec: 0, w: 16, get: (s) => s.distanza },
+          { label: "D>16",      unit: "m",    dec: 0, w: 14, get: (s) => s.hsr },
+          { label: "D>20",      unit: "m",    dec: 0, w: 13, get: (s) => s.vel21 },
+          { label: "D>25",      unit: "m",    dec: 0, w: 13, get: (s) => s.vel25 },
+          { label: "Vel.Max",   unit: "km/h", dec: 1, w: 14, get: (s) => s.velMax },
+          { label: "Acc.",      unit: "",     dec: 0, w: 11, get: (s) => s.acc },
+          { label: "Dec.",      unit: "",     dec: 0, w: 11, get: (s) => s.dec },
+          { label: "Sprint",    unit: "",     dec: 0, w: 11, get: (s) => s.sprint },
+          { label: "Potenza",   unit: "W/kg", dec: 1, w: 13, get: (s) => s.potenza },
         ];
+        const activeCols = allMetricCols.filter(({ get: getV }) =>
+          caricoSessions.some((s) => getV(s) !== null)
+        );
         const fmtV = (v: number | null, dec: number, unit: string) =>
           v !== null ? `${v.toFixed(dec)}${unit ? ` ${unit}` : ""}` : "—";
 
-        const summaryBody = perfMetrics.flatMap(({ label, unit, dec, get: getV }) => {
-          const vals = caricoSessions.map(getV).filter((v): v is number => v !== null);
-          if (vals.length === 0) return [];
-          const ultima = caricoSessions.slice().reverse().find((s) => getV(s) !== null);
-          const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
-          return [[label, fmtV(ultima ? getV(ultima) : null, dec, unit), fmtV(avg, dec, unit), fmtV(Math.max(...vals), dec, unit)]];
+        const sessionRows = caricoSessions.map((s) => [
+          s.dateFull, s.fase,
+          ...activeCols.map(({ dec, unit, get: getV }) => fmtV(getV(s), dec, unit)),
+        ]);
+        const avgRow = [
+          "Valori medi", "—",
+          ...activeCols.map(({ dec, unit, get: getV }) => {
+            const vals = caricoSessions.map(getV).filter((v): v is number => v !== null);
+            return vals.length ? fmtV(vals.reduce((a, b) => a + b, 0) / vals.length, dec, unit) : "—";
+          }),
+        ];
+
+        const metricW = activeCols.reduce((s, c) => s + c.w, 0);
+        const scale = (W - 2 * M - 34) / Math.max(metricW, 1);
+        const colStyles: Record<number, any> = {
+          0: { cellWidth: 16, halign: "center" as const },
+          1: { cellWidth: 18 },
+        };
+        activeCols.forEach((c, i) => {
+          colStyles[i + 2] = { cellWidth: Math.round(c.w * scale * 10) / 10, halign: "center" as const };
         });
 
-        if (summaryBody.length > 0) {
-          checkPage(summaryBody.length * 7 + 20, sub);
-          autoTable(doc, {
-            startY: y,
-            head: [["Metrica", "Ultima sessione", "Media", "Massimo"]],
-            body: summaryBody,
-            headStyles: { fillColor: [37, 99, 235] as [number,number,number], textColor: [255,255,255] as [number,number,number], fontSize: 7.5, halign: "center" as const, valign: "middle" as const },
-            bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "center" as const, valign: "middle" as const },
-            alternateRowStyles: { fillColor: [239, 246, 255] as [number,number,number] },
-            margin: { left: M, right: M },
-            columnStyles: {
-              0: { cellWidth: 50, halign: "left" as const, fontStyle: "bold", textColor: dark },
-              1: { cellWidth: 44 },
-              2: { cellWidth: 44 },
-              3: { cellWidth: 44 },
-            },
-          });
-          y = (doc as any).lastAutoTable.finalY + 8;
-        }
+        checkPage(sessionRows.length * 6 + 20, sub);
+        autoTable(doc, {
+          startY: y,
+          head: [["Data", "Fase", ...activeCols.map((c) => c.label)]],
+          body: [...sessionRows, avgRow],
+          headStyles: { fillColor: [37, 99, 235] as [number,number,number], textColor: [255,255,255] as [number,number,number], fontSize: 6, halign: "center" as const, valign: "middle" as const, cellPadding: 2 },
+          bodyStyles: { fontSize: 6.5, cellPadding: 2, halign: "left" as const, valign: "middle" as const },
+          alternateRowStyles: { fillColor: [239, 246, 255] as [number,number,number] },
+          margin: { left: M, right: M },
+          columnStyles: colStyles,
+          didParseCell: (data: any) => {
+            if (data.section === "body" && data.row.index === sessionRows.length) {
+              data.cell.styles.fontStyle = "bolditalic";
+              data.cell.styles.textColor = [0, 0, 0];
+              data.cell.styles.fillColor = [220, 230, 255];
+            }
+          },
+        });
+        y = (doc as any).lastAutoTable.finalY + 8;
 
         const chartDefs: Array<{ label: string; color: [number,number,number]; get: (s: CaricoSession) => number | null }> = [
           { label: "RPE",            color: [200, 16, 46],  get: (s) => s.rpe },
