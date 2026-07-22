@@ -261,7 +261,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 13 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Fisio", "Obiettivi Palestra", "Esercizi Palestra", "VAS", "Obiettivi Campo", "Esercizi Campo", "GPS", "VAS Campo", "Test", "RPE"]);
+      body.push(["Data", "Programma", "Fase", "Fisio", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS", "Obiettivi\nCampo", "Esercizi\nCampo", "GPS", "VAS\nCampo", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
