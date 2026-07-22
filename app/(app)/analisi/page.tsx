@@ -962,7 +962,7 @@ async function esportaPDFReport(
       : tuttiInf;
     const count = Math.max(infortuni.length, 1);
     if (infortuni.length === 0) {
-      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", a.note || "—", "—", "—", "—", a.stato]);
+      analisiRows.push([{ content: nd(a), styles: { fontStyle: "bold" } }, a.categoria, "—", "—", a.meccanismo || "—", a.note || "—", "—", "—", "—", a.stato]);
       athleteForRowA.push(athleteIdx);
     } else {
       infortuni.forEach((inf, i) => {
@@ -976,6 +976,7 @@ async function esportaPDFReport(
         row.push(
           inf.diagnosi,
           inf.tipo ?? "—",
+          a.meccanismo || "—",
           a.note || "—",
           inf.inizio ? fmtDPdf(inf.inizio) : "—",
           inf.fine ? fmtDPdf(inf.fine) : "—",
@@ -990,15 +991,15 @@ async function esportaPDFReport(
 
   autoTable(doc, {
     startY: y,
-    head: [["Atleta", "Categoria", "Infortunio", "Tipo", "Note", "Inizio", "Fine", "Giorni", "Stato"]],
+    head: [["Atleta", "Categoria", "Infortunio", "Tipo", "Meccanismo", "Note", "Inizio", "Fine", "Giorni", "Stato"]],
     body: analisiRows,
     headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
-    bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "left", valign: "middle" },
+    bodyStyles: { fontSize: 7.5, cellPadding: 2.5, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 28 }, 1: { cellWidth: 16 }, 2: { cellWidth: 50 },
-      3: { cellWidth: 50 }, 4: { cellWidth: 50 }, 5: { cellWidth: 18 },
-      6: { cellWidth: 18 }, 7: { cellWidth: 13 }, 8: { cellWidth: 26 },
+      0: { cellWidth: 26 }, 1: { cellWidth: 15 }, 2: { cellWidth: 44 },
+      3: { cellWidth: 42 }, 4: { cellWidth: 28 }, 5: { cellWidth: 42 },
+      6: { cellWidth: 17 }, 7: { cellWidth: 17 }, 8: { cellWidth: 12 }, 9: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
