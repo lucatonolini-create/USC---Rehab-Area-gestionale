@@ -518,7 +518,7 @@ async function esportaPDFPanoramica(params: {
     y = secTitle("Infortuni per squadra e tipo", y);
     autoTable(doc, {
       startY: y,
-      head: [["Squadra", "Totale", ...tipiPan]],
+      head: [["Squadra", "Totale", ...tipiPan.map((t) => t.replace(/\//g, "/\n"))]],
       body: [...crossPan, totRowPan],
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center" },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "center", valign: "middle" },
@@ -835,7 +835,7 @@ async function esportaPDFReport(
     y = secTitle("Infortuni per squadra e tipo", y);
     autoTable(doc, {
       startY: y,
-      head: [["Squadra", "Totale", ...tipiPresenti]],
+      head: [["Squadra", "Totale", ...tipiPresenti.map((t) => t.replace(/\//g, "/\n"))]],
       body: [...crossBody, totRow],
       headStyles: { fillColor: dark, textColor: 255, fontSize: 7.5, halign: "center" },
       bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "center", valign: "middle" },
