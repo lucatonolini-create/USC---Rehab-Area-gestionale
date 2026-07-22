@@ -33,6 +33,7 @@ interface Session {
   dateLabel: string;
   nome: string;
   fase: string;
+  infortunio: string;
   rpe: number | null;
   interno: number | null;
   durata: number | null;
@@ -57,6 +58,7 @@ function toSession(p: Programma): Session | null {
       : "",
     nome: p.nome ?? "",
     fase: p.fase ?? "",
+    infortunio: p.infortunioLabel ?? "",
     rpe: pn(c.rpe),
     interno: pn(c.interno),
     durata: pn(c.durata),
@@ -96,9 +98,9 @@ const METRICS: MetricDef[] = [
   { key: "vel21",    label: "D>20 km/h",           shortLabel: "D>20",      unit: "m",       color: "#16a34a", dec: 0 },
   { key: "vel25",    label: "D>25 km/h",           shortLabel: "D>25",      unit: "m",       color: "#15803d", dec: 0 },
   { key: "velMax",   label: "Velocità Max",         shortLabel: "Vel. Max",  unit: "km/h",    color: "#059669", dec: 1 },
-  { key: "acc",      label: "Accelerazioni",        shortLabel: "Acc.",      unit: "",        color: "#d97706", dec: 0 },
-  { key: "dec",      label: "Decelerazioni",        shortLabel: "Dec.",      unit: "",        color: "#ea580c", dec: 0 },
-  { key: "sprint",   label: "Sprint",               shortLabel: "Sprint",    unit: "",        color: "#db2777", dec: 0 },
+  { key: "acc",      label: "Accelerazioni",        shortLabel: "N. Acc.",   unit: "",        color: "#d97706", dec: 0 },
+  { key: "dec",      label: "Decelerazioni",        shortLabel: "N. Dec.",   unit: "",        color: "#ea580c", dec: 0 },
+  { key: "sprint",   label: "Sprint",               shortLabel: "N. Sprint", unit: "",        color: "#db2777", dec: 0 },
   { key: "potenza",  label: "Potenza Metabolica",   shortLabel: "Potenza",   unit: "W/kg",    color: "#65a30d", dec: 1 },
 ];
 
@@ -443,19 +445,23 @@ export default function PerformancePage() {
     const tblBase = [METRICS.find((m) => m.key === "rpe")!, METRICS.find((m) => m.key === "interno")!]
       .filter(Boolean).filter((m) => activeMetrics.includes(m));
     const tblMetrics = [...tblBase, ...tblGps];
-    const tblMW = tblMetrics.length ? Math.floor((269 - 98) / tblMetrics.length) : 0;
+    // Data=18 + Infortunio=32 + Programma=40 + Fase=20 = 110 fixed
+    const tblFixedW = 110;
+    const tblMW = tblMetrics.length ? Math.floor((269 - tblFixedW) / tblMetrics.length) : 0;
     const tblCols: Record<number, any> = {
       0: { cellWidth: 18 },
-      1: { cellWidth: 52, halign: "left" },
-      2: { cellWidth: 28, halign: "left" },
+      1: { cellWidth: 32, halign: "left" },
+      2: { cellWidth: 40, halign: "left" },
+      3: { cellWidth: 20, halign: "left" },
     };
-    tblMetrics.forEach((_, i) => { tblCols[i + 3] = { cellWidth: tblMW }; });
+    tblMetrics.forEach((_, i) => { tblCols[i + 4] = { cellWidth: tblMW }; });
 
     autoTable(doc, {
       startY: y,
-      head: [["Data", "Programma", "Fase", ...tblMetrics.map((m) => `${m.shortLabel}${m.unit ? `\n(${m.unit})` : ""}`)]],
+      head: [["Data", "Infortunio", "Programma", "Fase", ...tblMetrics.map((m) => `${m.shortLabel}${m.unit ? `\n(${m.unit})` : ""}`)]],
       body: sessions.map((s) => [
         s.dateLabel || s.data,
+        s.infortunio || "—",
         s.nome || "—",
         s.fase || "—",
         ...tblMetrics.map((m) => fv(s[m.key] as number | null, m.dec)),
@@ -716,7 +722,7 @@ export default function PerformancePage() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-200">
-                        {["Data", "Programma", "Fase"].map((h) => (
+                        {["Data", "Infortunio", "Programma", "Fase"].map((h) => (
                           <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
                             {h}
                           </th>
@@ -735,6 +741,7 @@ export default function PerformancePage() {
                           <td className="px-4 py-2.5 text-gray-600 whitespace-nowrap text-xs font-mono">
                             {s.data ? new Date(s.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit", year: "2-digit" }) : "—"}
                           </td>
+                          <td className="px-4 py-2.5 text-gray-500 text-xs max-w-[120px] truncate">{s.infortunio || "—"}</td>
                           <td className="px-4 py-2.5 text-gray-800 font-medium max-w-[160px] truncate">{s.nome || "—"}</td>
                           <td className="px-4 py-2.5 text-gray-500 whitespace-nowrap">{s.fase || "—"}</td>
                           {activeMetrics.map((m) => {
@@ -756,7 +763,7 @@ export default function PerformancePage() {
                     {/* Footer: averages */}
                     <tfoot>
                       <tr className="border-t border-gray-200 bg-gray-50">
-                        <td className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide" colSpan={3}>
+                        <td className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide" colSpan={4}>
                           Media
                         </td>
                         {activeMetrics.map((m) => (
@@ -766,7 +773,7 @@ export default function PerformancePage() {
                         ))}
                       </tr>
                       <tr className="bg-gray-50">
-                        <td className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide" colSpan={3}>
+                        <td className="px-4 py-2.5 text-xs font-semibold text-gray-500 uppercase tracking-wide" colSpan={4}>
                           Massimo
                         </td>
                         {activeMetrics.map((m) => (
