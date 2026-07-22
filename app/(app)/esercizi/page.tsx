@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull, FileText, Heart } from "lucide-react";
+import { Plus, Dumbbell, Trash2, X, ChevronDown, Edit2, FlaskConical, Gauge, Upload, AlertTriangle, Footprints, CalendarX2, Users, BatteryFull, FileText, Heart, Bone } from "lucide-react";
 import {
   loadAtleti, loadProgrammi, upsertProgramma, upsertAtleta, deleteProgramma, uid, nd, calcolaProgressoAuto,
   subscribeToAtleti, subscribeToProgrammi,
@@ -911,7 +911,7 @@ export default function EserciziPage() {
                         {prog.noteFisioterapia?.trim() && (
                           <div className="mb-4">
                             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center gap-1.5">
-                              <Heart className="w-3.5 h-3.5" /> Fisioterapia
+                              <Bone className="w-3.5 h-3.5" /> Fisioterapia
                             </p>
                             <p className="text-sm text-gray-700 bg-pink-50 border border-pink-100 rounded-xl px-3 py-2.5 whitespace-pre-wrap">{prog.noteFisioterapia.trim()}</p>
                           </div>
@@ -1253,7 +1253,7 @@ export default function EserciziPage() {
               </div>
               {(() => {
                 const tabs = [
-                  { key: "fisioterapia" as FormSection, label: "Fisio",       icon: Heart,        count: null },
+                  { key: "fisioterapia" as FormSection, label: "Fisio",       icon: Bone,         count: null },
                   { key: "esercizi"     as FormSection, label: "Palestra",    icon: Dumbbell,     count: form.esercizi.length },
                   { key: "campo"        as FormSection, label: "Campo",       icon: Footprints,   count: esercizicampo.length },
                   { key: "carico"       as FormSection, label: "GPS",         icon: Gauge,        count: null },
@@ -1708,7 +1708,7 @@ export default function EserciziPage() {
                     />
                   ) : (
                     <div className="text-center py-8 text-gray-400 text-sm">
-                      <Heart className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                      <Bone className="w-8 h-8 text-gray-200 mx-auto mb-2" />
                       Nessuna nota. Clicca "+ Aggiungi" per inserire.
                     </div>
                   )}
