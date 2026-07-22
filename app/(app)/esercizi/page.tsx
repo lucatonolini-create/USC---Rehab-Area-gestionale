@@ -1213,14 +1213,15 @@ export default function EserciziPage() {
                   )}
                 </div>
               </div>
-              <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
-                {([
+              {(() => {
+                const tabs = [
                   { key: "esercizi"     as FormSection, label: "Palestra",    icon: Dumbbell,     count: form.esercizi.length },
                   { key: "campo"        as FormSection, label: "Campo",       icon: Footprints,   count: esercizicampo.length },
                   { key: "test"         as FormSection, label: "Test",        icon: FlaskConical, count: tests.length },
                   { key: "carico"       as FormSection, label: "GPS",         icon: Gauge,        count: null },
                   { key: "fisioterapia" as FormSection, label: "Fisio",       icon: Heart,        count: null },
-                ]).map(({ key, label, icon: Icon, count }) => (
+                ];
+                const renderTab = ({ key, label, icon: Icon, count }: typeof tabs[number]) => (
                   <button key={key} className={tabClass(key)} onClick={() => setSezioneAttiva(key)}>
                     <span className="flex flex-col items-center gap-0.5">
                       <Icon className="w-4 h-4 shrink-0" />
@@ -1232,8 +1233,14 @@ export default function EserciziPage() {
                       </span>
                     </span>
                   </button>
-                ))}
-              </div>
+                );
+                return (
+                  <div className="flex flex-col bg-gray-100 rounded-xl p-1 gap-1">
+                    <div className="flex gap-1">{tabs.slice(0, 3).map(renderTab)}</div>
+                    <div className="flex gap-1">{tabs.slice(3).map(renderTab)}</div>
+                  </div>
+                );
+              })()}
 
               {/* Sezione Esercizi */}
               {sezioneAttiva === "esercizi" && (
