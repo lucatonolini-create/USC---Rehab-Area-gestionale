@@ -623,14 +623,15 @@ export default function PerformancePage() {
       y = cY + cH + GAP_Y;
     }
 
-    for (let i = 0; i < activeMetrics.length; i += 2) {
+    const chartMetrics = activeMetrics.filter((m) => m.key !== "rpe" && m.key !== "interno" && m.key !== "durata");
+    for (let i = 0; i < chartMetrics.length; i += 2) {
       if (y + CHART_H > PH - M) {
         doc.addPage();
         y = addHeader(true);
       }
-      drawChart(activeMetrics[i], M, y, CHART_W, CHART_H);
-      if (i + 1 < activeMetrics.length) {
-        drawChart(activeMetrics[i + 1], M + CHART_W + 6, y, CHART_W, CHART_H);
+      drawChart(chartMetrics[i], M, y, CHART_W, CHART_H);
+      if (i + 1 < chartMetrics.length) {
+        drawChart(chartMetrics[i + 1], M + CHART_W + 6, y, CHART_W, CHART_H);
       }
       y += CHART_H + GAP_Y;
     }
