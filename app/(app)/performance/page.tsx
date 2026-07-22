@@ -285,23 +285,141 @@ export default function PerformancePage() {
   function exportPdf() {
     if (!selectedAtleta || !sessions.length) return;
     const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const W = 297, M = 14;
+    const PW = 297, PH = 210, M = 14;
 
-    const addHdr = () => {
+    function hexRgb(hex: string): [number, number, number] {
+      const h = hex.replace("#", "");
+      return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)];
+    }
+
+    // Full header (first page), compact header (continuation pages)
+    // Returns the y position where content can start
+    const addHeader = (compact?: boolean): number => {
+      if (compact) {
+        doc.setFontSize(7.5); doc.setFont("helvetica", "bold"); doc.setTextColor(...RED_RGB);
+        doc.text(`U.S. Cremonese – Performance  ·  ${nd(selectedAtleta!)}`, M, 10);
+        doc.setDrawColor(...RED_RGB); doc.setLineWidth(0.3);
+        doc.line(M, 12.5, PW - M, 12.5);
+        return 16;
+      }
       doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(...RED_RGB);
       doc.text("U.S. Cremonese", M, 15);
       doc.setFontSize(9); doc.setFont("helvetica", "bolditalic"); doc.setTextColor(...GRAY_RGB);
       doc.text("Rehab Area – Performance", M, 19);
-      doc.setFontSize(7.5); doc.setFont("helvetica", "normal");
-      doc.text(`${nd(selectedAtleta)}  ·  ${selectedAtleta.categoria}`, M, 24);
+      doc.setFontSize(7.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...GRAY_RGB);
+      doc.text(`${nd(selectedAtleta!)}  ·  ${selectedAtleta!.categoria}`, M, 24);
       doc.setDrawColor(...RED_RGB); doc.setLineWidth(0.5);
-      doc.line(M, 27, W - M, 27);
+      doc.line(M, 27, PW - M, 27);
+      return 32;
     };
 
-    addHdr();
-    let y = 32;
+    // Draw a single line chart for metric m at position (cx, cy) with size (cw × ch)
+    function drawChart(m: MetricDef, cx: number, cy: number, cw: number, ch: number) {
+      const pts = sessions
+        .map((s) => ({ label: s.dateLabel, v: s[m.key] as number | null }))
+        .filter((p) => p.v !== null) as { label: string; v: number }[];
+      if (pts.length < 2) return;
 
-    // Stats summary row
+      const [cr, cg, cb] = hexRgb(m.color);
+      const PAD = { top: 9, right: 4, bottom: 10, left: 17 };
+      const iW = cw - PAD.left - PAD.right;
+      const iH = ch - PAD.top - PAD.bottom;
+      const n = pts.length;
+
+      const vals = pts.map((p) => p.v);
+      const dMin = Math.min(...vals);
+      const dMax = Math.max(...vals);
+      const dAvg = vals.reduce((a, b) => a + b, 0) / n;
+      const dSpan = (dMax - dMin) * 0.12 || dMax * 0.1 || 1;
+      const vMin = dMin - dSpan;
+      const vMax = dMax + dSpan;
+      const vRange = vMax - vMin;
+
+      const px = (i: number) => cx + PAD.left + (i / Math.max(n - 1, 1)) * iW;
+      const py = (v: number) => cy + PAD.top + (1 - (v - vMin) / vRange) * iH;
+      const botY = cy + PAD.top + iH;
+
+      // Card background + border
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(cx, cy, cw, ch, 1.5, 1.5, "F");
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.15);
+      doc.roundedRect(cx, cy, cw, ch, 1.5, 1.5, "S");
+
+      // Title (metric name + unit)
+      doc.setFontSize(6.5);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(cr, cg, cb);
+      doc.text(`${m.label}${m.unit ? ` (${m.unit})` : ""}`, cx + PAD.left, cy + 5.5);
+
+      // Stats in top-right
+      doc.setFontSize(5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(120, 120, 120);
+      const statStr = `Ult: ${fv(vals[n-1], m.dec)}  ·  Med: ${fv(dAvg, m.dec)}  ·  Max: ${fv(dMax, m.dec)}`;
+      doc.text(statStr, cx + cw - PAD.right, cy + 5.5, { align: "right" });
+
+      // Y grid + tick labels
+      [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+        const gy = cy + PAD.top + t * iH;
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.15);
+        doc.line(cx + PAD.left, gy, cx + cw - PAD.right, gy);
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(165, 165, 165);
+        doc.text((vMax - t * vRange).toFixed(m.dec), cx + PAD.left - 1, gy + 1.5, { align: "right" });
+      });
+
+      // Area fill — lightened tint of the metric color
+      const lr = Math.round(cr * 0.12 + 255 * 0.88);
+      const lg = Math.round(cg * 0.12 + 255 * 0.88);
+      const lb = Math.round(cb * 0.12 + 255 * 0.88);
+      doc.setFillColor(lr, lg, lb);
+      const segs: number[][] = [[0, py(pts[0].v) - botY]];
+      for (let i = 1; i < n; i++) {
+        segs.push([px(i) - px(i - 1), py(pts[i].v) - py(pts[i - 1].v)]);
+      }
+      segs.push([0, botY - py(pts[n - 1].v)]);
+      doc.lines(segs, px(0), botY, [1, 1], "F", true);
+
+      // Average dashed line
+      doc.setDrawColor(cr, cg, cb);
+      doc.setLineWidth(0.3);
+      doc.setLineDashPattern([1.5, 1.5], 0);
+      doc.line(cx + PAD.left, py(dAvg), cx + cw - PAD.right, py(dAvg));
+      doc.setLineDashPattern([], 0);
+
+      // Main line
+      doc.setDrawColor(cr, cg, cb);
+      doc.setLineWidth(0.8);
+      for (let i = 0; i < n - 1; i++) {
+        doc.line(px(i), py(pts[i].v), px(i + 1), py(pts[i + 1].v));
+      }
+
+      // Dots (skip some when many points to avoid clutter)
+      doc.setFillColor(cr, cg, cb);
+      doc.setDrawColor(255, 255, 255);
+      doc.setLineWidth(0.35);
+      const dotStep = n <= 30 ? 1 : 2;
+      pts.forEach((p, i) => {
+        if (i % dotStep === 0) doc.circle(px(i), py(p.v), 0.9, "FD");
+      });
+
+      // X-axis date labels
+      const lblStep = n <= 12 ? 1 : n <= 24 ? 2 : Math.ceil(n / 12);
+      doc.setFontSize(4.5);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(120, 120, 120);
+      pts.forEach((p, i) => {
+        if (i % lblStep === 0) doc.text(p.label, px(i), cy + ch - 1, { align: "center" });
+      });
+    }
+
+    // ── Page 1: header + stats summary + charts ────────────────────────────
+    let y = addHeader();
+
+    // Stats summary table (first 6 active metrics)
     const statCols = activeMetrics.slice(0, 6);
     if (statCols.length) {
       autoTable(doc, {
@@ -317,64 +435,66 @@ export default function PerformancePage() {
         alternateRowStyles: { fillColor: [249, 249, 249] },
         margin: { left: M, right: M },
       });
-      y = (doc as any).lastAutoTable.finalY + 6;
+      y = (doc as any).lastAutoTable.finalY + 8;
     }
 
-    // Sessions table - always include fixed columns, then active GPS metrics
-    // Width: 269mm total (297 - 14*2)
-    // Data=18 + Programma=52 + Fase=28 = 98 fixed
-    // Remaining 171 / activeMetrics.length each
-    const gpsMetrics = activeMetrics.filter((m) => m.key !== "rpe" && m.key !== "interno" && m.key !== "durata");
-    const baseMetrics: MetricDef[] = [
-      METRICS.find((m) => m.key === "rpe")!,
-      METRICS.find((m) => m.key === "interno")!,
-    ].filter(Boolean).filter((m) => activeMetrics.includes(m));
+    // Charts grid — 2 per row, each ~131.5mm wide × 48mm tall
+    const CHART_W = (269 - 6) / 2;
+    const CHART_H = 48;
+    const GAP_Y = 5;
 
-    const allPdfMetrics = [...baseMetrics, ...gpsMetrics];
-    const fixedW = 18 + 52 + 28;
-    const metricW = allPdfMetrics.length
-      ? Math.floor((269 - fixedW) / allPdfMetrics.length)
-      : 0;
+    for (let i = 0; i < activeMetrics.length; i += 2) {
+      if (y + CHART_H > PH - M) {
+        doc.addPage();
+        y = addHeader(true);
+      }
+      drawChart(activeMetrics[i], M, y, CHART_W, CHART_H);
+      if (i + 1 < activeMetrics.length) {
+        drawChart(activeMetrics[i + 1], M + CHART_W + 6, y, CHART_W, CHART_H);
+      }
+      y += CHART_H + GAP_Y;
+    }
 
-    const head = [
-      ["Data", "Programma", "Fase", ...allPdfMetrics.map((m) => `${m.shortLabel}${m.unit ? `\n(${m.unit})` : ""}`)],
-    ];
-    const body = sessions.map((s) => [
-      s.dateLabel || s.data,
-      s.nome || "—",
-      s.fase || "—",
-      ...allPdfMetrics.map((m) => fv(s[m.key] as number | null, m.dec)),
-    ]);
-
-    const colStyles: Record<number, any> = {
+    // ── Sessions data table — always on a fresh page ───────────────────────
+    const tblGps = activeMetrics.filter((m) => m.key !== "rpe" && m.key !== "interno" && m.key !== "durata");
+    const tblBase = [METRICS.find((m) => m.key === "rpe")!, METRICS.find((m) => m.key === "interno")!]
+      .filter(Boolean).filter((m) => activeMetrics.includes(m));
+    const tblMetrics = [...tblBase, ...tblGps];
+    const tblMW = tblMetrics.length ? Math.floor((269 - 98) / tblMetrics.length) : 0;
+    const tblCols: Record<number, any> = {
       0: { cellWidth: 18 },
       1: { cellWidth: 52, halign: "left" },
       2: { cellWidth: 28, halign: "left" },
     };
-    allPdfMetrics.forEach((_, i) => {
-      colStyles[i + 3] = { cellWidth: metricW };
-    });
+    tblMetrics.forEach((_, i) => { tblCols[i + 3] = { cellWidth: tblMW }; });
 
+    doc.addPage();
     autoTable(doc, {
-      startY: y,
-      head,
-      body,
+      startY: 18,
+      head: [["Data", "Programma", "Fase", ...tblMetrics.map((m) => `${m.shortLabel}${m.unit ? `\n(${m.unit})` : ""}`)]],
+      body: sessions.map((s) => [
+        s.dateLabel || s.data,
+        s.nome || "—",
+        s.fase || "—",
+        ...tblMetrics.map((m) => fv(s[m.key] as number | null, m.dec)),
+      ]),
       headStyles: { fillColor: DARK_RGB, textColor: 255, fontSize: 6.5, halign: "center", valign: "middle" },
       bodyStyles: { fontSize: 6.5, cellPadding: 1.8, halign: "center", valign: "middle", overflow: "linebreak" },
-      columnStyles: colStyles,
+      columnStyles: tblCols,
       alternateRowStyles: { fillColor: [249, 249, 249] },
-      margin: { left: M, right: M },
-      didDrawPage: () => addHdr(),
+      margin: { left: M, right: M, top: 18 },
+      didDrawPage: () => { addHeader(true); },
     });
 
+    // Page numbers
     const pages = (doc as any).internal.getNumberOfPages();
-    for (let i = 1; i <= pages; i++) {
-      doc.setPage(i);
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
       doc.setFontSize(7); doc.setFont("helvetica", "normal"); doc.setTextColor(...GRAY_RGB);
-      doc.text(`${i} / ${pages}`, W - M, 205, { align: "right" });
+      doc.text(`${p} / ${pages}`, PW - M, 205, { align: "right" });
     }
 
-    doc.save(`performance_${nd(selectedAtleta).replace(/ /g, "_")}.pdf`);
+    doc.save(`performance_${nd(selectedAtleta!).replace(/ /g, "_")}.pdf`);
   }
 
   // ── Trend icon ───────────────────────────────────────────────────────────────
