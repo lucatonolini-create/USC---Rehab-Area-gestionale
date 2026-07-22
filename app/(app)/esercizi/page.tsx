@@ -1215,11 +1215,11 @@ export default function EserciziPage() {
               </div>
               {(() => {
                 const tabs = [
+                  { key: "fisioterapia" as FormSection, label: "Fisio",       icon: Heart,        count: null },
                   { key: "esercizi"     as FormSection, label: "Palestra",    icon: Dumbbell,     count: form.esercizi.length },
                   { key: "campo"        as FormSection, label: "Campo",       icon: Footprints,   count: esercizicampo.length },
-                  { key: "test"         as FormSection, label: "Test",        icon: FlaskConical, count: tests.length },
                   { key: "carico"       as FormSection, label: "GPS",         icon: Gauge,        count: null },
-                  { key: "fisioterapia" as FormSection, label: "Fisio",       icon: Heart,        count: null },
+                  { key: "test"         as FormSection, label: "Test",        icon: FlaskConical, count: tests.length },
                 ];
                 const renderTab = ({ key, label, icon: Icon, count }: typeof tabs[number]) => (
                   <button key={key} className={tabClass(key)} onClick={() => setSezioneAttiva(key)}>
