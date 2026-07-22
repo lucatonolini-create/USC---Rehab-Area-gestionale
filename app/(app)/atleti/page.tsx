@@ -185,7 +185,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     dateLabel: string;
     dateFull: string;
     fase: string;
-    rpe: number | null; interno: number | null;
+    rpe: number | null; interno: number | null; durata: number | null;
     distanza: number | null; hsr: number | null; vel21: number | null;
     vel25: number | null; velMax: number | null; acc: number | null;
     dec: number | null; sprint: number | null; potenza: number | null;
@@ -638,7 +638,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           dateLabel: p.data ? new Date(p.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }) : "—",
           dateFull: p.data ? fmtD(p.data) : "—",
           fase: p.fase ?? "—",
-          rpe: pn(ca?.rpe), interno: pn(ca?.interno),
+          rpe: pn(ca?.rpe), interno: pn(ca?.interno), durata: pn(ca?.durata),
           distanza: pn(ca?.distanzaTotale), hsr: pn(ca?.hsr),
           vel21: pn(ca?.velocita21), vel25: pn(ca?.velocita25), velMax: pn(ca?.velocitaMax),
           acc: pn(ca?.accelerazioni), dec: pn(ca?.decelerazioni),
@@ -714,18 +714,71 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         });
         y = (doc as any).lastAutoTable.finalY + 8;
 
-        const chartDefs: Array<{ label: string; color: [number,number,number]; get: (s: CaricoSession) => number | null }> = [
-          { label: "RPE",            color: [200, 16, 46],  get: (s) => s.rpe },
-          { label: "Carico Interno", color: [124, 58, 237], get: (s) => s.interno },
-          { label: "Distanza Tot.",  color: [37, 99, 235],  get: (s) => s.distanza },
+        // Combined Training Load chart (normalized % of each series' max)
+        type TLSeries = { label: string; color: [number,number,number]; dash: boolean; unit: string; vals: (number|null)[]; maxV: number };
+        const tlRaw: Array<{ label: string; color: [number,number,number]; dash: boolean; unit: string; getV: (s: CaricoSession) => number|null }> = [
+          { label: "RPE",           color: [200, 16, 46],  dash: false, unit: "/10",  getV: (s) => s.rpe },
+          { label: "Minutaggio",    color: [37, 99, 235],  dash: false, unit: "min",  getV: (s) => s.durata },
+          { label: "Training Load", color: [88, 28, 135],  dash: true,  unit: "UA",   getV: (s) => s.interno },
         ];
-        for (const { label, color, get: getV } of chartDefs) {
-          const pts = caricoSessions
-            .filter((s) => getV(s) !== null)
-            .map((s) => ({ dateLabel: s.dateLabel, value: getV(s) as number }));
-          if (pts.length < 2) continue;
-          checkPage(58, sub);
-          drawPerfChart(label, color, pts);
+        const tlSeries: TLSeries[] = tlRaw.flatMap(({ label, color, dash, unit, getV }) => {
+          const vals = caricoSessions.map(getV);
+          const nonNull = vals.filter((v): v is number => v !== null);
+          if (nonNull.length < 2) return [];
+          return [{ label, color, dash, unit, vals, maxV: Math.max(...nonNull) }];
+        });
+        if (tlSeries.length > 0) {
+          checkPage(68, sub);
+          const n = caricoSessions.length;
+          const cX = M; const cW = W - 2 * M; const cH = 48; const cY = y + 8;
+          doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...dark);
+          doc.text("Andamento Training Load", M, y + 2);
+          doc.setFillColor(249, 250, 251); doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.3);
+          doc.rect(cX, cY, cW, cH, "FD");
+          const PAD = { top: 6, right: 4, bottom: 8, left: 16 };
+          const plotX = cX + PAD.left; const plotW = cW - PAD.left - PAD.right;
+          const plotY = cY + PAD.top; const plotH = cH - PAD.top - PAD.bottom;
+          for (let t = 0; t <= 4; t++) {
+            const pct = t / 4;
+            const ty = plotY + plotH - pct * plotH;
+            doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.2);
+            doc.line(plotX, ty, plotX + plotW, ty);
+            doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+            doc.text(`${Math.round(pct * 100)}%`, plotX - 1.5, ty + 1.5, { align: "right" });
+          }
+          const gX = (i: number) => plotX + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
+          const gY = (normed: number) => plotY + plotH - normed * plotH;
+          for (const ser of tlSeries) {
+            doc.setDrawColor(...ser.color); doc.setLineWidth(ser.dash ? 1.1 : 0.8);
+            if (ser.dash) doc.setLineDashPattern([2, 1.5], 0);
+            let pIdx = -1; let pNorm = 0;
+            ser.vals.forEach((v, i) => {
+              if (v === null) return;
+              const norm = v / ser.maxV;
+              if (pIdx >= 0) doc.line(gX(pIdx), gY(pNorm), gX(i), gY(norm));
+              pIdx = i; pNorm = norm;
+            });
+            if (ser.dash) doc.setLineDashPattern([], 0);
+            doc.setFillColor(...ser.color); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
+            ser.vals.forEach((v, i) => { if (v !== null) doc.circle(gX(i), gY(v / ser.maxV), 0.8, "FD"); });
+          }
+          const step = n <= 12 ? 1 : n <= 24 ? 2 : Math.ceil(n / 12);
+          doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+          caricoSessions.forEach((s, i) => { if (i % step === 0) doc.text(s.dateLabel, gX(i), cY + cH + 4, { align: "center" }); });
+          const legY = cY + cH + 9;
+          let legX = cX;
+          for (const ser of tlSeries) {
+            doc.setDrawColor(...ser.color); doc.setLineWidth(0.6);
+            if (ser.dash) doc.setLineDashPattern([2, 1.5], 0);
+            doc.line(legX, legY, legX + 9, legY);
+            if (ser.dash) doc.setLineDashPattern([], 0);
+            doc.setFillColor(...ser.color); doc.circle(legX + 4.5, legY, 0.8, "F");
+            const lbl = `${ser.label} (max: ${ser.maxV.toFixed(ser.label === "RPE" ? 1 : 0)} ${ser.unit})`;
+            doc.setFontSize(5.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
+            doc.text(lbl, legX + 11, legY + 1.5);
+            legX += doc.getTextWidth(lbl) + 14;
+          }
+          y = legY + 10;
         }
       }
     } else {
