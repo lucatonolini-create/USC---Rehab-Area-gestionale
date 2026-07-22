@@ -790,7 +790,10 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
             if (s.rpe === null) return;
             const px = gX(i); const py = gY_rpe(s.rpe);
             doc.circle(px, py, 1.1, "FD");
-            doc.setFontSize(5); doc.setFont("helvetica", "bold"); doc.setTextColor(200, 16, 46);
+            const barTop = s.interno !== null ? plotY + plotH - (s.interno / maxTL) * plotH : plotY;
+            const insideBar = py - 2.5 >= barTop;
+            doc.setFontSize(5); doc.setFont("helvetica", "bold");
+            doc.setTextColor(...(insideBar ? ([255, 255, 255] as [number,number,number]) : ([200, 16, 46] as [number,number,number])));
             doc.text(`${s.rpe.toFixed(1)}`, px, py - 2.5, { align: "center" });
           });
 

@@ -588,9 +588,11 @@ export default function PerformancePage() {
         doc.setDrawColor(255, 255, 255);
         doc.setLineWidth(0.3);
         doc.circle(bX(i), rpeY(s.rpe), 1, "FD");
+        const barTopP = s.interno !== null ? cY + PAD.top + (1 - s.interno / maxTL) * plotH : cY + PAD.top;
+        const insideBarP = rpeY(s.rpe) - 2 >= barTopP;
         doc.setFontSize(4.5);
         doc.setFont("helvetica", "bold");
-        doc.setTextColor(...RED_RGB);
+        doc.setTextColor(...(insideBarP ? ([255, 255, 255] as [number, number, number]) : RED_RGB));
         doc.text(s.rpe.toFixed(1), bX(i), rpeY(s.rpe) - 2, { align: "center" });
       });
 
