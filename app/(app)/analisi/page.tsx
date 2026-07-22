@@ -975,7 +975,7 @@ async function esportaPDFReport(
         }
         row.push(
           inf.diagnosi,
-          inf.tipo ?? "—",
+          (inf.tipo ?? "—").replace(/\//g, "/ "),
           a.meccanismo || "—",
           a.note || "—",
           inf.inizio ? fmtDPdf(inf.inizio) : "—",
@@ -997,9 +997,9 @@ async function esportaPDFReport(
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 26 }, 1: { cellWidth: 15 }, 2: { cellWidth: 44 },
+      0: { cellWidth: 26 }, 1: { cellWidth: 18 }, 2: { cellWidth: 44 },
       3: { cellWidth: 42 }, 4: { cellWidth: 28 }, 5: { cellWidth: 42 },
-      6: { cellWidth: 17 }, 7: { cellWidth: 17 }, 8: { cellWidth: 12 }, 9: { cellWidth: 26 },
+      6: { cellWidth: 17 }, 7: { cellWidth: 17 }, 8: { cellWidth: 9 }, 9: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {

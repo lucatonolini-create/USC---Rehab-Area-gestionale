@@ -632,7 +632,7 @@ async function esportaPDFReportMensile(
             { content: a.categoria, rowSpan: count, styles: { valign: "middle" } },
           );
         }
-        row.push(inf.diagnosi, inf.tipo ?? "—");
+        row.push(inf.diagnosi, (inf.tipo ?? "—").replace(/\//g, "/ "));
         if (i === 0) {
           row.push({ content: a.meccanismo || "—", rowSpan: count, styles: { valign: "middle" } });
           row.push({ content: a.note || "—", rowSpan: count, styles: { valign: "middle" } });
@@ -657,9 +657,9 @@ async function esportaPDFReportMensile(
     bodyStyles: { fontSize: 7.5, cellPadding: 2, halign: "left", valign: "middle" },
     margin: { left: M, right: M },
     columnStyles: {
-      0: { cellWidth: 26 }, 1: { cellWidth: 15 }, 2: { cellWidth: 46 },
+      0: { cellWidth: 26 }, 1: { cellWidth: 18 }, 2: { cellWidth: 46 },
       3: { cellWidth: 36 }, 4: { cellWidth: 28 }, 5: { cellWidth: 44 },
-      6: { cellWidth: 18 }, 7: { cellWidth: 18 }, 8: { cellWidth: 12 }, 9: { cellWidth: 26 },
+      6: { cellWidth: 18 }, 7: { cellWidth: 18 }, 8: { cellWidth: 9 }, 9: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
