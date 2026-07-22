@@ -452,7 +452,7 @@ export default function PerformancePage() {
       {/* ── Athlete selector ─────────────────────────────────────────────────── */}
       {atletiConDati.length > 0 && (
         <div className="bg-white border-b border-gray-200 px-6 py-3 shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-w-md">
             <button
               onClick={() => idx > 0 && setSelectedId(atletiConDati[idx - 1].id)}
               disabled={idx <= 0}
@@ -461,26 +461,18 @@ export default function PerformancePage() {
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            <div className="flex gap-2 overflow-x-auto flex-1 pb-0.5" style={{ scrollbarWidth: "none" }}>
-              {atletiConDati.map((a) => {
-                const active = a.id === selectedId;
-                return (
-                  <button
-                    key={a.id}
-                    onClick={() => setSelectedId(a.id)}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                      active ? "text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                    style={active ? { backgroundColor: RED } : {}}
-                  >
-                    {nd(a)}
-                    <span className={`ml-1.5 text-xs ${active ? "text-red-200" : "text-gray-400"}`}>
-                      {a.categoria}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <select
+              value={selectedId ?? ""}
+              onChange={(e) => setSelectedId(e.target.value || null)}
+              className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-red-400 cursor-pointer"
+            >
+              <option value="">— Seleziona atleta —</option>
+              {atletiConDati.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {nd(a)}{a.categoria ? ` — ${a.categoria}` : ""}
+                </option>
+              ))}
+            </select>
 
             <button
               onClick={() => idx < atletiConDati.length - 1 && setSelectedId(atletiConDati[idx + 1].id)}
@@ -552,24 +544,40 @@ export default function PerformancePage() {
                       className={`bg-white rounded-xl border border-gray-200 p-4 ${isExpanded ? "lg:col-span-2" : ""}`}
                     >
                       {/* Card header */}
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
-                          <span className="font-semibold text-gray-800 text-sm">{m.label}</span>
-                          {m.unit && <span className="text-xs text-gray-400">({m.unit})</span>}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-lg font-bold" style={{ color: m.color }}>{lastVal(m.key, m.dec)}</span>
-                          <TrendIcon t={t} />
-                          <span className="text-xs text-gray-400">
-                            med. {avgVal(m.key, m.dec)} · max {maxVal(m.key, m.dec)}
-                          </span>
+                      <div className="mb-3">
+                        {/* Row 1: title + expand */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: m.color }} />
+                            <span className="font-semibold text-gray-800 text-sm">{m.label}</span>
+                            {m.unit && (
+                              <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">{m.unit}</span>
+                            )}
+                          </div>
                           <button
                             onClick={() => setExpandedKey(isExpanded ? null : m.key)}
-                            className="ml-1 text-xs text-gray-400 hover:text-gray-600 underline"
+                            className="text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
                           >
-                            {isExpanded ? "Riduci" : "Espandi"}
+                            {isExpanded ? "Riduci ↙" : "Espandi ↗"}
                           </button>
+                        </div>
+                        {/* Row 2: stats */}
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">Ultimo</span>
+                            <span className="text-base font-bold" style={{ color: m.color }}>{lastVal(m.key, m.dec)}</span>
+                            <TrendIcon t={t} />
+                          </div>
+                          <div className="w-px h-4 bg-gray-200" />
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-400">Media</span>
+                            <span className="text-sm font-semibold text-gray-700">{avgVal(m.key, m.dec)}</span>
+                          </div>
+                          <div className="w-px h-4 bg-gray-200" />
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-400">Max</span>
+                            <span className="text-sm font-semibold text-gray-700">{maxVal(m.key, m.dec)}</span>
+                          </div>
                         </div>
                       </div>
                       <MetricChart sessions={sessions} metric={m} />
