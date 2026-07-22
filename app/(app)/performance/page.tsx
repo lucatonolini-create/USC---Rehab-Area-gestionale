@@ -426,14 +426,14 @@ export default function PerformancePage() {
     const tblBase = [METRICS.find((m) => m.key === "rpe")!, METRICS.find((m) => m.key === "interno")!]
       .filter(Boolean).filter((m) => activeMetrics.includes(m));
     const tblMetrics = [...tblBase, ...tblGps];
-    // Data=18 + Infortunio=32 + Programma=40 + Fase=20 = 110 fixed
-    const tblFixedW = 110;
+    // Data=18 + Infortunio=28 + Programma=38 + Fase=12 = 96 fixed
+    const tblFixedW = 96;
     const tblMW = tblMetrics.length ? Math.floor((269 - tblFixedW) / tblMetrics.length) : 0;
     const tblCols: Record<number, any> = {
       0: { cellWidth: 18 },
-      1: { cellWidth: 32, halign: "left" },
-      2: { cellWidth: 40, halign: "left" },
-      3: { cellWidth: 20, halign: "left" },
+      1: { cellWidth: 28, halign: "left" },
+      2: { cellWidth: 38, halign: "left" },
+      3: { cellWidth: 12, halign: "left" },
     };
     tblMetrics.forEach((_, i) => { tblCols[i + 4] = { cellWidth: tblMW }; });
 
