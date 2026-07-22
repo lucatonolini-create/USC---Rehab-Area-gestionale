@@ -491,6 +491,179 @@ export default function PerformancePage() {
     doc.addPage();
     y = addHeader(true);
 
+    // ── Grafico carico interno (dual-axis: barre minutaggio + linea RPE + linea TL) ──
+    const tlSessions = sessions.filter(
+      (s) => s.rpe !== null || s.durata !== null || s.interno !== null
+    );
+    if (tlSessions.length >= 1) {
+      const n = tlSessions.length;
+      const cX = M;
+      const cW = PW - 2 * M; // full landscape width 269mm
+      const cH = 62;
+      const cY = y;
+
+      const PAD = { top: 8, right: 22, bottom: 12, left: 18 };
+      const plotW = cW - PAD.left - PAD.right;
+      const plotH = cH - PAD.top - PAD.bottom;
+
+      const maxRPE = 10;
+      const durVals = tlSessions.map((s) => s.durata ?? 0);
+      const maxDurRaw = Math.max(...durVals, 1);
+      const maxDur = Math.ceil(maxDurRaw / 20) * 20 || 20;
+      const tlVals = tlSessions.map((s) => s.interno ?? 0);
+      const maxTL = Math.max(...tlVals, 1);
+
+      const bX = (i: number) => cX + PAD.left + (i + 0.5) * (plotW / n);
+      const barW = Math.min((plotW / n) * 0.55, 16);
+      const rpeY = (v: number) => cY + PAD.top + (1 - v / maxRPE) * plotH;
+      const durY = (v: number) => cY + PAD.top + (1 - v / maxDur) * plotH;
+      const tlY  = (v: number) => cY + PAD.top + (1 - v / maxTL) * plotH;
+
+      // Card background
+      doc.setFillColor(249, 250, 251);
+      doc.roundedRect(cX, cY, cW, cH, 1.5, 1.5, "F");
+      doc.setDrawColor(229, 231, 235);
+      doc.setLineWidth(0.15);
+      doc.roundedRect(cX, cY, cW, cH, 1.5, 1.5, "S");
+
+      // Title
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...RED_RGB);
+      doc.text("Andamento Training Load", cX + PAD.left, cY + 5.5);
+
+      // Y grid lines (5 horizontal)
+      [0, 0.25, 0.5, 0.75, 1].forEach((t) => {
+        const gy = cY + PAD.top + t * plotH;
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.12);
+        doc.line(cX + PAD.left, gy, cX + cW - PAD.right, gy);
+      });
+
+      // Left Y-axis labels (RPE 0-10, red)
+      [0, 2, 4, 6, 8, 10].forEach((v) => {
+        const gy = rpeY(v);
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...RED_RGB);
+        doc.text(String(v), cX + PAD.left - 1, gy + 1.2, { align: "right" });
+      });
+      doc.setFontSize(4);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(...RED_RGB);
+      doc.text("RPE", cX + 3, cY + PAD.top + plotH / 2, { angle: 90, align: "center" });
+
+      // Right Y-axis labels (minutes, blue)
+      const durTicks = 4;
+      for (let t = 0; t <= durTicks; t++) {
+        const v = (maxDur / durTicks) * t;
+        const gy = durY(v);
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(96, 165, 250);
+        doc.text(String(Math.round(v)), cX + cW - PAD.right + 1.5, gy + 1.2);
+      }
+      doc.setFontSize(4);
+      doc.setFont("helvetica", "italic");
+      doc.setTextColor(96, 165, 250);
+      doc.text("min", cX + cW - 3.5, cY + PAD.top + plotH / 2, { angle: 270, align: "center" });
+
+      // Bars (minutaggio, light blue)
+      tlSessions.forEach((s, i) => {
+        if (s.durata === null) return;
+        const bh = (s.durata / maxDur) * plotH;
+        const bx = bX(i) - barW / 2;
+        const by = cY + PAD.top + plotH - bh;
+        doc.setFillColor(191, 219, 254);
+        doc.setDrawColor(96, 165, 250);
+        doc.setLineWidth(0.2);
+        doc.rect(bx, by, barW, bh, "FD");
+      });
+
+      // RPE solid red line + dots + value labels
+      doc.setDrawColor(...RED_RGB);
+      doc.setLineWidth(0.9);
+      doc.setLineDashPattern([], 0);
+      for (let i = 0; i < n - 1; i++) {
+        const s0 = tlSessions[i], s1 = tlSessions[i + 1];
+        if (s0.rpe !== null && s1.rpe !== null) {
+          doc.line(bX(i), rpeY(s0.rpe), bX(i + 1), rpeY(s1.rpe));
+        }
+      }
+      tlSessions.forEach((s, i) => {
+        if (s.rpe === null) return;
+        doc.setFillColor(...RED_RGB);
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.3);
+        doc.circle(bX(i), rpeY(s.rpe), 1, "FD");
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(...RED_RGB);
+        doc.text(s.rpe.toFixed(1), bX(i), rpeY(s.rpe) - 2, { align: "center" });
+      });
+
+      // TL dashed purple line + dots + value labels (UA)
+      doc.setDrawColor(88, 28, 135);
+      doc.setLineWidth(0.7);
+      doc.setLineDashPattern([1.5, 1.2], 0);
+      for (let i = 0; i < n - 1; i++) {
+        const s0 = tlSessions[i], s1 = tlSessions[i + 1];
+        if (s0.interno !== null && s1.interno !== null) {
+          doc.line(bX(i), tlY(s0.interno), bX(i + 1), tlY(s1.interno));
+        }
+      }
+      doc.setLineDashPattern([], 0);
+      tlSessions.forEach((s, i) => {
+        if (s.interno === null) return;
+        doc.setFillColor(88, 28, 135);
+        doc.setDrawColor(255, 255, 255);
+        doc.setLineWidth(0.3);
+        doc.circle(bX(i), tlY(s.interno), 1, "FD");
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(88, 28, 135);
+        doc.text(`${Math.round(s.interno)} UA`, bX(i), tlY(s.interno) + 3.5, { align: "center" });
+      });
+
+      // X-axis date labels
+      const lblStep = n <= 20 ? 1 : Math.ceil(n / 20);
+      tlSessions.forEach((s, i) => {
+        if (i % lblStep !== 0) return;
+        doc.setFontSize(4.5);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(120, 120, 120);
+        doc.text(s.dateLabel || s.data, bX(i), cY + cH - 1, { align: "center" });
+      });
+
+      // Legend
+      const legY = cY + cH - 5;
+      const legX = cX + PAD.left;
+      // bar swatch
+      doc.setFillColor(191, 219, 254);
+      doc.setDrawColor(96, 165, 250);
+      doc.setLineWidth(0.2);
+      doc.rect(legX, legY - 2.5, 4, 2.5, "FD");
+      doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(60, 60, 60);
+      doc.text("Minutaggio", legX + 5.2, legY);
+      // RPE line swatch
+      doc.setDrawColor(...RED_RGB); doc.setLineWidth(0.9); doc.setLineDashPattern([], 0);
+      doc.line(legX + 30, legY - 1.2, legX + 34, legY - 1.2);
+      doc.setFillColor(...RED_RGB); doc.setDrawColor(255,255,255); doc.setLineWidth(0.3);
+      doc.circle(legX + 32, legY - 1.2, 0.9, "FD");
+      doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(60, 60, 60);
+      doc.text("RPE", legX + 35.5, legY);
+      // TL line swatch
+      doc.setDrawColor(88, 28, 135); doc.setLineWidth(0.7); doc.setLineDashPattern([1.5, 1.2], 0);
+      doc.line(legX + 52, legY - 1.2, legX + 56, legY - 1.2);
+      doc.setLineDashPattern([], 0);
+      doc.setFillColor(88, 28, 135); doc.setDrawColor(255,255,255); doc.setLineWidth(0.3);
+      doc.circle(legX + 54, legY - 1.2, 0.9, "FD");
+      doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(60, 60, 60);
+      doc.text("Training Load (UA)", legX + 57.5, legY);
+
+      y = cY + cH + GAP_Y;
+    }
+
     for (let i = 0; i < activeMetrics.length; i += 2) {
       if (y + CHART_H > PH - M) {
         doc.addPage();
