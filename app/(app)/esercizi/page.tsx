@@ -1251,6 +1251,42 @@ export default function EserciziPage() {
                   )}
                 </div>
               </div>
+
+              {/* Durata / RPE / Training Load — sempre visibili */}
+              {!form.assente && !form.riposo && (
+                <div className="grid grid-cols-3 gap-3 pt-1">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Durata (min)</label>
+                    <input
+                      value={carico.durata}
+                      onChange={(e) => aggiornaCarico("durata", e.target.value)}
+                      placeholder="Es. 75"
+                      type="number" min="0"
+                      className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">RPE (/10)</label>
+                    <input
+                      value={carico.rpe}
+                      onChange={(e) => aggiornaCarico("rpe", e.target.value)}
+                      placeholder="Es. 6"
+                      type="number" min="1" max="10"
+                      className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E]"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Training Load</label>
+                    <input
+                      value={carico.interno}
+                      readOnly
+                      placeholder="RPE × min"
+                      className="mt-1 w-full border border-gray-100 rounded-xl px-4 py-2.5 text-sm bg-gray-50 text-gray-500 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              )}
+
               {(() => {
                 const tabs = [
                   { key: "fisioterapia" as FormSection, label: "Fisio",       icon: ShieldPlus,         count: null },
