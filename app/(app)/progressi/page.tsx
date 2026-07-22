@@ -261,7 +261,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
       weekRowIndices.add(body.length);
       body.push([{ content: weekLabel, colSpan: 13 }]);
       subHeaderRowIndices.add(body.length);
-      body.push(["Data", "Programma", "Fase", "Obiettivi Palestra", "Esercizi Palestra", "VAS", "Obiettivi Campo", "Esercizi Campo", "GPS", "VAS Campo", "Test", "RPE", "Fisio"]);
+      body.push(["Data", "Programma", "Fase", "Fisio", "Obiettivi Palestra", "Esercizi Palestra", "VAS", "Obiettivi Campo", "Esercizi Campo", "GPS", "VAS Campo", "Test", "RPE"]);
 
       let dataRowCount = 0;
       for (const prog of wkProgs) {
@@ -325,7 +325,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
         const fisio = prog.noteFisioterapia?.trim() || "—";
         if (isAlt) altRowIndices.add(body.length);
-        body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, gps, vasC, tests, rpe, fisio]);
+        body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", fisio, obP, esText, vasText, obCampo, esC, gps, vasC, tests, rpe]);
         dataRowCount++;
       }
     });
@@ -341,15 +341,15 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         1:  { cellWidth: 22 },
         2:  { cellWidth: 13 },
         3:  { cellWidth: 18 },
-        4:  { cellWidth: 31 },
-        5:  { cellWidth: 10, halign: "center" as const },
-        6:  { cellWidth: 28 },
-        7:  { cellWidth: 30 },
-        8:  { cellWidth: 29 },
-        9:  { cellWidth: 13, halign: "center" as const },
-        10: { cellWidth: 30 },
-        11: { cellWidth: 12, halign: "center" as const },
-        12: { cellWidth: 18 },
+        4:  { cellWidth: 18 },
+        5:  { cellWidth: 31 },
+        6:  { cellWidth: 10, halign: "center" as const },
+        7:  { cellWidth: 28 },
+        8:  { cellWidth: 30 },
+        9:  { cellWidth: 29 },
+        10: { cellWidth: 13, halign: "center" as const },
+        11: { cellWidth: 30 },
+        12: { cellWidth: 12, halign: "center" as const },
       },
       didParseCell: (data: any) => {
         if (data.section !== "body") return;

@@ -245,14 +245,14 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
 
       const fisio = prog.noteFisioterapia?.trim() || "—";
       if (isAlt) altRowIndices.add(body.length);
-      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe, fisio]);
+      body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", fisio, obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
       dataRowCount++;
     }
   }
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE", "Fisio\nterapia"]],
+    head: [["Atleta", "Programma", "Fase", "Fisio", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE"]],
     body,
     headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
@@ -262,16 +262,16 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       0:  { cellWidth: 24, fontStyle: "bold" },
       1:  { cellWidth: 20 },
       2:  { cellWidth: 14 },
-      3:  { cellWidth: 26 },
-      4:  { cellWidth: 31 },
-      5:  { cellWidth: 10, halign: "center" as const },
-      6:  { cellWidth: 28 },
-      7:  { cellWidth: 31 },
-      8:  { cellWidth: 13, halign: "center" as const },
-      9:  { cellWidth: 19 },
-      10: { cellWidth: 24 },
-      11: { cellWidth: 11, halign: "center" as const },
-      12: { cellWidth: 18 },
+      3:  { cellWidth: 18 },
+      4:  { cellWidth: 26 },
+      5:  { cellWidth: 31 },
+      6:  { cellWidth: 10, halign: "center" as const },
+      7:  { cellWidth: 28 },
+      8:  { cellWidth: 31 },
+      9:  { cellWidth: 13, halign: "center" as const },
+      10: { cellWidth: 19 },
+      11: { cellWidth: 24 },
+      12: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => {
       addHeader();
@@ -443,7 +443,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
 
         const fisio = prog.noteFisioterapia?.trim() || "—";
         if (isAlt) altRowIndices.add(body.length);
-        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe, fisio]);
+        body.push([nomeAtleta, prog.nome ?? "—", prog.fase ?? "—", fisio, obP, esText, vasText, obCampo, esC, vasC, gps, tests, rpe]);
         dataRowCount++;
       }
     }
@@ -451,7 +451,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
 
   autoTable(doc, {
     startY: HDR + 8,
-    head: [["Atleta", "Programma", "Fase", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE", "Fisio\nterapia"]],
+    head: [["Atleta", "Programma", "Fase", "Fisio", "Obiettivi\nPalestra", "Esercizi\nPalestra", "VAS\nPal.", "Obiettivi\nCampo", "Esercizi\nCampo", "VAS\nCampo", "GPS", "Test", "RPE"]],
     body,
     headStyles: { fillColor: [110, 110, 110] as [number,number,number], textColor: 255, fontSize: 7.5, halign: "center", valign: "middle" },
     bodyStyles: { fontSize: 7.5, cellPadding: 2.5, overflow: "linebreak" as const, halign: "left" as const, valign: "top" as const },
@@ -461,16 +461,16 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
       0:  { cellWidth: 24, fontStyle: "bold" },
       1:  { cellWidth: 20 },
       2:  { cellWidth: 14 },
-      3:  { cellWidth: 26 },
-      4:  { cellWidth: 31 },
-      5:  { cellWidth: 10, halign: "center" as const },
-      6:  { cellWidth: 28 },
-      7:  { cellWidth: 31 },
-      8:  { cellWidth: 13, halign: "center" as const },
-      9:  { cellWidth: 19 },
-      10: { cellWidth: 24 },
-      11: { cellWidth: 11, halign: "center" as const },
-      12: { cellWidth: 18 },
+      3:  { cellWidth: 18 },
+      4:  { cellWidth: 26 },
+      5:  { cellWidth: 31 },
+      6:  { cellWidth: 10, halign: "center" as const },
+      7:  { cellWidth: 28 },
+      8:  { cellWidth: 31 },
+      9:  { cellWidth: 13, halign: "center" as const },
+      10: { cellWidth: 19 },
+      11: { cellWidth: 24 },
+      12: { cellWidth: 11, halign: "center" as const },
     },
     didDrawPage: () => { addHeader(); },
     didParseCell: (data: any) => {
