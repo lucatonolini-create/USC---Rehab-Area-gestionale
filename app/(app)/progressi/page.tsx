@@ -658,8 +658,8 @@ async function esportaPDFReportMensile(
     margin: { left: M, right: M },
     columnStyles: {
       0: { cellWidth: 26 }, 1: { cellWidth: 18 }, 2: { cellWidth: 46 },
-      3: { cellWidth: 36 }, 4: { cellWidth: 28 }, 5: { cellWidth: 44 },
-      6: { cellWidth: 18 }, 7: { cellWidth: 18 }, 8: { cellWidth: 9 }, 9: { cellWidth: 26 },
+      3: { cellWidth: 36 }, 4: { cellWidth: 26 }, 5: { cellWidth: 43 },
+      6: { cellWidth: 18 }, 7: { cellWidth: 16 }, 8: { cellWidth: 14 }, 9: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {

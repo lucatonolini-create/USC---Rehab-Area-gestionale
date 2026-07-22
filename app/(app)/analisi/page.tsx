@@ -998,8 +998,8 @@ async function esportaPDFReport(
     margin: { left: M, right: M },
     columnStyles: {
       0: { cellWidth: 26 }, 1: { cellWidth: 18 }, 2: { cellWidth: 44 },
-      3: { cellWidth: 42 }, 4: { cellWidth: 28 }, 5: { cellWidth: 42 },
-      6: { cellWidth: 17 }, 7: { cellWidth: 17 }, 8: { cellWidth: 9 }, 9: { cellWidth: 26 },
+      3: { cellWidth: 42 }, 4: { cellWidth: 26 }, 5: { cellWidth: 41 },
+      6: { cellWidth: 17 }, 7: { cellWidth: 15 }, 8: { cellWidth: 14 }, 9: { cellWidth: 26 },
     },
     didParseCell: (data: any) => {
       if (data.section === "body") {
