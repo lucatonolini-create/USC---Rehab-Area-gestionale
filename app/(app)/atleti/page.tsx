@@ -135,6 +135,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   const hS = (fill: [number, number, number]) => ({ fillColor: fill, textColor: [255, 255, 255] as [number, number, number], fontSize: 7.5, halign: "center" as const, valign: "middle" as const });
   const checkPage = (need: number, sub?: string) => { if (y + need > H - 18) { doc.addPage(); addHeader(sub); y = HDR + 8; } };
   const miniLabel = (text: string) => { doc.setFont("helvetica", "bold"); doc.setFontSize(6.5); doc.setTextColor(...gray); doc.text(text, M, y); y += 3; };
+  const pn = (v: string | undefined): number | null => { const n = parseFloat(v ?? ""); return isNaN(n) ? null : n; };
 
   const drawChart = (items: { data: string; punteggio: number }[], sub?: string) => {
     if (items.length < 2) return;
@@ -178,6 +179,68 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         doc.setFontSize(6); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray); doc.text(label, lx + 11, legY + 1);
       });
     y = legY + 10;
+  };
+
+  type CaricoSession = {
+    dateLabel: string;
+    rpe: number | null; interno: number | null; durata: number | null;
+    distanza: number | null; hsr: number | null; vel21: number | null;
+    vel25: number | null; velMax: number | null; acc: number | null;
+    dec: number | null; sprint: number | null; potenza: number | null;
+  };
+
+  const drawPerfChart = (
+    chartLabel: string,
+    color: [number, number, number],
+    data: { dateLabel: string; value: number }[],
+  ) => {
+    if (data.length < 2) return;
+    const [cr, cg, cb] = color;
+    const cX = M; const cW = W - 2 * M; const cH = 40; const cY = y + 9;
+    doc.setFont("helvetica", "bold"); doc.setFontSize(7); doc.setTextColor(...color);
+    doc.text(`Andamento ${chartLabel}`, M, y + 2);
+    doc.setFillColor(249, 250, 251); doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.3);
+    doc.rect(cX, cY, cW, cH, "FD");
+    const n = data.length;
+    const vals = data.map((d) => d.value);
+    const minV = Math.min(...vals); const maxV = Math.max(...vals);
+    const range = maxV - minV || 1;
+    const PAD = { top: 6, right: 4, bottom: 8, left: 16 };
+    const plotX = cX + PAD.left; const plotW = cW - PAD.left - PAD.right;
+    const plotY = cY + PAD.top; const plotH = cH - PAD.top - PAD.bottom;
+    for (let t = 0; t <= 4; t++) {
+      const tv = minV + (range / 4) * t;
+      const ty = plotY + plotH - (t / 4) * plotH;
+      doc.setDrawColor(229, 231, 235); doc.setLineWidth(0.2);
+      doc.line(plotX, ty, plotX + plotW, ty);
+      doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+      doc.text(tv.toFixed(1), plotX - 1.5, ty + 1.5, { align: "right" });
+    }
+    const gX = (i: number) => plotX + (n > 1 ? (i / (n - 1)) * plotW : plotW / 2);
+    const gY = (v: number) => plotY + plotH - ((v - minV) / range) * plotH;
+    const lr = Math.round(cr * 0.12 + 255 * 0.88);
+    const lg = Math.round(cg * 0.12 + 255 * 0.88);
+    const lb = Math.round(cb * 0.12 + 255 * 0.88);
+    doc.setFillColor(lr, lg, lb);
+    const botY2 = plotY + plotH;
+    const segs: [number, number][] = [[0, gY(data[0].value) - botY2]];
+    for (let i = 1; i < n; i++) segs.push([gX(i) - gX(i - 1), gY(data[i].value) - gY(data[i - 1].value)]);
+    segs.push([0, botY2 - gY(data[n - 1].value)]);
+    segs.push([gX(0) - gX(n - 1), 0]);
+    (doc as any).lines(segs, gX(0), botY2, [1, 1], "F", true);
+    const avg = vals.reduce((a, b) => a + b, 0) / n;
+    const avgY2 = gY(avg);
+    doc.setDrawColor(...gray); doc.setLineWidth(0.5); doc.setLineDashPattern([1.5, 1.5], 0);
+    doc.line(plotX, avgY2, plotX + plotW, avgY2);
+    doc.setLineDashPattern([], 0);
+    doc.setDrawColor(...color); doc.setLineWidth(0.8);
+    for (let i = 0; i < n - 1; i++) doc.line(gX(i), gY(data[i].value), gX(i + 1), gY(data[i + 1].value));
+    doc.setFillColor(...color); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
+    data.forEach((d, i) => doc.circle(gX(i), gY(d.value), 0.9, "FD"));
+    doc.setFontSize(4.5); doc.setFont("helvetica", "normal"); doc.setTextColor(...gray);
+    const step = n <= 12 ? 1 : n <= 24 ? 2 : Math.ceil(n / 12);
+    data.forEach((d, i) => { if (i % step === 0) doc.text(d.dateLabel, gX(i), cY + cH + 4, { align: "center" }); });
+    y = cY + cH + 9;
   };
 
   const getMonday = (dateStr: string): string => {
@@ -565,6 +628,85 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
       checkPage(20, sub);
       y = secTitle(`Sessioni di lavoro — ${injProgs.filter(isSessionePDF).length} sessioni`, y);
       renderWeeklyTable(injProgs, sub);
+
+      // ── Analisi Carico e Performance ──────────────────────────────────────
+      const caricoSessions: CaricoSession[] = injProgs.filter(isSessionePDF).map((p) => {
+        const ca = p.carico;
+        return {
+          dateLabel: p.data ? new Date(p.data + "T12:00").toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" }) : "—",
+          rpe: pn(ca?.rpe), interno: pn(ca?.interno), durata: pn(ca?.durata),
+          distanza: pn(ca?.distanzaTotale), hsr: pn(ca?.hsr),
+          vel21: pn(ca?.velocita21), vel25: pn(ca?.velocita25), velMax: pn(ca?.velocitaMax),
+          acc: pn(ca?.accelerazioni), dec: pn(ca?.decelerazioni),
+          sprint: pn(ca?.sprint), potenza: pn(ca?.potenzaMetabolica),
+        };
+      });
+      const hasCarico = caricoSessions.some(
+        (s) => s.rpe !== null || s.interno !== null || s.distanza !== null
+      );
+      if (hasCarico) {
+        checkPage(20, sub);
+        y = secTitle("Analisi Carico e Performance", y);
+
+        const perfMetrics: Array<{ label: string; unit: string; dec: number; get: (s: CaricoSession) => number | null }> = [
+          { label: "RPE",            unit: "/10",  dec: 1, get: (s) => s.rpe },
+          { label: "Carico Interno", unit: "UA",   dec: 0, get: (s) => s.interno },
+          { label: "Durata",         unit: "min",  dec: 0, get: (s) => s.durata },
+          { label: "Distanza Tot.",  unit: "m",    dec: 0, get: (s) => s.distanza },
+          { label: "D>16 km/h",      unit: "m",    dec: 0, get: (s) => s.hsr },
+          { label: "D>20 km/h",      unit: "m",    dec: 0, get: (s) => s.vel21 },
+          { label: "D>25 km/h",      unit: "m",    dec: 0, get: (s) => s.vel25 },
+          { label: "Vel. Max",       unit: "km/h", dec: 1, get: (s) => s.velMax },
+          { label: "Accelerazioni",  unit: "",     dec: 0, get: (s) => s.acc },
+          { label: "Decelerazioni",  unit: "",     dec: 0, get: (s) => s.dec },
+          { label: "Sprint",         unit: "",     dec: 0, get: (s) => s.sprint },
+          { label: "Potenza Metab.", unit: "W/kg", dec: 1, get: (s) => s.potenza },
+        ];
+        const fmtV = (v: number | null, dec: number, unit: string) =>
+          v !== null ? `${v.toFixed(dec)}${unit ? ` ${unit}` : ""}` : "—";
+
+        const summaryBody = perfMetrics.flatMap(({ label, unit, dec, get: getV }) => {
+          const vals = caricoSessions.map(getV).filter((v): v is number => v !== null);
+          if (vals.length === 0) return [];
+          const ultima = caricoSessions.slice().reverse().find((s) => getV(s) !== null);
+          const avg = vals.reduce((a, b) => a + b, 0) / vals.length;
+          return [[label, fmtV(ultima ? getV(ultima) : null, dec, unit), fmtV(avg, dec, unit), fmtV(Math.max(...vals), dec, unit)]];
+        });
+
+        if (summaryBody.length > 0) {
+          checkPage(summaryBody.length * 7 + 20, sub);
+          autoTable(doc, {
+            startY: y,
+            head: [["Metrica", "Ultima sessione", "Media", "Massimo"]],
+            body: summaryBody,
+            headStyles: { fillColor: [37, 99, 235] as [number,number,number], textColor: [255,255,255] as [number,number,number], fontSize: 7.5, halign: "center" as const, valign: "middle" as const },
+            bodyStyles: { fontSize: 8, cellPadding: 2.5, halign: "center" as const, valign: "middle" as const },
+            alternateRowStyles: { fillColor: [239, 246, 255] as [number,number,number] },
+            margin: { left: M, right: M },
+            columnStyles: {
+              0: { cellWidth: 50, halign: "left" as const, fontStyle: "bold", textColor: dark },
+              1: { cellWidth: 44 },
+              2: { cellWidth: 44 },
+              3: { cellWidth: 44 },
+            },
+          });
+          y = (doc as any).lastAutoTable.finalY + 8;
+        }
+
+        const chartDefs: Array<{ label: string; color: [number,number,number]; get: (s: CaricoSession) => number | null }> = [
+          { label: "RPE",            color: [200, 16, 46],  get: (s) => s.rpe },
+          { label: "Carico Interno", color: [124, 58, 237], get: (s) => s.interno },
+          { label: "Distanza Tot.",  color: [37, 99, 235],  get: (s) => s.distanza },
+        ];
+        for (const { label, color, get: getV } of chartDefs) {
+          const pts = caricoSessions
+            .filter((s) => getV(s) !== null)
+            .map((s) => ({ dateLabel: s.dateLabel, value: getV(s) as number }));
+          if (pts.length < 2) continue;
+          checkPage(58, sub);
+          drawPerfChart(label, color, pts);
+        }
+      }
     } else {
       checkPage(12, sub);
       doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...gray);
