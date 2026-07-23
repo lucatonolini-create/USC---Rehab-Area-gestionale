@@ -62,7 +62,12 @@ export default function Dashboard() {
   const atletiFiltrati = (filtroCategoria === "Tutti"
     ? atleti
     : atleti.filter((a) => a.categoria === filtroCategoria)
-  ).slice().sort((a, b) => nd(a).localeCompare(nd(b), "it"));
+  ).slice().sort((a, b) => {
+    const statoOrd = (s: string) => s === "Infortunato" ? 0 : 1;
+    const sd = statoOrd(a.stato) - statoOrd(b.stato);
+    if (sd !== 0) return sd;
+    return nd(a).localeCompare(nd(b), "it");
+  });
 
   const infortunatiIds = new Set(atleti.filter((a) => a.stato === "Infortunato").map((a) => a.id));
   const programmiReali = programmi.filter((p) => !p.riposo);
