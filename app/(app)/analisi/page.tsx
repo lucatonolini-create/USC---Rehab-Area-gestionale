@@ -477,13 +477,14 @@ async function esportaPDFPanoramica(params: {
 
   const drawLegend = (items: string[], colorMap: Record<string, [number,number,number]>, sy: number): number => {
     let lx = M; let ly = sy;
+    doc.setFontSize(5); doc.setFont("helvetica", "normal");
     items.forEach((k) => {
-      if (lx + 36 > W - M) { lx = M; ly += 5; }
+      const itemW = doc.getTextWidth(k) + 7;
+      if (lx + itemW > W - M) { lx = M; ly += 5; }
       doc.setFillColor(...(colorMap[k] ?? [180,180,180] as [number,number,number]));
       doc.rect(lx, ly - 2.5, 3, 3, "F");
-      doc.setFontSize(5); doc.setFont("helvetica", "normal"); doc.setTextColor(...dark);
-      const lbl = k.length > 20 ? k.slice(0, 19) + "…" : k;
-      doc.text(lbl, lx + 4.5, ly + 0.3);
+      doc.setTextColor(...dark);
+      doc.text(k, lx + 4.5, ly + 0.3);
       lx += Math.min(lbl.length * 1.7 + 9, 44);
     });
     return ly + 7;
