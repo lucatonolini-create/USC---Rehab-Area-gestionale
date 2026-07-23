@@ -1580,7 +1580,7 @@ export default function AtletiPage() {
                             <div className="flex gap-2">
                               <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
                                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide w-10">TSK</span>
-                                <input type="number" min={0} max={40} placeholder="0–40"
+                                <input type="number" min={10} max={40} placeholder="10–40"
                                   value={nuovoPunteggioTSK} onChange={(e) => setNuovoPunteggioTSK(e.target.value)}
                                   className="flex-1 text-xs bg-transparent outline-none" />
                               </div>
