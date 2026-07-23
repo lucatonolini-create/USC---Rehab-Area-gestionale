@@ -795,10 +795,10 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
             if (rpeI >= 0) doc.line(gX(rpeI), rpeYv, gX(i), py);
             rpeI = i; rpeYv = py;
           });
-          doc.setFillColor(200, 16, 46); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
           chartSessions.forEach((s, i) => {
             if (s.rpe === null) return;
             const px = gX(i); const py = gY_rpe(s.rpe);
+            doc.setFillColor(200, 16, 46); doc.setDrawColor(255, 255, 255); doc.setLineWidth(0.4);
             doc.circle(px, py, 1.1, "FD");
             const barTop = s.interno !== null ? plotY + plotH - (s.interno / maxTL) * plotH : plotY;
             const insideBar = py - 2.5 >= barTop;
