@@ -1120,7 +1120,12 @@ export default function AtletiPage() {
 
   const perCategoria: Record<string, Atleta[]> = {};
   CATEGORIE.forEach((cat) => {
-    const lista = filtered.filter((a) => a.categoria === cat).sort((a, b) => nd(a).localeCompare(nd(b), "it"));
+    const lista = filtered.filter((a) => a.categoria === cat).sort((a, b) => {
+      const statoOrd = (s: string) => s === "Infortunato" ? 0 : 1;
+      const sd = statoOrd(a.stato) - statoOrd(b.stato);
+      if (sd !== 0) return sd;
+      return nd(a).localeCompare(nd(b), "it");
+    });
     if (lista.length > 0) perCategoria[cat] = lista;
   });
 
