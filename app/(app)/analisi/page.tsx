@@ -485,7 +485,7 @@ async function esportaPDFPanoramica(params: {
       doc.rect(lx, ly - 2.5, 3, 3, "F");
       doc.setTextColor(...dark);
       doc.text(k, lx + 4.5, ly + 0.3);
-      lx += Math.min(lbl.length * 1.7 + 9, 44);
+      lx += itemW;
     });
     return ly + 7;
   };
