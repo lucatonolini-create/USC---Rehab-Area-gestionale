@@ -340,7 +340,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
           ca?.potenzaMetabolica ? `P.Met.: ${ca.potenzaMetabolica}W/kg` : "",
         ].filter(Boolean).map((s) => `- ${s}`).join("\n") || "—";
 
-        const esText = esercizi.map((e, i) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`; }).join("\n") || "—";
+        const esText = esercizi.map((e, i) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); const carico = e.carico ? ` (${e.carico})` : ""; return `${i + 1}. ${sx ? `${e.nome} ${sx}${carico}` : e.nome}`; }).join("\n") || "—";
         const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
         const fisio = prog.noteFisioterapia?.trim() || "—";
         if (isAlt) altRowIndices.add(body.length);

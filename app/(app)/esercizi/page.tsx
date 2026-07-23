@@ -226,7 +226,8 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
       // Esercizi uniti in celle multi-riga: un atleta = una riga, niente rowSpan
       const esText = esercizi.map((e, i) => {
         const sx = [e.serie, e.reps].filter(Boolean).join("×");
-        return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`;
+        const carico = e.carico ? ` (${e.carico})` : "";
+        return `${i + 1}. ${sx ? `${e.nome} ${sx}${carico}` : e.nome}`;
       }).join("\n") || "—";
       const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "0"}`).join("\n") || "—";
 
@@ -425,7 +426,8 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
         const tests = testLines.join("\n") || "—";
         const esText = esercizi.map((e, i) => {
           const sx = [e.serie, e.reps].filter(Boolean).join("×");
-          return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`;
+          const carico = e.carico ? ` (${e.carico})` : "";
+          return `${i + 1}. ${sx ? `${e.nome} ${sx}${carico}` : e.nome}`;
         }).join("\n") || "—";
         const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "0"}`).join("\n") || "—";
         const ca = prog.carico;
