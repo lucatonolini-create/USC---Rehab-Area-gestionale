@@ -850,39 +850,6 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
     renderWeeklyTable(unassigned, `${nd(atleta)}  ·  Sessioni non associate`);
   }
 
-  // ── QUESTIONARI TSK / AFAQ ───────────────────────────────────────────────
-  const tuttiQ = (atleta.questionariKinesiofobia ?? []).sort((a, b) => a.data.localeCompare(b.data));
-  if (tuttiQ.length > 0) {
-    doc.addPage();
-    addHeader(`${nd(atleta)}  ·  Questionari psicologici`);
-    y = HDR + 8;
-    y = secTitle("Questionari TSK / AFAQ", y);
-    autoTable(doc, {
-      startY: y,
-      head: [["Data", "Test", "Punteggio", "Interpretazione"]],
-      body: tuttiQ.map((q) => {
-        const inj = allInjuries.find((i) => i.id === q.infortunioId);
-        const interp = interpretaRTS(q.punteggio);
-        return [
-          new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
-          q.tipoTest ?? "—",
-          `${q.punteggio} / ${q.tipoTest === "TSK" ? 40 : 100}`,
-          interp,
-        ];
-      }),
-      headStyles: hS(dark),
-      bodyStyles: { ...bS, overflow: "linebreak" as const },
-      alternateRowStyles: aS,
-      margin: { left: M, right: M },
-      columnStyles: {
-        0: { cellWidth: 22 },
-        1: { cellWidth: 18, fontStyle: "bold" },
-        2: { cellWidth: 22, fontStyle: "bold" },
-      },
-    });
-    y = (doc as any).lastAutoTable.finalY + 6;
-  }
-
   addFooter();
   doc.save(`${nd(atleta).replace(/ /g, "_")}_storico_completo.pdf`);
 }
