@@ -414,8 +414,9 @@ async function esportaPDFPanoramica(params: {
 
   // ── Grafici impilati mensili (panoramica PDF) ─────────────────────────────
   const oggi_d = new Date();
+  const stagionAnno_pdf = oggi_d.getMonth() >= 6 ? oggi_d.getFullYear() : oggi_d.getFullYear() - 1;
   const trendStacked = Array.from({ length: 12 }, (_, i) => {
-    const d = new Date(oggi_d.getFullYear(), oggi_d.getMonth() - 11 + i, 1);
+    const d = new Date(stagionAnno_pdf, 6 + i, 1);
     const a2 = d.getFullYear(); const m2 = d.getMonth();
     const attv = params.atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
     const perCat: Record<string, number> = {};
