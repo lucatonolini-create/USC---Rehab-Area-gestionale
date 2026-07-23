@@ -433,9 +433,8 @@ async function esportaPDFPanoramica(params: {
   const tipiStacked = Array.from(new Set(trendStacked.flatMap((t) => Object.keys(t.perTipo)))).sort();
   const catColPdf: Record<string, [number,number,number]> = {};
   catStacked.forEach((cat) => { const idx = CATEGORIE.indexOf(cat); catColPdf[cat] = hexToRgb(CAT_PALETTE[(idx >= 0 ? idx : 0) % CAT_PALETTE.length]); });
-  const TIPI_ORDER_PAN = ["Distorsione/Lesione Legamentosa","Muscolare: Strappo/Stiramento/Crampo","Contusione","Frattura","Tendinopatia/Borsite","Overuse/Sovraccarico","Altro"];
   const tipoColPdf: Record<string, [number,number,number]> = {};
-  tipiStacked.forEach((tipo) => { const idx = TIPI_ORDER_PAN.indexOf(tipo); tipoColPdf[tipo] = hexToRgb(TIPO_PALETTE[(idx >= 0 ? idx : tipiStacked.indexOf(tipo)) % TIPO_PALETTE.length]); });
+  tipiStacked.forEach((tipo, i) => { tipoColPdf[tipo] = hexToRgb(TIPO_PALETTE[i % TIPO_PALETTE.length]); });
 
   const drawStackedBar = (
     title: string, sy: number,
