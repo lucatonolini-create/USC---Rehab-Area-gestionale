@@ -612,7 +612,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         body: [...injQRTS].sort((a, b) => a.data.localeCompare(b.data)).map((q) => [
           new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
           q.tipoTest ?? "—",
-          `${q.punteggio} / 100`,
+          `${q.punteggio} / ${q.tipoTest === "TSK" ? 40 : 100}`,
           interpretaRTS(q.punteggio),
         ]),
         headStyles: hS(dark),
@@ -857,7 +857,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
         return [
           new Date(q.data + "T12:00").toLocaleDateString("it-IT"),
           q.tipoTest ?? "—",
-          `${q.punteggio} / 100`,
+          `${q.punteggio} / ${q.tipoTest === "TSK" ? 40 : 100}`,
           interp,
         ];
       }),
@@ -1580,7 +1580,7 @@ export default function AtletiPage() {
                             <div className="flex gap-2">
                               <div className="flex-1 flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2 py-1.5">
                                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wide w-10">TSK</span>
-                                <input type="number" min={0} max={100} placeholder="0–100"
+                                <input type="number" min={0} max={40} placeholder="0–40"
                                   value={nuovoPunteggioTSK} onChange={(e) => setNuovoPunteggioTSK(e.target.value)}
                                   className="flex-1 text-xs bg-transparent outline-none" />
                               </div>
