@@ -1617,7 +1617,7 @@ export default function AtletiPage() {
                                 <div key={q.id} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-3 py-2">
                                   <div>
                                     {q.tipoTest && <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mr-2">{q.tipoTest}</span>}
-                                    <span className={`text-sm font-bold ${colore}`}>{q.punteggio}/100</span>
+                                    <span className={`text-sm font-bold ${colore}`}>{q.punteggio}/{q.tipoTest === "TSK" ? 40 : 100}</span>
                                     <span className="text-xs text-gray-400 ml-2">{new Date(q.data + "T12:00").toLocaleDateString("it-IT")}</span>
                                     {inf && <p className="text-[11px] text-gray-400 mt-0.5">{inf.label}</p>}
                                   </div>
