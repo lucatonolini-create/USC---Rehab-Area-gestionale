@@ -488,7 +488,15 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   const storico = atleta.storicoInfortuni ?? [];
   // Giorni persi = numero di sessioni inserite per quell'infortunio (non giorni di calendario)
   const isSessionePDF = (p: Programma) => !p.riposo;
-  const sessStoricoMap = new Map(storico.map((inf) => [inf.id, programmi.filter((p) => p.infortunioId === inf.id && isSessionePDF(p)).length]));
+  const matchesInfPDF = (p: Programma, inf: { id: string; inizioRehab: string; fineRehab: string }) => {
+    const eid = p.infortunioId === "__corrente__" ? undefined : p.infortunioId;
+    if (eid) return eid === inf.id;
+    if (!p.data || !inf.inizioRehab) return false;
+    if (p.data < inf.inizioRehab) return false;
+    if (inf.fineRehab && p.data > inf.fineRehab) return false;
+    return true;
+  };
+  const sessStoricoMap = new Map(storico.map((inf) => [inf.id, programmi.filter((p) => matchesInfPDF(p, inf) && isSessionePDF(p)).length]));
   const giorniArchivio = storico.map((inf) => sessStoricoMap.get(inf.id) ?? 0);
   const giorniCorrente = atleta.stato === "Infortunato" && atleta.inizioRehab
     ? programmi.filter((p) => (
@@ -570,7 +578,8 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   for (const inj of allInjuries) {
     const injProgs = programmi
       .filter((p) => {
-        if (p.infortunioId) return p.infortunioId === inj.id;
+        const eid = p.infortunioId === "__corrente__" ? undefined : p.infortunioId;
+        if (eid) return eid === inj.id;
         if (!p.data || !inj.inizio) return false;
         if (p.data < inj.inizio) return false;
         if (inj.fine && p.data > inj.fine) return false;
@@ -1646,7 +1655,15 @@ export default function AtletiPage() {
               (() => {
                 const storico = selected.storicoInfortuni ?? [];
                 const isSessione = (p: Programma) => !p.riposo;
-                const giorni = storico.map((inf) => programmiAtleta.filter((p) => p.infortunioId === inf.id && isSessione(p)).length);
+                const matchInf = (p: Programma, inf: InfortunioStorico) => {
+                  const eid = p.infortunioId === "__corrente__" ? undefined : p.infortunioId;
+                  if (eid) return eid === inf.id;
+                  if (!p.data || !inf.inizioRehab) return false;
+                  if (p.data < inf.inizioRehab) return false;
+                  if (inf.fineRehab && p.data > inf.fineRehab) return false;
+                  return true;
+                };
+                const giorni = storico.map((inf) => programmiAtleta.filter((p) => matchInf(p, inf) && isSessione(p)).length);
                 const giorniCorrente = selected.stato === "Infortunato" && selected.inizioRehab
                   ? programmiAtleta.filter((p) => (
                       p.infortunioId === "__corrente__" ||
