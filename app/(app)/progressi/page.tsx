@@ -528,8 +528,8 @@ async function esportaPDFReportMensile(
       attv.forEach((a) => {
         if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
         const infs = infortunitNelMese(a, a2, m2);
-        const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
-        perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+        const tipo = infs.length > 0 ? infs[0].tipo : undefined;
+        if (tipo) perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
       });
       return { label: MESI_BREVI[m2], total: attv.length, perCat, perTipo };
     });

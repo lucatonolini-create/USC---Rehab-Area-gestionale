@@ -424,8 +424,8 @@ async function esportaPDFPanoramica(params: {
     attv.forEach((a) => {
       if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
       const infs = infortunitNelMese(a, a2, m2);
-      const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
-      perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+      const tipo = infs.length > 0 ? infs[0].tipo : undefined;
+      if (tipo) perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
     });
     return { label: MESI[m2], total: attv.length, perCat, perTipo };
   });
@@ -503,13 +503,13 @@ async function esportaPDFPanoramica(params: {
 
   // ── Infortuni per squadra e tipo (panoramica) ─────────────────────────────
   const attiviPan = params.atleti.filter((a) => a.stato !== "Disponibile");
-  const tipiPan = Array.from(new Set(attiviPan.map((a) => a.tipoInfortunio ?? "Non specificato"))).sort();
+  const tipiPan = Array.from(new Set(attiviPan.map((a) => a.tipoInfortunio).filter((t): t is string => !!t))).sort();
   if (tipiPan.length > 0) {
     const catPanList = CATEGORIE.filter((cat) => attiviPan.some((a) => a.categoria === cat));
     const crossPan: any[][] = catPanList.map((cat) => {
       const ca = attiviPan.filter((a) => a.categoria === cat);
       const tm: Record<string, number> = {};
-      ca.forEach((a) => { const t = a.tipoInfortunio ?? "Non specificato"; tm[t] = (tm[t] ?? 0) + 1; });
+      ca.forEach((a) => { if (a.tipoInfortunio) tm[a.tipoInfortunio] = (tm[a.tipoInfortunio] ?? 0) + 1; });
       return [cat, ca.length, ...tipiPan.map((t) => tm[t] ?? 0)];
     });
     const gtPan = crossPan.reduce((s, r) => s + (r[1] as number), 0);
@@ -730,7 +730,7 @@ async function esportaPDFReport(
     catAtleti.forEach((a) => {
       const infMese = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
       if (infMese.length === 0) return;
-      Array.from(new Set(infMese.map((i) => i.tipo ?? "Non specificato"))).forEach((t) => {
+      Array.from(new Set(infMese.map((i) => i.tipo).filter((t): t is string => !!t))).forEach((t) => {
         tipoMap[t] = (tipoMap[t] ?? 0) + 1;
       });
     });
@@ -812,7 +812,7 @@ async function esportaPDFReport(
 
   // ── Tabella incrociata squadra × tipo infortunio ───────────────────────────
   const tipiPresenti = Array.from(
-    new Set(atletiMese.flatMap((a) => infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).map((i) => i.tipo ?? "Non specificato")))
+    new Set(atletiMese.flatMap((a) => infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).map((i) => i.tipo).filter((t): t is string => !!t)))
   ).sort();
 
   if (tipiPresenti.length > 0) {
@@ -822,8 +822,7 @@ async function esportaPDFReport(
       const tipoMap: Record<string, number> = {};
       catAtleti.forEach((a) => {
         infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).forEach((inf) => {
-          const t = inf.tipo ?? "Non specificato";
-          tipoMap[t] = (tipoMap[t] ?? 0) + 1;
+          if (inf.tipo) tipoMap[inf.tipo] = (tipoMap[inf.tipo] ?? 0) + 1;
         });
       });
       const tot = Object.values(tipoMap).reduce((s, v) => s + v, 0);
@@ -874,8 +873,8 @@ async function esportaPDFReport(
       attv.forEach((a) => {
         if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
         const infs = infortunitNelMese(a, a2, m2);
-        const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
-        perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+        const tipo = infs.length > 0 ? infs[0].tipo : undefined;
+        if (tipo) perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
       });
       return { label: MESI[m2], total: attv.length, perCat, perTipo };
     });
@@ -1125,8 +1124,7 @@ export default function AnalisiPage() {
       const catAttivi = attivi.filter((a) => a.categoria === cat);
       const tipoMap: Record<string, number> = {};
       catAttivi.forEach((a) => {
-        const tipo = a.tipoInfortunio ?? "Non specificato";
-        tipoMap[tipo] = (tipoMap[tipo] ?? 0) + 1;
+        if (a.tipoInfortunio) tipoMap[a.tipoInfortunio] = (tipoMap[a.tipoInfortunio] ?? 0) + 1;
       });
       const catTotal = catAttivi.length;
       return {
@@ -1153,8 +1151,8 @@ export default function AnalisiPage() {
       attv.forEach((a) => {
         if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
         const infs = infortunitNelMese(a, anno, mese);
-        const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
-        perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
+        const tipo = infs.length > 0 ? infs[0].tipo : undefined;
+        if (tipo) perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
       });
       return { label, nomeMese: MESI[mese], total: attv.length, perCat, perTipo };
     });
