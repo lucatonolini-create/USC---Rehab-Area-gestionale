@@ -8,7 +8,7 @@ const MESI = ["Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov",
 const MESI_LUNGHI = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
 
 const CAT_PALETTE = ["#C8102E","#1E40AF","#047857","#B45309","#7C3AED","#0E7490","#BE185D","#374151"];
-const TIPO_PALETTE = ["#374151","#6B7280","#B45309","#1E40AF","#7C3AED","#0E7490","#047857","#BE185D"];
+const TIPO_PALETTE = ["#1D4ED8","#DC2626","#D97706","#059669","#7C3AED","#0891B2","#DB2777","#92400E"];
 const hexToRgb = (h: string): [number, number, number] => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
 
 function BarraOrizzontale({ label, value, max, color = "bg-[#C8102E]", sub }: {
