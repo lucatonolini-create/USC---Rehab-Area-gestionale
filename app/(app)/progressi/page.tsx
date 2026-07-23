@@ -55,7 +55,7 @@ function esportaCSV(atleta: Atleta, programmi: Programma[]) {
     programmi.forEach(prog => {
       const dataProg = prog.data ? new Date(prog.data + "T12:00").toLocaleDateString("it-IT") : "—";
       prog.esercizi.forEach((e, i) => {
-        rows.push([dataProg, prog.nome ?? "—", prog.fase ?? "—", "Palestra", String(i + 1), e.nome, e.serie ?? "—", e.reps ?? "—", e.carico ?? "—", e.rir ?? "—", e.vas ? `${e.vas}/10` : "—", e.note ?? ""]);
+        rows.push([dataProg, prog.nome ?? "—", prog.fase ?? "—", "Palestra", String(i + 1), e.nome, e.serie ?? "—", e.reps ?? "—", e.carico ?? "—", e.rir ?? "—", `${e.vas || "0"}/10`, e.note ?? ""]);
       });
       (prog.esercizicampo ?? []).forEach((c, i) => {
         rows.push([dataProg, prog.nome ?? "—", prog.fase ?? "—", "Campo", String(i + 1), c.descrizione ?? c.tipo ?? "—", c.serie ?? "—", c.durata ?? "—", "", "", "", ""]);
@@ -274,7 +274,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
           return parts.join(" ");
         });
         const esC = campoEsLines.join("\n") || "—";
-        const vasC = (prog.esercizicampo ?? []).map((c) => c.vas || "—").join("\n") || "—";
+        const vasC = (prog.esercizicampo ?? []).map((c) => c.vas || "0").join("\n") || "—";
         const esercizi = prog.esercizi ?? [];
 
         const testLines = (prog.tests ?? []).map((t) => {
@@ -322,7 +322,7 @@ async function esportaPDF(atleta: Atleta, programmi: Programma[]) {
         ].filter(Boolean).join("\n") || "—";
 
         const esText = esercizi.map((e) => { const sx = [e.serie, e.reps].filter(Boolean).join("×"); return sx ? `${e.nome} ${sx}` : e.nome; }).join("\n") || "—";
-        const vasText = esercizi.map((e) => e.vas || "—").join("\n") || "—";
+        const vasText = esercizi.map((e) => e.vas || "0").join("\n") || "—";
         const fisio = prog.noteFisioterapia?.trim() || "—";
         if (isAlt) altRowIndices.add(body.length);
         body.push([dataStr, prog.nome ?? "—", prog.fase ?? "—", fisio, obP, esText, vasText, obCampo, esC, gps, vasC, tests, rpe]);

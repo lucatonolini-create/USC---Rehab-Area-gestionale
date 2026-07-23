@@ -213,7 +213,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
         return `${i + 1}. ${parts.join(" ")}`;
       }).join("\n") || "—";
-      const vasC = (prog.esercizicampo ?? []).map((c: any, i: number) => `${i + 1}. ${c.vas || "—"}`).join("\n") || "—";
+      const vasC = (prog.esercizicampo ?? []).map((c: any, i: number) => `${i + 1}. ${c.vas || "0"}`).join("\n") || "—";
       const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
       const esercizi = prog.esercizi ?? [];
 
@@ -228,7 +228,7 @@ async function esportaPDFGiornaliero(data: string, atleti: Atleta[], tuttiProgra
         const sx = [e.serie, e.reps].filter(Boolean).join("×");
         return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`;
       }).join("\n") || "—";
-      const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
+      const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "0"}`).join("\n") || "—";
 
       const ca = prog.carico;
       const gps = [
@@ -415,7 +415,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
           const parts = [c.tipo, c.serie ? `${c.serie}×` : "", c.durata || ""].filter(Boolean);
           return `${i + 1}. ${parts.join(" ")}`;
         }).join("\n") || "—";
-        const vasC = (prog.esercizicampo ?? []).map((c: any, i: number) => `${i + 1}. ${c.vas || "—"}`).join("\n") || "—";
+        const vasC = (prog.esercizicampo ?? []).map((c: any, i: number) => `${i + 1}. ${c.vas || "0"}`).join("\n") || "—";
         const rpe = prog.carico?.rpe ? `${prog.carico.rpe}/10` : "—";
         const esercizi = prog.esercizi ?? [];
         const testLines = (prog.tests ?? []).map((t) => {
@@ -427,7 +427,7 @@ async function esportaPDFIntervallo(dataInizio: string, dataFine: string, atleti
           const sx = [e.serie, e.reps].filter(Boolean).join("×");
           return `${i + 1}. ${sx ? `${e.nome} ${sx}` : e.nome}`;
         }).join("\n") || "—";
-        const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "—"}`).join("\n") || "—";
+        const vasText = esercizi.map((e, i) => `${i + 1}. ${e.vas || "0"}`).join("\n") || "—";
         const ca = prog.carico;
         const gps = [
           ca?.distanzaTotale ? `Dist.: ${ca.distanzaTotale}m` : "",
@@ -931,7 +931,7 @@ export default function EserciziPage() {
                                       {es.reps && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{es.reps}</span>}
                                       {es.carico && <span className="bg-white border border-blue-200 text-blue-600 px-2 py-0.5 rounded-full">{es.carico}</span>}
                                       {es.rir && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">RIR {es.rir}</span>}
-                                      {es.vas && <span className="bg-white border border-red-200 text-red-600 px-2 py-0.5 rounded-full">VAS {es.vas}/10</span>}
+                                      <span className="bg-white border border-red-200 text-red-600 px-2 py-0.5 rounded-full">VAS {es.vas || "0"}/10</span>
                                     </div>
                                   </div>
                                   {es.note && <p className="text-xs text-gray-500 mt-1.5 italic">{es.note}</p>}
@@ -955,7 +955,7 @@ export default function EserciziPage() {
                                     <div className="flex items-center gap-2 text-xs text-gray-500">
                                       {c.serie && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{c.serie} serie</span>}
                                       {c.durata && <span className="bg-white border border-gray-200 px-2 py-0.5 rounded-full">{c.durata}</span>}
-                                      {c.vas && <span className="bg-white border border-red-200 text-red-600 px-2 py-0.5 rounded-full">VAS {c.vas}/10</span>}
+                                      <span className="bg-white border border-red-200 text-red-600 px-2 py-0.5 rounded-full">VAS {c.vas || "0"}/10</span>
                                     </div>
                                   </div>
                                   {c.descrizione && <p className="text-xs text-gray-500 mt-1.5 italic">{c.descrizione}</p>}
