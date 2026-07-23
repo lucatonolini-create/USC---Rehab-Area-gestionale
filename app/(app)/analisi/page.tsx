@@ -423,7 +423,8 @@ async function esportaPDFPanoramica(params: {
     const perTipo: Record<string, number> = {};
     attv.forEach((a) => {
       if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
-      const tipo = a.tipoInfortunio ?? "Non specificato";
+      const infs = infortunitNelMese(a, a2, m2);
+      const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
       perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
     });
     return { label: MESI[m2], total: attv.length, perCat, perTipo };
@@ -872,7 +873,8 @@ async function esportaPDFReport(
       const perTipo: Record<string, number> = {};
       attv.forEach((a) => {
         if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
-        const tipo = a.tipoInfortunio ?? "Non specificato";
+        const infs = infortunitNelMese(a, a2, m2);
+        const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
         perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
       });
       return { label: MESI[m2], total: attv.length, perCat, perTipo };
@@ -1150,7 +1152,8 @@ export default function AnalisiPage() {
       const perTipo: Record<string, number> = {};
       attv.forEach((a) => {
         if (a.categoria) perCat[a.categoria] = (perCat[a.categoria] ?? 0) + 1;
-        const tipo = a.tipoInfortunio ?? "Non specificato";
+        const infs = infortunitNelMese(a, anno, mese);
+        const tipo = infs.length > 0 ? (infs[0].tipo ?? "Non specificato") : "Non specificato";
         perTipo[tipo] = (perTipo[tipo] ?? 0) + 1;
       });
       return { label, nomeMese: MESI[mese], total: attv.length, perCat, perTipo };
