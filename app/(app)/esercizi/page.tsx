@@ -561,6 +561,7 @@ export default function EserciziPage() {
   const [dataInizioIntervallo, setDataInizioIntervallo] = useState(() => new Date().toISOString().slice(0, 10));
   const [dataFineIntervallo, setDataFineIntervallo] = useState(() => new Date().toISOString().slice(0, 10));
   const [esportandoIntervallo, setEsportandoIntervallo] = useState(false);
+  const [atletiAggiuntivi, setAtletiAggiuntivi] = useState<string[]>([]);
 
   const atletiOrdinati = useMemo(() => [...atleti].sort((a, b) => nd(a).localeCompare(nd(b), "it")), [atleti]);
 
@@ -590,7 +591,7 @@ export default function EserciziPage() {
 
   const apriNuovo = () => {
     setForm({ ...progVuoto, data: new Date().toISOString().slice(0, 10), esercizi: [], esercizicampo: [], tests: [], carico: { ...caricoVuoto }, assente: false, riposo: false, squadra: false, noteAssenza: "" });
-    setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi");
+    setEditId(null); setMostraForm(true); setSezioneAttiva("esercizi"); setAtletiAggiuntivi([]);
   };
 
   const copiaDaPrecedente = () => {
@@ -671,6 +672,31 @@ export default function EserciziPage() {
       }
     }
 
+    // Salva una copia del programma per ogni atleta aggiuntivo
+    for (const addId of atletiAggiuntivi) {
+      const pulitoCopia = { ...pulito, atletaId: addId, infortunioId: undefined, infortunioLabel: undefined };
+      const progCopia: Programma = { ...pulitoCopia, id: uid() };
+      await upsertProgramma(progCopia);
+      setProgrammiPerAtleta((prev) => {
+        if (!(addId in prev)) return prev;
+        return { ...prev, [addId]: [...prev[addId], progCopia] };
+      });
+      if (form.squadra) {
+        const atletaAdd = atleti.find((a) => a.id === addId);
+        if (atletaAdd && atletaAdd.stato === "Infortunato") {
+          const fineRehabAdd = progCopia.data;
+          const nuovoStoricoAdd: InfortunioStorico[] = [...(atletaAdd.storicoInfortuni ?? [])];
+          if (atletaAdd.infortunio || atletaAdd.inizioRehab) {
+            nuovoStoricoAdd.push({ id: uid(), tipo: atletaAdd.tipoInfortunio, diagnosi: atletaAdd.infortunio || "—", inizioRehab: atletaAdd.inizioRehab || "", fineRehab: fineRehabAdd, note: atletaAdd.note || undefined });
+          }
+          const aggiornatoAdd: Atleta = { ...atletaAdd, stato: "Disponibile", fineRehab: fineRehabAdd, storicoInfortuni: nuovoStoricoAdd, infortunio: "", tipoInfortunio: undefined, inizioRehab: "", progresso: 100 };
+          aggiornatoAdd.progresso = calcolaProgressoAuto(aggiornatoAdd);
+          await upsertAtleta(aggiornatoAdd);
+          setAtleti((prev) => prev.map((a) => a.id === aggiornatoAdd.id ? aggiornatoAdd : a));
+        }
+      }
+    }
+    setAtletiAggiuntivi([]);
     setMostraForm(false);
   };
 
@@ -1144,6 +1170,38 @@ export default function EserciziPage() {
                     className="mt-1 border border-gray-200 rounded-xl px-2 py-3 text-xs focus:outline-none focus:ring-2 focus:ring-[#C8102E] bg-white" />
                 </div>
               </div>
+
+              {/* Applica anche ad altri atleti (solo nuovo programma) */}
+              {!editId && form.atletaId && (
+                <div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Applica anche a</label>
+                  <div className="mt-2 border border-gray-200 rounded-xl overflow-hidden max-h-36 overflow-y-auto divide-y divide-gray-100">
+                    {atletiOrdinati
+                      .filter((a) => a.id !== form.atletaId)
+                      .map((a) => {
+                        const checked = atletiAggiuntivi.includes(a.id);
+                        return (
+                          <label key={a.id} className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-colors ${checked ? "bg-red-50" : "hover:bg-gray-50"}`}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => setAtletiAggiuntivi((prev) => checked ? prev.filter((id) => id !== a.id) : [...prev, a.id])}
+                              className="w-4 h-4 accent-[#C8102E] shrink-0"
+                            />
+                            <span className="text-sm text-gray-700">{nd(a)}</span>
+                            <span className="text-xs text-gray-400 ml-auto">{a.categoria}</span>
+                          </label>
+                        );
+                      })}
+                    {atletiOrdinati.filter((a) => a.id !== form.atletaId).length === 0 && (
+                      <p className="text-sm text-gray-400 text-center py-4">Nessun altro atleta disponibile</p>
+                    )}
+                  </div>
+                  {atletiAggiuntivi.length > 0 && (
+                    <p className="mt-1.5 text-xs text-[#C8102E] font-medium">Il programma verrà salvato per {atletiAggiuntivi.length + 1} atleti</p>
+                  )}
+                </div>
+              )}
 
               {/* Presente / Assente / Riposo / Squadra */}
               {(() => {
