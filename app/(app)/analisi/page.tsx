@@ -503,7 +503,7 @@ async function esportaPDFPanoramica(params: {
 
   // ── Infortuni per squadra e tipo (panoramica) ─────────────────────────────
   const attiviPan = params.atleti.filter((a) => a.stato !== "Disponibile");
-  const tipiPan = Array.from(new Set(attiviPan.map((a) => a.tipoInfortunio).filter((t): t is string => !!t))).sort();
+  const tipiPan = Array.from(new Set(attiviPan.map((a) => a.tipoInfortunio).filter((t): t is NonNullable<typeof t> => !!t))).sort();
   if (tipiPan.length > 0) {
     const catPanList = CATEGORIE.filter((cat) => attiviPan.some((a) => a.categoria === cat));
     const crossPan: any[][] = catPanList.map((cat) => {
@@ -730,7 +730,7 @@ async function esportaPDFReport(
     catAtleti.forEach((a) => {
       const infMese = infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]);
       if (infMese.length === 0) return;
-      Array.from(new Set(infMese.map((i) => i.tipo).filter((t): t is string => !!t))).forEach((t) => {
+      Array.from(new Set(infMese.map((i) => i.tipo).filter((t): t is NonNullable<typeof t> => !!t))).forEach((t) => {
         tipoMap[t] = (tipoMap[t] ?? 0) + 1;
       });
     });
@@ -812,7 +812,7 @@ async function esportaPDFReport(
 
   // ── Tabella incrociata squadra × tipo infortunio ───────────────────────────
   const tipiPresenti = Array.from(
-    new Set(atletiMese.flatMap((a) => infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).map((i) => i.tipo).filter((t): t is string => !!t)))
+    new Set(atletiMese.flatMap((a) => infortunitNelPeriodo(a, mesiP ?? [{ anno, mese }]).map((i) => i.tipo).filter((t): t is NonNullable<typeof t> => !!t)))
   ).sort();
 
   if (tipiPresenti.length > 0) {
