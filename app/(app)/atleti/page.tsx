@@ -7,8 +7,10 @@ import {
   subscribeToAtleti, subscribeToProgrammi, subscribeToIntakeInsert,
   CATEGORIE, TIPI_INFORTUNIO, calcolaProgressoAuto,
   TIPI_REFERTO, ESITI_REFERTO,
+  loadDettaglioSituazionale, upsertDettaglioSituazionale, formToDettaglio,
   type Atleta, type Stato, type InfortunioStorico, type Programma, type QuestionarioKinesiofobia,
   type RefertoClinico, type TipoReferto, type EsitoReferto, type TestFisiometrico,
+  type DettaglioSituazionaleData, type DettaglioSituazionaleForm,
 } from "@/lib/store";
 import AtletaModal from "@/components/AtletaModal";
 import CartellaClinaca from "@/components/CartellaClinaca";
@@ -892,6 +894,7 @@ export default function AtletiPage() {
   const [nuovoPunteggioAFAQ, setNuovoPunteggioAFAQ] = useState("");
   const [nuovoInfRTS, setNuovoInfRTS] = useState("__corrente__");
   const [copiatoLink, setCopiatoLink] = useState<1 | 2 | null>(null);
+  const [dettaglioSituazionale, setDettaglioSituazionale] = useState<DettaglioSituazionaleData | null>(null);
 
   useEffect(() => {
     loadAtleti().then(setAtleti);
@@ -905,6 +908,11 @@ export default function AtletiPage() {
     const updated = atleti.find((a) => a.id === selected.id);
     if (updated && updated !== selected) setSelected(updated);
   }, [atleti]);
+
+  useEffect(() => {
+    if (!selected || selected.stato !== "Infortunato") { setDettaglioSituazionale(null); return; }
+    loadDettaglioSituazionale(selected.id).then(setDettaglioSituazionale);
+  }, [selected?.id]);
 
   useEffect(() => {
     if (!selected) { setProgrammiAtleta([]); return; }
@@ -934,7 +942,7 @@ export default function AtletiPage() {
     setMostraForm(true);
   };
 
-  const onSalvaAtleta = async (dati: Omit<Atleta, "id">) => {
+  const onSalvaAtleta = async (dati: Omit<Atleta, "id">, atletaId: string, dettaglio?: DettaglioSituazionaleForm) => {
     try {
       if (editAtleta) {
         let aggiornato: Atleta = { ...dati, id: editAtleta.id };
@@ -969,10 +977,15 @@ export default function AtletiPage() {
         await upsertAtleta(aggiornato);
         syncInjury(aggiornato);
       } else {
-        const nuovo = { ...dati, id: uid() };
+        const nuovo = { ...dati, id: atletaId };
         setAtleti((prev) => [...prev, nuovo]);
         await upsertAtleta(nuovo);
         syncInjury(nuovo);
+        if (dettaglio) {
+          const det = formToDettaglio(uid(), atletaId, dettaglio);
+          await upsertDettaglioSituazionale(det);
+          setDettaglioSituazionale(det);
+        }
       }
       setMostraForm(false);
     } catch (err: any) {
@@ -1292,6 +1305,42 @@ export default function AtletiPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Dettaglio situazionale FIICCS */}
+                {selected.stato === "Infortunato" && (
+                  <div className="pt-1 border-t border-gray-100">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Dettaglio situazionale</p>
+                    {dettaglioSituazionale ? (
+                      <div className="space-y-2">
+                        {[
+                          dettaglioSituazionale.fonteInformazione?.length && ["Fonte", dettaglioSituazionale.fonteInformazione.join(", ")],
+                          dettaglioSituazionale.giorniReferto != null && ["Giorni a referto", String(dettaglioSituazionale.giorniReferto)],
+                          dettaglioSituazionale.modalitaInsorgenza && ["Insorgenza", dettaglioSituazionale.modalitaInsorgenza + (dettaglioSituazionale.modalitaInsorgenzaAltro ? ` — ${dettaglioSituazionale.modalitaInsorgenzaAltro}` : "")],
+                          dettaglioSituazionale.attivitaFisica && ["Attività fisica", dettaglioSituazionale.attivitaFisica],
+                          dettaglioSituazionale.tipoCorsa && ["Tipo corsa", dettaglioSituazionale.tipoCorsa],
+                          dettaglioSituazionale.corsaGradi && ["Gradi cambio dir.", dettaglioSituazionale.corsaGradi],
+                          dettaglioSituazionale.saltoFase && ["Fase salto", dettaglioSituazionale.saltoFase],
+                          dettaglioSituazionale.contattoDettaglio && ["Tipo contatto", dettaglioSituazionale.contattoDettaglio],
+                          dettaglioSituazionale.direzioneContrasto && ["Direzione contrasto", dettaglioSituazionale.direzioneContrasto],
+                          dettaglioSituazionale.attivitaConPalla && ["Azione con palla", dettaglioSituazionale.attivitaConPalla],
+                          dettaglioSituazionale.calcioTipo && ["Tipo calcio", dettaglioSituazionale.calcioTipo],
+                          dettaglioSituazionale.tipoSeduta && ["Tipo seduta", dettaglioSituazionale.tipoSeduta + (dettaglioSituazionale.tipoEsercitazione ? ` — ${dettaglioSituazionale.tipoEsercitazione}` : "")],
+                          dettaglioSituazionale.partitaCompetizione && ["Competizione", dettaglioSituazionale.partitaCompetizione],
+                          dettaglioSituazionale.faseGioco && ["Fase di gioco", dettaglioSituazionale.faseGioco],
+                          dettaglioSituazionale.minutoInfortunio != null && ["Minuto", `${dettaglioSituazionale.minutoInfortunio}'`],
+                          dettaglioSituazionale.terrenoGioco && ["Terreno", dettaglioSituazionale.terrenoGioco],
+                        ].filter((item): item is [string, string] => Array.isArray(item)).map(([label, value]) => (
+                          <div key={label as string} className="bg-blue-50 rounded-xl p-3">
+                            <p className="text-xs text-blue-400">{label as string}</p>
+                            <p className="font-medium text-blue-900 text-sm">{value as string}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-gray-400 italic py-2">Nessun dettaglio situazionale inserito</p>
+                    )}
                   </div>
                 )}
 

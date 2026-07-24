@@ -22,6 +22,7 @@
     "pdfjs-dist": "^6.1.200",
     "react": "^18",
     "react-dom": "^18",
+    "react-hook-form": "^7.82.0",
     "web-push": "^3.6.7",
     "xlsx": "^0.18.5"
   },

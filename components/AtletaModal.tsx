@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
-import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
+import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, uid, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 import PlayerCombobox from "@/components/PlayerCombobox";
+import DettaglioSituazionale, { type DettaglioSituazionaleHandle, type DettaglioSituazionaleForm } from "@/components/DettaglioSituazionale";
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
@@ -19,7 +20,7 @@ const atletaVuoto: Omit<Atleta, "id"> = {
 
 interface Props {
   atletaIniziale?: Atleta;
-  onSalva: (dati: Omit<Atleta, "id">) => void;
+  onSalva: (dati: Omit<Atleta, "id">, atletaId: string, dettaglio?: DettaglioSituazionaleForm) => void;
   onChiudi: () => void;
 }
 
@@ -56,6 +57,10 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
   );
   const f = <K extends keyof typeof form>(k: K, v: typeof form[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
+
+  // ID pre-generato per poter salvare il dettaglio con la FK corretta
+  const [atletaId] = useState(() => atletaIniziale?.id ?? uid());
+  const dettaglioRef = useRef<DettaglioSituazionaleHandle>(null);
 
   return (
     <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
@@ -184,6 +189,11 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
               className="mt-1 w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C8102E] resize-none" />
           </div>
 
+          {/* Dettaglio situazionale FIICCS — sempre disponibile per atleti infortunati */}
+          {form.stato === "Infortunato" && (
+            <DettaglioSituazionale ref={dettaglioRef} contatto={form.contatto} />
+          )}
+
         </div>
 
         <div className="flex gap-3 p-6 border-t border-gray-100 sticky bottom-0 bg-white">
@@ -193,7 +203,8 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
           </button>
           <button onClick={() => {
               if (!isModifica && !form.nome.trim()) return;
-              onSalva(form);
+              const det = dettaglioRef.current?.hasData() ? dettaglioRef.current.getValues() : undefined;
+              onSalva(form, atletaId, det);
             }} disabled={!isModifica && !form.nome.trim()}
             className="flex-1 bg-[#C8102E] text-white py-3 rounded-xl text-sm font-medium hover:bg-red-800 disabled:opacity-40">
             {isModifica ? "Salva modifiche" : "Aggiungi atleta"}

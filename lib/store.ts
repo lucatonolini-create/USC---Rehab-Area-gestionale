@@ -876,3 +876,266 @@ export async function deleteEpiMonthly(id: string): Promise<void> {
   const db = getDB();
   await db.epiMonthly.delete(id);
 }
+
+// ─── Dettaglio Situazionale (FIICCS) ─────────────────────────────────────────
+
+export interface DettaglioSituazionaleData {
+  id: string;
+  atletaId: string;
+  // A
+  fonteInformazione?: string[];
+  fonteInformazioneAltro?: string;
+  giorniReferto?: number;
+  modalitaInsorgenza?: string;
+  modalitaInsorgenzaAltro?: string;
+  // B
+  contattoDettaglio?: string;
+  situazioneDuello?: string;
+  direzioneContrasto?: string;
+  collisioneCon?: string;
+  duelloAereo?: boolean;
+  // C
+  attivitaFisica?: string;
+  tipoCorsa?: string;
+  corsaGradi?: string;
+  corsaGambaCoinvolta?: string;
+  saltoFase?: string;
+  saltoAtterraggioDove?: string;
+  saltoGambaAtterraggio?: string;
+  cadutaDettagli?: string;
+  // D
+  azioneConPalla?: boolean;
+  situazioneGiocoPalla?: string;
+  attivitaConPalla?: string;
+  calcioAzione?: string;
+  calcioIntensita?: string;
+  calcioTipo?: string;
+  calcioFase?: string;
+  dribblingTipo?: string;
+  pallaAltezza?: string;
+  controlloPallaCon?: string;
+  gambaInfortunataPalla?: string;
+  // E
+  tipoSeduta?: string;
+  tipoEsercitazione?: string;
+  partitaSede?: string;
+  partitaCompetizione?: string;
+  partitaPunteggio?: string;
+  // F
+  faseGioco?: string;
+  sottoFaseGioco?: string;
+  terrenoGioco?: string;
+  decisioneArbitrale?: string;
+  minutoInfortunio?: number;
+  minutiGiocatiPrima?: number;
+}
+
+// Form values type (used by react-hook-form in the component)
+export interface DettaglioSituazionaleForm {
+  fonte_informazione: string[];
+  fonte_informazione_altro: string;
+  giorni_referto: string;
+  modalita_insorgenza: string;
+  modalita_insorgenza_altro: string;
+  contatto_dettaglio: string;
+  situazione_duello: string;
+  direzione_contrasto: string;
+  collisione_con: string;
+  duello_aereo: string;
+  attivita_fisica: string;
+  tipo_corsa: string;
+  corsa_gradi: string;
+  corsa_gamba_coinvolta: string;
+  salto_fase: string;
+  salto_atterraggio_dove: string;
+  salto_gamba_atterraggio: string;
+  caduta_dettagli: string;
+  azione_con_palla: boolean;
+  situazione_gioco_palla: string;
+  attivita_con_palla: string;
+  calcio_azione: string;
+  calcio_intensita: string;
+  calcio_tipo: string;
+  calcio_fase: string;
+  dribbling_tipo: string;
+  palla_altezza: string;
+  controllo_palla_con: string;
+  gamba_infortunata_palla: string;
+  tipo_seduta: string;
+  tipo_esercitazione: string;
+  partita_sede: string;
+  partita_competizione: string;
+  partita_punteggio: string;
+  fase_gioco: string;
+  sotto_fase_gioco: string;
+  terreno_gioco: string;
+  decisione_arbitrale: string;
+  minuto_infortunio: string;
+  minuti_giocati_prima: string;
+}
+
+function rowToDettaglio(r: Record<string, unknown>): DettaglioSituazionaleData {
+  const n = (k: string) => (r[k] as string | null | undefined) || undefined;
+  const nb = (k: string) => (r[k] as boolean | null | undefined) ?? undefined;
+  const ni = (k: string) => (r[k] != null ? Number(r[k]) : undefined);
+  return {
+    id: r.id as string,
+    atletaId: r.atleta_id as string,
+    fonteInformazione: (r.fonte_informazione as string[]) || undefined,
+    fonteInformazioneAltro: n("fonte_informazione_altro"),
+    giorniReferto: ni("giorni_referto"),
+    modalitaInsorgenza: n("modalita_insorgenza"),
+    modalitaInsorgenzaAltro: n("modalita_insorgenza_altro"),
+    contattoDettaglio: n("contatto_dettaglio"),
+    situazioneDuello: n("situazione_duello"),
+    direzioneContrasto: n("direzione_contrasto"),
+    collisioneCon: n("collisione_con"),
+    duelloAereo: nb("duello_aereo"),
+    attivitaFisica: n("attivita_fisica"),
+    tipoCorsa: n("tipo_corsa"),
+    corsaGradi: n("corsa_gradi"),
+    corsaGambaCoinvolta: n("corsa_gamba_coinvolta"),
+    saltoFase: n("salto_fase"),
+    saltoAtterraggioDove: n("salto_atterraggio_dove"),
+    saltoGambaAtterraggio: n("salto_gamba_atterraggio"),
+    cadutaDettagli: n("caduta_dettagli"),
+    azioneConPalla: nb("azione_con_palla"),
+    situazioneGiocoPalla: n("situazione_gioco_palla"),
+    attivitaConPalla: n("attivita_con_palla"),
+    calcioAzione: n("calcio_azione"),
+    calcioIntensita: n("calcio_intensita"),
+    calcioTipo: n("calcio_tipo"),
+    calcioFase: n("calcio_fase"),
+    dribblingTipo: n("dribbling_tipo"),
+    pallaAltezza: n("palla_altezza"),
+    controlloPallaCon: n("controllo_palla_con"),
+    gambaInfortunataPalla: n("gamba_infortunata_palla"),
+    tipoSeduta: n("tipo_seduta"),
+    tipoEsercitazione: n("tipo_esercitazione"),
+    partitaSede: n("partita_sede"),
+    partitaCompetizione: n("partita_competizione"),
+    partitaPunteggio: n("partita_punteggio"),
+    faseGioco: n("fase_gioco"),
+    sottoFaseGioco: n("sotto_fase_gioco"),
+    terrenoGioco: n("terreno_gioco"),
+    decisioneArbitrale: n("decisione_arbitrale"),
+    minutoInfortunio: ni("minuto_infortunio"),
+    minutiGiocatiPrima: ni("minuti_giocati_prima"),
+  };
+}
+
+function dettaglioToRow(d: DettaglioSituazionaleData): Record<string, unknown> {
+  return {
+    id: d.id,
+    atleta_id: d.atletaId,
+    fonte_informazione: d.fonteInformazione ?? null,
+    fonte_informazione_altro: d.fonteInformazioneAltro ?? null,
+    giorni_referto: d.giorniReferto ?? null,
+    modalita_insorgenza: d.modalitaInsorgenza ?? null,
+    modalita_insorgenza_altro: d.modalitaInsorgenzaAltro ?? null,
+    contatto_dettaglio: d.contattoDettaglio ?? null,
+    situazione_duello: d.situazioneDuello ?? null,
+    direzione_contrasto: d.direzioneContrasto ?? null,
+    collisione_con: d.collisioneCon ?? null,
+    duello_aereo: d.duelloAereo ?? null,
+    attivita_fisica: d.attivitaFisica ?? null,
+    tipo_corsa: d.tipoCorsa ?? null,
+    corsa_gradi: d.corsaGradi ?? null,
+    corsa_gamba_coinvolta: d.corsaGambaCoinvolta ?? null,
+    salto_fase: d.saltoFase ?? null,
+    salto_atterraggio_dove: d.saltoAtterraggioDove ?? null,
+    salto_gamba_atterraggio: d.saltoGambaAtterraggio ?? null,
+    caduta_dettagli: d.cadutaDettagli ?? null,
+    azione_con_palla: d.azioneConPalla ?? null,
+    situazione_gioco_palla: d.situazioneGiocoPalla ?? null,
+    attivita_con_palla: d.attivitaConPalla ?? null,
+    calcio_azione: d.calcioAzione ?? null,
+    calcio_intensita: d.calcioIntensita ?? null,
+    calcio_tipo: d.calcioTipo ?? null,
+    calcio_fase: d.calcioFase ?? null,
+    dribbling_tipo: d.dribblingTipo ?? null,
+    palla_altezza: d.pallaAltezza ?? null,
+    controllo_palla_con: d.controlloPallaCon ?? null,
+    gamba_infortunata_palla: d.gambaInfortunataPalla ?? null,
+    tipo_seduta: d.tipoSeduta ?? null,
+    tipo_esercitazione: d.tipoEsercitazione ?? null,
+    partita_sede: d.partitaSede ?? null,
+    partita_competizione: d.partitaCompetizione ?? null,
+    partita_punteggio: d.partitaPunteggio ?? null,
+    fase_gioco: d.faseGioco ?? null,
+    sotto_fase_gioco: d.sottoFaseGioco ?? null,
+    terreno_gioco: d.terrenoGioco ?? null,
+    decisione_arbitrale: d.decisioneArbitrale ?? null,
+    minuto_infortunio: d.minutoInfortunio ?? null,
+    minuti_giocati_prima: d.minutiGiocatiPrima ?? null,
+  };
+}
+
+export function formToDettaglio(id: string, atletaId: string, f: DettaglioSituazionaleForm): DettaglioSituazionaleData {
+  const s = (v: string) => v || undefined;
+  const si = (v: string) => (v ? parseInt(v) || undefined : undefined);
+  return {
+    id,
+    atletaId,
+    fonteInformazione: f.fonte_informazione?.length ? f.fonte_informazione : undefined,
+    fonteInformazioneAltro: s(f.fonte_informazione_altro),
+    giorniReferto: si(f.giorni_referto),
+    modalitaInsorgenza: s(f.modalita_insorgenza),
+    modalitaInsorgenzaAltro: s(f.modalita_insorgenza_altro),
+    contattoDettaglio: s(f.contatto_dettaglio),
+    situazioneDuello: s(f.situazione_duello),
+    direzioneContrasto: s(f.direzione_contrasto),
+    collisioneCon: s(f.collisione_con),
+    duelloAereo: f.duello_aereo === "si" ? true : f.duello_aereo === "no" ? false : undefined,
+    attivitaFisica: s(f.attivita_fisica),
+    tipoCorsa: s(f.tipo_corsa),
+    corsaGradi: s(f.corsa_gradi),
+    corsaGambaCoinvolta: s(f.corsa_gamba_coinvolta),
+    saltoFase: s(f.salto_fase),
+    saltoAtterraggioDove: s(f.salto_atterraggio_dove),
+    saltoGambaAtterraggio: s(f.salto_gamba_atterraggio),
+    cadutaDettagli: s(f.caduta_dettagli),
+    azioneConPalla: f.azione_con_palla || undefined,
+    situazioneGiocoPalla: s(f.situazione_gioco_palla),
+    attivitaConPalla: s(f.attivita_con_palla),
+    calcioAzione: s(f.calcio_azione),
+    calcioIntensita: s(f.calcio_intensita),
+    calcioTipo: s(f.calcio_tipo),
+    calcioFase: s(f.calcio_fase),
+    dribblingTipo: s(f.dribbling_tipo),
+    pallaAltezza: s(f.palla_altezza),
+    controlloPallaCon: s(f.controllo_palla_con),
+    gambaInfortunataPalla: s(f.gamba_infortunata_palla),
+    tipoSeduta: s(f.tipo_seduta),
+    tipoEsercitazione: s(f.tipo_esercitazione),
+    partitaSede: s(f.partita_sede),
+    partitaCompetizione: s(f.partita_competizione),
+    partitaPunteggio: s(f.partita_punteggio),
+    faseGioco: s(f.fase_gioco),
+    sottoFaseGioco: s(f.sotto_fase_gioco),
+    terrenoGioco: s(f.terreno_gioco),
+    decisioneArbitrale: s(f.decisione_arbitrale),
+    minutoInfortunio: si(f.minuto_infortunio),
+    minutiGiocatiPrima: si(f.minuti_giocati_prima),
+  };
+}
+
+export async function loadDettaglioSituazionale(atletaId: string): Promise<DettaglioSituazionaleData | null> {
+  if (!isOnline()) return null;
+  try {
+    const { data, error } = await supabase
+      .from("dettaglio_situazionale")
+      .select("*")
+      .eq("atleta_id", atletaId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return rowToDettaglio(data as Record<string, unknown>);
+  } catch { return null; }
+}
+
+export async function upsertDettaglioSituazionale(d: DettaglioSituazionaleData): Promise<void> {
+  if (!isOnline()) return;
+  try {
+    await supabase.from("dettaglio_situazionale").upsert(dettaglioToRow(d));
+  } catch {}
+}
