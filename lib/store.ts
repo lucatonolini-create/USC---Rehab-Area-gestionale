@@ -57,6 +57,7 @@ export const TIPI_INFORTUNIO = [
   "Altri infortuni",
   "Altro Infortunio Osseo",
   "Concussion (with or without loss of consciousness)",
+  "Cutaneo",
   "Dislocazione/Sublussazione",
   "Distorsione/Lesione Legamentosa",
   "Ematoma/Contusione",

@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import PlayerCombobox from "@/components/PlayerCombobox";
+import OsiicsCombobox from "@/components/OsiicsCombobox";
+import type { OsiicsCode } from "@/lib/store";
 
 const CATEGORIA_MAP: Record<string, string> = {
   u19: "U19", u17: "U17", u16: "U16", u15: "U15", u14: "U14",
@@ -12,7 +14,7 @@ const CATEGORIA_MAP: Record<string, string> = {
 const PIEDI = ["Ambidestro", "Destro", "Sinistro"];
 const TIPI_INFORTUNIO = [
   "Abrasione","Altri infortuni","Altro Infortunio Osseo",
-  "Concussion (with or without loss of consciousness)","Dislocazione/Sublussazione",
+  "Concussion (with or without loss of consciousness)","Cutaneo","Dislocazione/Sublussazione",
   "Distorsione/Lesione Legamentosa","Ematoma/Contusione","Frattura",
   "Infortunio Dentale","Infortunio Nervoso","Lacerazione/Taglio",
   "Lesione meniscale o cartilaginea","Malattia","Muscolare: Strappo/Stiramento/Crampo",
@@ -59,6 +61,7 @@ type FormState = {
   evento: string; meccanismo: string; contatto: string;
   lato: string; posizioneInfortunio: string; note: string;
   fisioterapista: string; categoria: string;
+  osiicsCodeId: string; osiicsCodice: string; osiicsDescrizione: string;
 };
 
 const RUOLI = ["Attaccante", "Centrocampista", "Difensore", "Portiere"];
@@ -69,6 +72,7 @@ const vuoto = (): FormState => ({
   tipoInfortunio: "", evento: "", meccanismo: "", contatto: "",
   lato: "", posizioneInfortunio: "", note: "",
   fisioterapista: "", categoria: "",
+  osiicsCodeId: "", osiicsCodice: "", osiicsDescrizione: "",
 });
 
 export default function IntakePage() {
@@ -251,6 +255,24 @@ export default function IntakePage() {
                 <div>
                   <Label>Diagnosi / Descrizione infortunio</Label>
                   <Input value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione LCA, Distorsione caviglia…" />
+                </div>
+
+                <div className="border border-blue-100 rounded-xl p-3 bg-blue-50/40 space-y-2">
+                  <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Classificazione OSIICS</p>
+                  <OsiicsCombobox
+                    value={form.osiicsCodeId ? { id: form.osiicsCodeId, codice: form.osiicsCodice, descrizioneIta: form.osiicsDescrizione } : null}
+                    onChange={(code: OsiicsCode | null) => {
+                      if (code) {
+                        f("osiicsCodeId", code.id);
+                        f("osiicsCodice", code.codice);
+                        f("osiicsDescrizione", code.descrizioneIta);
+                      } else {
+                        f("osiicsCodeId", "");
+                        f("osiicsCodice", "");
+                        f("osiicsDescrizione", "");
+                      }
+                    }}
+                  />
                 </div>
 
                 <div>
