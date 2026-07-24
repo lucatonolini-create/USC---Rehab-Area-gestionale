@@ -116,7 +116,7 @@ export default function OsiicsCombobox({ value, onChange }: Props) {
       )}
 
       <p className="mt-1 text-[10px] text-gray-400 leading-relaxed">
-        Classificazione basata su OSIICS v15 — Orchard et al., Journal of Sport and Health Science, 2024
+        Classificazione basata su OSIICS v13.5 — Orchard et al., Journal of Sport and Health Science
       </p>
     </div>
   );
