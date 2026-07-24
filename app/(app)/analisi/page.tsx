@@ -863,12 +863,20 @@ async function esportaPDFReport(
       return { anno: d.getFullYear(), mese: d.getMonth() };
     });
     const todayT = new Date(); const nowY = todayT.getFullYear(); const nowM = todayT.getMonth();
+    const atletiPerTrend = atleti.filter((a) => {
+      if (filtroCat && filtroCat !== "Tutte" && a.categoria !== filtroCat) return false;
+      if (filtroTipoInf) {
+        const tipoAttivo = a.tipoInfortunio === filtroTipoInf;
+        const tipoStorico = (a.storicoInfortuni ?? []).some((s) => s.tipo === filtroTipoInf);
+        if (!tipoAttivo && !tipoStorico) return false;
+      }
+      return true;
+    });
     const trendR = trendPeriod.map(({ anno: a2, mese: m2 }) => {
       if (a2 > nowY || (a2 === nowY && m2 > nowM)) {
         return { label: MESI[m2], total: 0, perCat: {} as Record<string, number>, perTipo: {} as Record<string, number> };
       }
-      const atletiFiltrati = filtroCat && filtroCat !== "Tutte" ? atleti.filter((a) => a.categoria === filtroCat) : atleti;
-      const attv = atletiFiltrati.filter((a) => atletaAttivoInMese(a, a2, m2));
+      const attv = atletiPerTrend.filter((a) => atletaAttivoInMese(a, a2, m2));
       const perCat: Record<string, number> = {};
       const perTipo: Record<string, number> = {};
       attv.forEach((a) => {
