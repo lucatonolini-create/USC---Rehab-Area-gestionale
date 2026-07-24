@@ -922,7 +922,7 @@ export default function EserciziPage() {
                             <span className="text-sm font-semibold text-gray-700">{lbl.diagnosi}</span>
                           </div>
                         )}
-                        {progs.map((prog) => (
+                        {[...progs].sort((a, b) => a.data.localeCompare(b.data)).map((prog) => (
                   <div key={prog.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${prog.assente ? "border-orange-100" : prog.riposo ? "border-blue-100" : prog.squadra ? "border-red-100" : "border-gray-100"}`}>
                     <button onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
                       className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 text-left">
