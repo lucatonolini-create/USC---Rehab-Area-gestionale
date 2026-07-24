@@ -844,9 +844,15 @@ export default function EserciziPage() {
           <p className="text-gray-400 text-lg font-medium">Nessun atleta ancora</p>
           <p className="text-gray-300 text-sm mt-1">Aggiungi prima un atleta per creare programmi</p>
         </div>
+      ) : atletiOrdinati.filter((a) => a.stato === "Infortunato").length === 0 ? (
+        <div className="text-center py-20">
+          <Dumbbell className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+          <p className="text-gray-400 text-lg font-medium">Nessun atleta in riabilitazione</p>
+          <p className="text-gray-300 text-sm mt-1">Tutti gli atleti sono disponibili</p>
+        </div>
       ) : (
         <div className="space-y-3">
-          {atletiOrdinati.map((atleta) => {
+          {atletiOrdinati.filter((a) => a.stato === "Infortunato").map((atleta) => {
             const isOpen = atletaAperto === atleta.id;
             const lista = programmiPerAtleta[atleta.id] ?? [];
             return (
