@@ -371,12 +371,13 @@ export default function EpidemiologiaPage() {
     // All injuries: current active + archived
     const tuttiInfortuni = atleti.flatMap((a) => [
       ...(a.stato === "Infortunato" && (a.infortunio || a.tipoInfortunio)
-        ? [{ tipo: a.tipoInfortunio, meccanismo: a.meccanismo, lato: a.lato, contatto: a.contatto, evento: a.evento, categoria: a.categoria }]
+        ? [{ tipo: a.tipoInfortunio, meccanismo: a.meccanismo, lato: a.lato, contatto: a.contatto, evento: a.evento, categoria: a.categoria, osiics: a.osiicsCodice }]
         : []),
       ...(a.storicoInfortuni ?? []).map((inf) => ({
         tipo: inf.tipo, meccanismo: undefined as string | undefined,
         lato: undefined as string | undefined, contatto: undefined as string | undefined,
         evento: undefined as string | undefined, categoria: a.categoria,
+        osiics: undefined as string | undefined,
       })),
     ]);
 
@@ -387,6 +388,23 @@ export default function EpidemiologiaPage() {
     const perMeccanismo = distrib(tuttiInfortuni.map((i) => i.meccanismo));
     const perLato = distrib(tuttiInfortuni.map((i) => i.lato));
     const perCategoria = distrib(tuttiInfortuni.map((i) => i.categoria));
+
+    // OSIICS-specific
+    const codiciFull = atleti.filter((a) => a.osiicsCodice).map((a) => a.osiicsCodice!);
+    const perOsiicsCodice = distrib(codiciFull);
+    const OSIICS_CATEGORIE: Record<string, string> = {
+      M: "Muscolo/Tendine",
+      J: "Articolazione/Legamento",
+      B: "Osso/Frattura",
+      N: "Nervo/Midollo",
+      S: "Cute/Lacerazioni",
+      C: "Contusione",
+      O: "Altro tessuto molle",
+      X: "Testa/Concussione",
+      I: "Malattia/Illness",
+      W: "Sovraccarico",
+    };
+    const perOsiicsCategoria = distrib(codiciFull.map((c) => OSIICS_CATEGORIE[c[0]?.toUpperCase()] ?? `Altro (${c[0]?.toUpperCase() ?? "?"})`));
 
     // FIICCS-specific
     const perSeduta = distrib(dettagli.map((d) => d.tipoSeduta));
@@ -399,7 +417,7 @@ export default function EpidemiologiaPage() {
     const conPalla = dettagli.filter((d) => d.azioneConPalla === true).length;
     const senzaPalla = dettagli.filter((d) => d.azioneConPalla === false).length;
 
-    return { totaleInfortuni, atletiInfortunatiOra, perTipo, perMeccanismo, perLato, perCategoria, perSeduta, perAttivita, perInsorgenza, perTerreno, perFaseGioco, minutoMedio, conPalla, senzaPalla, fiiccsCount: dettagli.length };
+    return { totaleInfortuni, atletiInfortunatiOra, perTipo, perMeccanismo, perLato, perCategoria, perSeduta, perAttivita, perInsorgenza, perTerreno, perFaseGioco, minutoMedio, conPalla, senzaPalla, fiiccsCount: dettagli.length, perOsiicsCodice, perOsiicsCategoria, osiicsCount: codiciFull.length };
   }, [atleti, dettagli]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -719,6 +737,7 @@ export default function EpidemiologiaPage() {
               <h2 className="text-xl font-bold text-gray-900">Statistiche Infortuni</h2>
               <p className="text-xs text-gray-400">
                 {infStats.totaleInfortuni} infortuni registrati · {infStats.atletiInfortunatiOra} attualmente in rehab
+                {infStats.osiicsCount > 0 && ` · ${infStats.osiicsCount} codici OSIICS`}
                 {infStats.fiiccsCount > 0 && ` · ${infStats.fiiccsCount} schede FIICCS`}
               </p>
             </div>
@@ -737,9 +756,9 @@ export default function EpidemiologiaPage() {
               <p className="text-xs text-gray-400 mt-0.5">atleti attivi</p>
             </div>
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
-              <p className="text-2xl font-bold text-blue-600">{infStats.fiiccsCount}</p>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">Schede FIICCS</p>
-              <p className="text-xs text-gray-400 mt-0.5">dettaglio situazionale</p>
+              <p className="text-2xl font-bold text-blue-600">{infStats.osiicsCount}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">Codici OSIICS</p>
+              <p className="text-xs text-gray-400 mt-0.5">classificati</p>
             </div>
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
               <p className="text-2xl font-bold text-gray-700">{infStats.minutoMedio != null ? `${infStats.minutoMedio}'` : "—"}</p>
@@ -769,6 +788,47 @@ export default function EpidemiologiaPage() {
                   {infStats.perMeccanismo.map(([label, n]) => (
                     <BarraH key={label} label={label} value={n} max={infStats.perMeccanismo[0][1]} color="#374151" extra={`${n}`} />
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* OSIICS per categoria */}
+            {infStats.perOsiicsCategoria.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest">OSIICS — Categoria</h3>
+                  <span className="text-[10px] bg-blue-100 text-blue-600 font-mono px-1.5 py-0.5 rounded">v13</span>
+                </div>
+                <div className="space-y-3">
+                  {infStats.perOsiicsCategoria.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perOsiicsCategoria[0][1]} color="#1D4ED8" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* OSIICS codici specifici */}
+            {infStats.perOsiicsCodice.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-sm font-bold text-blue-600 uppercase tracking-widest">OSIICS — Codici</h3>
+                  <span className="text-[10px] text-blue-400">{infStats.osiicsCount} totali</span>
+                </div>
+                <div className="space-y-2">
+                  {infStats.perOsiicsCodice.map(([code, n]) => {
+                    const atleta = atleti.find((a) => a.osiicsCodice === code);
+                    const desc = atleta?.osiicsDescrizione;
+                    return (
+                      <div key={code} className="flex items-center gap-3">
+                        <span className="font-mono font-bold text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded w-16 text-center shrink-0">{code}</span>
+                        <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-full rounded-full" style={{ width: `${Math.max((n / infStats.perOsiicsCodice[0][1]) * 100, n > 0 ? 4 : 0)}%`, backgroundColor: "#1D4ED8" }} />
+                        </div>
+                        <span className="text-xs text-gray-500 truncate max-w-[120px]">{desc ?? ""}</span>
+                        <span className="text-xs font-bold text-gray-700 w-6 text-right shrink-0">{n}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

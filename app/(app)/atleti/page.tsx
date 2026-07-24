@@ -432,6 +432,7 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[],
       ...(atleta.contatto ? [["Contatto", atleta.contatto]] : [] as any),
       ...(atleta.lato ? [["Lato", atleta.lato]] : [] as any),
       ...(atleta.posizioneInfortunio ? [["Posizione", atleta.posizioneInfortunio]] : [] as any),
+      ...(atleta.osiicsCodice ? [["OSIICS", `${atleta.osiicsCodice}${atleta.osiicsDescrizione ? `  —  ${atleta.osiicsDescrizione}` : ""}`]] : [] as any),
       ...(atleta.note ? [["Note", atleta.note]] : [] as any),
     ],
     theme: "striped",
@@ -1350,6 +1351,18 @@ export default function AtletiPage() {
                     <p className="font-medium text-gray-900">{value}</p>
                   </div>
                 ))}
+
+                {(selected.osiicsCodice || selected.osiicsDescrizione) && (
+                  <div className="pt-1 border-t border-blue-100">
+                    <p className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Classificazione OSIICS</p>
+                    <div className="bg-blue-50 rounded-xl p-3 flex items-start gap-3">
+                      {selected.osiicsCodice && (
+                        <span className="font-mono font-bold text-base text-blue-700 shrink-0 bg-blue-100 px-2 py-1 rounded-lg">{selected.osiicsCodice}</span>
+                      )}
+                      <p className="font-medium text-blue-900 text-sm mt-1">{selected.osiicsDescrizione || "—"}</p>
+                    </div>
+                  </div>
+                )}
 
                 {(selected.tipoInfortunio || selected.evento || selected.meccanismo || selected.contatto || selected.lato || selected.posizioneInfortunio) && (
                   <div className="pt-1 border-t border-gray-100">

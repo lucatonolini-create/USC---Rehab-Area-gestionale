@@ -190,6 +190,9 @@ export interface Atleta {
   // Antropometria
   peso?: string;
   altezza?: string;
+  // Classificazione OSIICS
+  osiicsCodice?: string;
+  osiicsDescrizione?: string;
 }
 
 // Tempi di recupero standard per tipo di infortunio (in giorni)
@@ -420,6 +423,8 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
       ? (r.progresso_manuale as number) : undefined,
     peso: (r.peso as string) ?? "",
     altezza: (r.altezza as string) ?? "",
+    osiicsCodice: (r.osiics_codice as string) ?? undefined,
+    osiicsDescrizione: (r.osiics_descrizione as string) ?? undefined,
   };
 }
 
@@ -453,6 +458,8 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
     peso: a.peso ?? null,
     altezza: a.altezza ?? null,
     nome_completo: a.nomeCompleto ?? null,
+    osiics_codice: a.osiicsCodice ?? null,
+    osiics_descrizione: a.osiicsDescrizione ?? null,
   };
 }
 

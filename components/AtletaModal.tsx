@@ -162,6 +162,34 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             <Input className="mt-1" value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione LCA" />
           </div>
 
+          <div className="border border-blue-100 rounded-xl p-3 bg-blue-50/40 space-y-3">
+            <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Classificazione OSIICS</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Codice OSIICS</Label>
+                <Input
+                  className="mt-1 font-mono uppercase"
+                  value={form.osiicsCodice ?? ""}
+                  onChange={(e) => f("osiicsCodice", e.target.value.toUpperCase() || undefined)}
+                  placeholder="Es. M14H"
+                  maxLength={8}
+                />
+              </div>
+              <div>
+                <Label>Diagnosi OSIICS</Label>
+                <Input
+                  className="mt-1"
+                  value={form.osiicsDescrizione ?? ""}
+                  onChange={(e) => f("osiicsDescrizione", e.target.value || undefined)}
+                  placeholder="Es. Stiramento bicipite femorale"
+                />
+              </div>
+            </div>
+            <p className="text-[10px] text-blue-400 leading-relaxed">
+              Codifica standardizzata Orchard Sports Injury Classification System (v13). Il codice è composto da lettera tipo + sede anatomica + specificatore (es. M=Muscolo, J=Articolazione, B=Osso).
+            </p>
+          </div>
+
           <div>
             <Label>Inizio Riabilitazione</Label>
             <Input className="mt-1" type="date" value={form.inizioRehab} onChange={(e) => f("inizioRehab", e.target.value)} />
