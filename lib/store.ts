@@ -1139,3 +1139,12 @@ export async function upsertDettaglioSituazionale(d: DettaglioSituazionaleData):
     await supabase.from("dettaglio_situazionale").upsert(dettaglioToRow(d));
   } catch {}
 }
+
+export async function loadAllDettagliSituazionali(): Promise<DettaglioSituazionaleData[]> {
+  if (!isOnline()) return [];
+  try {
+    const { data, error } = await supabase.from("dettaglio_situazionale").select("*");
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map(rowToDettaglio);
+  } catch { return []; }
+}

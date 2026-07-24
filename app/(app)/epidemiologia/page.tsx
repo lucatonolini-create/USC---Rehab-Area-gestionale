@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, FileText, Upload, Trash2, Users, TrendingUp, Clock, X } from "lucide-react";
+import { Activity, FileText, Upload, Trash2, Users, TrendingUp, Clock, X, AlertTriangle } from "lucide-react";
 import {
   loadEpiMonthly, upsertEpiMonthly, deleteEpiMonthly,
-  CATEGORIE, type Categoria, type EpiMonthlyRecord, type EpiMonthlyEntry,
+  loadAtleti, loadAllDettagliSituazionali,
+  CATEGORIE, TIPI_INFORTUNIO,
+  type Categoria, type EpiMonthlyRecord, type EpiMonthlyEntry,
+  type Atleta, type DettaglioSituazionaleData,
 } from "@/lib/store";
 
 const MESI_FULL = ["Gennaio","Febbraio","Marzo","Aprile","Maggio","Giugno","Luglio","Agosto","Settembre","Ottobre","Novembre","Dicembre"];
@@ -267,6 +270,8 @@ export default function EpidemiologiaPage() {
   const [records, setRecords] = useState<EpiMonthlyRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [atleti, setAtleti] = useState<Atleta[]>([]);
+  const [dettagli, setDettagli] = useState<DettaglioSituazionaleData[]>([]);
 
   // Upload modal state
   const [showUpload, setShowUpload] = useState(false);
@@ -286,6 +291,8 @@ export default function EpidemiologiaPage() {
 
   useEffect(() => {
     loadEpiMonthly().then(r => { setRecords(r); setLoading(false); });
+    loadAtleti().then(setAtleti);
+    loadAllDettagliSituazionali().then(setDettagli);
   }, []);
 
   const filtered = useMemo(() => records.filter(r => {
@@ -352,6 +359,48 @@ export default function EpidemiologiaPage() {
       return { label: `${MESI[parseInt(m) - 1]} ${y}`, presenzaMedia, rpeMedia, sessioni: val.count };
     });
   }, [filtered]);
+
+  // ── Infortuni statistics (from atleti + FIICCS) ────────────────────────────
+  const infStats = useMemo(() => {
+    function distrib(vals: (string | undefined | null)[]): [string, number][] {
+      const map = new Map<string, number>();
+      for (const v of vals) if (v) map.set(v, (map.get(v) ?? 0) + 1);
+      return Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
+    }
+
+    // All injuries: current active + archived
+    const tuttiInfortuni = atleti.flatMap((a) => [
+      ...(a.stato === "Infortunato" && (a.infortunio || a.tipoInfortunio)
+        ? [{ tipo: a.tipoInfortunio, meccanismo: a.meccanismo, lato: a.lato, contatto: a.contatto, evento: a.evento, categoria: a.categoria }]
+        : []),
+      ...(a.storicoInfortuni ?? []).map((inf) => ({
+        tipo: inf.tipo, meccanismo: undefined as string | undefined,
+        lato: undefined as string | undefined, contatto: undefined as string | undefined,
+        evento: undefined as string | undefined, categoria: a.categoria,
+      })),
+    ]);
+
+    const totaleInfortuni = tuttiInfortuni.length;
+    const atletiInfortunatiOra = atleti.filter((a) => a.stato === "Infortunato").length;
+
+    const perTipo = distrib(tuttiInfortuni.map((i) => i.tipo));
+    const perMeccanismo = distrib(tuttiInfortuni.map((i) => i.meccanismo));
+    const perLato = distrib(tuttiInfortuni.map((i) => i.lato));
+    const perCategoria = distrib(tuttiInfortuni.map((i) => i.categoria));
+
+    // FIICCS-specific
+    const perSeduta = distrib(dettagli.map((d) => d.tipoSeduta));
+    const perAttivita = distrib(dettagli.map((d) => d.attivitaFisica));
+    const perInsorgenza = distrib(dettagli.map((d) => d.modalitaInsorgenza));
+    const perTerreno = distrib(dettagli.map((d) => d.terrenoGioco));
+    const perFaseGioco = distrib(dettagli.map((d) => d.faseGioco));
+    const minutiValori = dettagli.map((d) => d.minutoInfortunio).filter((v): v is number => v != null);
+    const minutoMedio = minutiValori.length > 0 ? Math.round(minutiValori.reduce((a, b) => a + b, 0) / minutiValori.length) : null;
+    const conPalla = dettagli.filter((d) => d.azioneConPalla === true).length;
+    const senzaPalla = dettagli.filter((d) => d.azioneConPalla === false).length;
+
+    return { totaleInfortuni, atletiInfortunatiOra, perTipo, perMeccanismo, perLato, perCategoria, perSeduta, perAttivita, perInsorgenza, perTerreno, perFaseGioco, minutoMedio, conPalla, senzaPalla, fiiccsCount: dettagli.length };
+  }, [atleti, dettagli]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -657,6 +706,171 @@ export default function EpidemiologiaPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ── Statistiche Infortuni ─────────────────────────────────────────── */}
+      {(infStats.totaleInfortuni > 0 || infStats.fiiccsCount > 0) && (
+        <div className="mt-8">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#C8102E] rounded-xl flex items-center justify-center">
+              <AlertTriangle className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Statistiche Infortuni</h2>
+              <p className="text-xs text-gray-400">
+                {infStats.totaleInfortuni} infortuni registrati · {infStats.atletiInfortunatiOra} attualmente in rehab
+                {infStats.fiiccsCount > 0 && ` · ${infStats.fiiccsCount} schede FIICCS`}
+              </p>
+            </div>
+          </div>
+
+          {/* KPI row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <p className="text-2xl font-bold text-[#C8102E]">{infStats.totaleInfortuni}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">Infortuni totali</p>
+              <p className="text-xs text-gray-400 mt-0.5">attivi + archiviati</p>
+            </div>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <p className="text-2xl font-bold text-orange-500">{infStats.atletiInfortunatiOra}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">In rehab ora</p>
+              <p className="text-xs text-gray-400 mt-0.5">atleti attivi</p>
+            </div>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <p className="text-2xl font-bold text-blue-600">{infStats.fiiccsCount}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">Schede FIICCS</p>
+              <p className="text-xs text-gray-400 mt-0.5">dettaglio situazionale</p>
+            </div>
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+              <p className="text-2xl font-bold text-gray-700">{infStats.minutoMedio != null ? `${infStats.minutoMedio}'` : "—"}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">Minuto medio</p>
+              <p className="text-xs text-gray-400 mt-0.5">infortunio in partita</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
+            {/* Tipo infortunio */}
+            {infStats.perTipo.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Tipo Infortunio</h3>
+                <div className="space-y-3">
+                  {infStats.perTipo.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perTipo[0][1]} color="#C8102E" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Meccanismo */}
+            {infStats.perMeccanismo.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Meccanismo</h3>
+                <div className="space-y-3">
+                  {infStats.perMeccanismo.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perMeccanismo[0][1]} color="#374151" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tipo seduta (FIICCS) */}
+            {infStats.perSeduta.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Tipo Seduta (FIICCS)</h3>
+                <div className="space-y-3">
+                  {infStats.perSeduta.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perSeduta[0][1]} color="#1D4ED8" extra={`${n}`} />
+                  ))}
+                </div>
+                {(infStats.conPalla > 0 || infStats.senzaPalla > 0) && (
+                  <div className="mt-4 pt-3 border-t border-gray-100 flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+                      <span className="text-xs text-gray-600">Con palla: <strong>{infStats.conPalla}</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full bg-gray-400" />
+                      <span className="text-xs text-gray-600">Senza palla: <strong>{infStats.senzaPalla}</strong></span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Attività fisica (FIICCS) */}
+            {infStats.perAttivita.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Attività Fisica (FIICCS)</h3>
+                <div className="space-y-3">
+                  {infStats.perAttivita.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perAttivita[0][1]} color="#D97706" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Modalità insorgenza (FIICCS) */}
+            {infStats.perInsorgenza.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Modalità Insorgenza (FIICCS)</h3>
+                <div className="space-y-3">
+                  {infStats.perInsorgenza.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perInsorgenza[0][1]} color="#7C3AED" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Terreno di gioco (FIICCS) */}
+            {infStats.perTerreno.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Terreno di Gioco (FIICCS)</h3>
+                <div className="space-y-3">
+                  {infStats.perTerreno.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perTerreno[0][1]} color="#059669" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Fase di gioco (FIICCS) */}
+            {infStats.perFaseGioco.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Fase di Gioco (FIICCS)</h3>
+                <div className="space-y-3">
+                  {infStats.perFaseGioco.map(([label, n]) => (
+                    <BarraH key={label} label={label} value={n} max={infStats.perFaseGioco[0][1]} color="#DC2626" extra={`${n}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Lato / Categoria */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+              <h3 className="text-sm font-bold text-gray-500 uppercase tracking-widest mb-4">Distribuzione</h3>
+              {infStats.perLato.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Lato</p>
+                  <div className="space-y-2 mb-4">
+                    {infStats.perLato.map(([label, n]) => (
+                      <BarraH key={label} label={label} value={n} max={infStats.perLato[0][1]} color="#F59E0B" extra={`${n}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+              {infStats.perCategoria.length > 0 && (
+                <>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Per Categoria</p>
+                  <div className="space-y-2">
+                    {infStats.perCategoria.map(([label, n]) => (
+                      <BarraH key={label} label={label} value={n} max={infStats.perCategoria[0][1]} color="#C8102E" extra={`${n}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

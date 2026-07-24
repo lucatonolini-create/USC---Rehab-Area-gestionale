@@ -82,7 +82,7 @@ function _calcolaDelta(curr: TestFisiometrico, prev: TestFisiometrico | null): n
   return null;
 }
 
-async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[]) {
+async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[], dettaglio?: import("@/lib/store").DettaglioSituazionaleData | null) {
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
   const doc = new jsPDF();
@@ -442,6 +442,69 @@ async function esportaStoricoCompletoPDF(atleta: Atleta, programmi: Programma[])
   });
 
   y = (doc as any).lastAutoTable.finalY + 10;
+
+  // ── Dettaglio Situazionale FIICCS ─────────────────────────────────────────
+  if (dettaglio) {
+    checkPage(20);
+    y = secTitle("Dettaglio Situazionale (FIICCS)", y);
+    const fiiccsRows: [string, string][] = [
+      dettaglio.fonteInformazione?.length ? ["Fonte informazione", dettaglio.fonteInformazione.join(", ")] : null,
+      dettaglio.giorniReferto != null ? ["Giorni a referto", `${dettaglio.giorniReferto}`] : null,
+      dettaglio.modalitaInsorgenza ? ["Modalità insorgenza", dettaglio.modalitaInsorgenza + (dettaglio.modalitaInsorgenzaAltro ? ` — ${dettaglio.modalitaInsorgenzaAltro}` : "")] : null,
+      dettaglio.attivitaFisica ? ["Attività fisica", dettaglio.attivitaFisica] : null,
+      dettaglio.tipoCorsa ? ["Tipo corsa", dettaglio.tipoCorsa] : null,
+      dettaglio.corsaGradi ? ["Gradi cambio direzione", dettaglio.corsaGradi] : null,
+      dettaglio.corsaGambaCoinvolta ? ["Gamba coinvolta", dettaglio.corsaGambaCoinvolta] : null,
+      dettaglio.saltoFase ? ["Fase salto", dettaglio.saltoFase] : null,
+      dettaglio.saltoAtterraggioDove ? ["Atterraggio su", dettaglio.saltoAtterraggioDove] : null,
+      dettaglio.saltoGambaAtterraggio ? ["Gamba atterraggio", dettaglio.saltoGambaAtterraggio] : null,
+      dettaglio.cadutaDettagli ? ["Dettagli caduta", dettaglio.cadutaDettagli] : null,
+      dettaglio.contattoDettaglio ? ["Tipo contatto", dettaglio.contattoDettaglio] : null,
+      dettaglio.situazioneDuello ? ["Situazione duello", dettaglio.situazioneDuello] : null,
+      dettaglio.direzioneContrasto ? ["Direzione contrasto", dettaglio.direzioneContrasto] : null,
+      dettaglio.collisioneCon ? ["Collisione con", dettaglio.collisioneCon] : null,
+      dettaglio.duelloAereo != null ? ["Duello aereo", dettaglio.duelloAereo ? "Sì" : "No"] : null,
+      dettaglio.azioneConPalla != null ? ["Azione con palla", dettaglio.azioneConPalla ? "Sì" : "No"] : null,
+      dettaglio.situazioneGiocoPalla ? ["Situazione di gioco", dettaglio.situazioneGiocoPalla] : null,
+      dettaglio.attivitaConPalla ? ["Attività con palla", dettaglio.attivitaConPalla] : null,
+      dettaglio.calcioAzione ? ["Azione di calcio", dettaglio.calcioAzione] : null,
+      dettaglio.calcioIntensita ? ["Intensità calcio", dettaglio.calcioIntensita] : null,
+      dettaglio.calcioTipo ? ["Tipo calcio", dettaglio.calcioTipo] : null,
+      dettaglio.calcioFase ? ["Fase calcio", dettaglio.calcioFase] : null,
+      dettaglio.dribblingTipo ? ["Tipo dribbling", dettaglio.dribblingTipo] : null,
+      dettaglio.pallaAltezza ? ["Altezza palla", dettaglio.pallaAltezza] : null,
+      dettaglio.tipoSeduta ? ["Tipo seduta", dettaglio.tipoSeduta] : null,
+      dettaglio.tipoEsercitazione ? ["Tipo esercitazione", dettaglio.tipoEsercitazione] : null,
+      dettaglio.partitaSede ? ["Sede partita", dettaglio.partitaSede] : null,
+      dettaglio.partitaCompetizione ? ["Competizione", dettaglio.partitaCompetizione] : null,
+      dettaglio.partitaPunteggio ? ["Punteggio", dettaglio.partitaPunteggio] : null,
+      dettaglio.faseGioco ? ["Fase di gioco", dettaglio.faseGioco] : null,
+      dettaglio.sottoFaseGioco ? ["Sotto-fase di gioco", dettaglio.sottoFaseGioco] : null,
+      dettaglio.terrenoGioco ? ["Terreno di gioco", dettaglio.terrenoGioco] : null,
+      dettaglio.decisioneArbitrale ? ["Decisione arbitrale", dettaglio.decisioneArbitrale] : null,
+      dettaglio.minutoInfortunio != null ? ["Minuto infortunio", `${dettaglio.minutoInfortunio}'`] : null,
+      dettaglio.minutiGiocatiPrima != null ? ["Minuti giocati prima", `${dettaglio.minutiGiocatiPrima}'`] : null,
+    ].filter((r): r is [string, string] => r !== null);
+
+    if (fiiccsRows.length > 0) {
+      autoTable(doc, {
+        startY: y,
+        body: fiiccsRows,
+        theme: "striped",
+        styles: { fontSize: 8, cellPadding: 2.5, overflow: "linebreak", halign: "left", valign: "middle" },
+        columnStyles: {
+          0: { cellWidth: 70, fontStyle: "bold", textColor: [30, 64, 175] as [number, number, number] },
+          1: { textColor: dark },
+        },
+        alternateRowStyles: { fillColor: [239, 246, 255] as [number, number, number] },
+        margin: { left: M, right: M },
+      });
+      y = (doc as any).lastAutoTable.finalY + 10;
+    } else {
+      doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...gray);
+      doc.text("Nessun dettaglio situazionale inserito.", M, y); y += 10;
+    }
+  }
 
   // ── Referti clinici ───────────────────────────────────────────────────────
   const referti = [...(atleta.refertiClinici ?? [])].sort((a, b) => b.data.localeCompare(a.data));
@@ -1070,7 +1133,8 @@ export default function AtletiPage() {
   const scaricaPDFStorico = async () => {
     if (!selected) return;
     const programmi = await loadProgrammi(selected.id);
-    await esportaStoricoCompletoPDF(selected, programmi);
+    const det = selected.stato === "Infortunato" ? (dettaglioSituazionale ?? await loadDettaglioSituazionale(selected.id)) : null;
+    await esportaStoricoCompletoPDF(selected, programmi, det);
   };
 
   const salvaQuestionnaire = async (questionari: QuestionarioKinesiofobia[]) => {
