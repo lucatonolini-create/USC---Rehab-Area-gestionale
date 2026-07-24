@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { CATEGORIE, PIEDI, TIPI_INFORTUNIO, EVENTI_INFORTUNIO, MECCANISMI_INFORTUNIO, CONTATTI_INFORTUNIO, LATI_INFORTUNIO, POSIZIONI_INFORTUNIO, uid, type Atleta, type Stato, type Categoria, type Piede, type TipoInfortunio } from "@/lib/store";
 import PlayerCombobox from "@/components/PlayerCombobox";
 import DettaglioSituazionale, { type DettaglioSituazionaleHandle, type DettaglioSituazionaleForm } from "@/components/DettaglioSituazionale";
+import OsiicsCombobox from "@/components/OsiicsCombobox";
+import type { OsiicsCode } from "@/lib/store";
 
 const STATI: Stato[] = ["Infortunato", "Disponibile"];
 
@@ -162,32 +164,22 @@ export default function AtletaModal({ atletaIniziale, onSalva, onChiudi }: Props
             <Input className="mt-1" value={form.infortunio} onChange={(e) => f("infortunio", e.target.value)} placeholder="Es. Lesione LCA" />
           </div>
 
-          <div className="border border-blue-100 rounded-xl p-3 bg-blue-50/40 space-y-3">
+          <div className="border border-blue-100 rounded-xl p-3 bg-blue-50/40 space-y-2">
             <p className="text-xs font-bold text-blue-600 uppercase tracking-wider">Classificazione OSIICS</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label>Codice OSIICS</Label>
-                <Input
-                  className="mt-1 font-mono uppercase"
-                  value={form.osiicsCodice ?? ""}
-                  onChange={(e) => f("osiicsCodice", e.target.value.toUpperCase() || undefined)}
-                  placeholder="Es. M14H"
-                  maxLength={8}
-                />
-              </div>
-              <div>
-                <Label>Diagnosi OSIICS</Label>
-                <Input
-                  className="mt-1"
-                  value={form.osiicsDescrizione ?? ""}
-                  onChange={(e) => f("osiicsDescrizione", e.target.value || undefined)}
-                  placeholder="Es. Stiramento bicipite femorale"
-                />
-              </div>
-            </div>
-            <p className="text-[10px] text-blue-400 leading-relaxed">
-              Codifica standardizzata Orchard Sports Injury Classification System (v13). Il codice è composto da lettera tipo + sede anatomica + specificatore (es. M=Muscolo, J=Articolazione, B=Osso).
-            </p>
+            <OsiicsCombobox
+              value={form.osiicsCodeId ? { id: form.osiicsCodeId, codice: form.osiicsCodice ?? "", descrizioneIta: form.osiicsDescrizione ?? "" } : null}
+              onChange={(code: OsiicsCode | null) => {
+                if (code) {
+                  f("osiicsCodeId", code.id);
+                  f("osiicsCodice", code.codice);
+                  f("osiicsDescrizione", code.descrizioneIta);
+                } else {
+                  f("osiicsCodeId", undefined);
+                  f("osiicsCodice", undefined);
+                  f("osiicsDescrizione", undefined);
+                }
+              }}
+            />
           </div>
 
           <div>

@@ -193,6 +193,7 @@ export interface Atleta {
   // Classificazione OSIICS
   osiicsCodice?: string;
   osiicsDescrizione?: string;
+  osiicsCodeId?: string;
 }
 
 // Tempi di recupero standard per tipo di infortunio (in giorni)
@@ -425,6 +426,7 @@ function rowToAtleta(r: Record<string, unknown>): Atleta {
     altezza: (r.altezza as string) ?? "",
     osiicsCodice: (r.osiics_codice as string) ?? undefined,
     osiicsDescrizione: (r.osiics_descrizione as string) ?? undefined,
+    osiicsCodeId: (r.osiics_code_id as string) ?? undefined,
   };
 }
 
@@ -460,6 +462,7 @@ function atletaToRow(a: Atleta): Record<string, unknown> {
     nome_completo: a.nomeCompleto ?? null,
     osiics_codice: a.osiicsCodice ?? null,
     osiics_descrizione: a.osiicsDescrizione ?? null,
+    osiics_code_id: a.osiicsCodeId ?? null,
   };
 }
 
@@ -1153,5 +1156,44 @@ export async function loadAllDettagliSituazionali(): Promise<DettaglioSituaziona
     const { data, error } = await supabase.from("dettaglio_situazionale").select("*");
     if (error || !data) return [];
     return (data as Record<string, unknown>[]).map(rowToDettaglio);
+  } catch { return []; }
+}
+
+// ─── OSIICS v15 ─────────────────────────────────────────────────────────────
+
+export interface OsiicsCode {
+  id: string;
+  codice: string;
+  descrizioneIta: string;
+  descrizioneEng: string;
+  regioneAnatomica: string;
+  categoriaPatologia: string;
+  versione: string;
+}
+
+function rowToOsiicsCode(r: Record<string, unknown>): OsiicsCode {
+  return {
+    id: r.id as string,
+    codice: r.codice as string,
+    descrizioneIta: (r.descrizione_ita as string) ?? "",
+    descrizioneEng: (r.descrizione_eng as string) ?? "",
+    regioneAnatomica: (r.regione_anatomica as string) ?? "",
+    categoriaPatologia: (r.categoria_patologia as string) ?? "",
+    versione: (r.versione as string) ?? "v15",
+  };
+}
+
+export async function searchOsiicsCodes(query: string): Promise<OsiicsCode[]> {
+  if (!isOnline() || !query.trim()) return [];
+  try {
+    const q = query.trim();
+    const { data, error } = await supabase
+      .from("osiics_codes")
+      .select("*")
+      .or(`codice.ilike.%${q}%,descrizione_ita.ilike.%${q}%,descrizione_eng.ilike.%${q}%`)
+      .order("codice")
+      .limit(20);
+    if (error || !data) return [];
+    return (data as Record<string, unknown>[]).map(rowToOsiicsCode);
   } catch { return []; }
 }
