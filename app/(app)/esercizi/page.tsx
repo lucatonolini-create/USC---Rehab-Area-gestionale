@@ -904,25 +904,13 @@ export default function EserciziPage() {
                     gruppi.get(k)!.push(p);
                   });
                   const multiGroups = lista.some((p) => p.infortunioId) && gruppi.size > 1;
-                  return Array.from(gruppi.entries()).map(([key, progs]) => {
-                    let lbl: { diagnosi: string; tipo?: string } | null = null;
-                    if (multiGroups && key) {
-                      if (key === "__corrente__") {
-                        lbl = { diagnosi: atleta.infortunio || "Infortunio corrente", tipo: atleta.tipoInfortunio };
-                      } else {
-                        const st = (atleta.storicoInfortuni ?? []).find((s) => s.id === key);
-                        if (st) lbl = { diagnosi: st.diagnosi, tipo: st.tipo };
-                      }
-                    }
+
+                  // Se non servono etichette di gruppo, mostra tutto in una lista piatta ordinata per data
+                  if (!multiGroups) {
+                    const tuttiOrdinati = [...lista].sort((a, b) => a.data.localeCompare(b.data));
                     return (
-                      <div key={key ?? "__none__"} className="space-y-2">
-                        {lbl && (
-                          <div className="flex items-center gap-2 px-1 py-1.5 border-b border-gray-100 pb-2">
-                            {lbl.tipo && <span className="text-xs bg-red-50 text-[#C8102E] font-bold px-2 py-0.5 rounded-full">{lbl.tipo}</span>}
-                            <span className="text-sm font-semibold text-gray-700">{lbl.diagnosi}</span>
-                          </div>
-                        )}
-                        {[...progs].sort((a, b) => a.data.localeCompare(b.data)).map((prog) => (
+                      <div className="space-y-2">
+                        {tuttiOrdinati.map((prog) => (
                   <div key={prog.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${prog.assente ? "border-orange-100" : prog.riposo ? "border-blue-100" : prog.squadra ? "border-red-100" : "border-gray-100"}`}>
                     <button onClick={() => setAperto(aperto === prog.id ? null : prog.id)}
                       className="w-full flex items-center gap-4 p-5 hover:bg-gray-50 text-left">
@@ -1127,6 +1115,33 @@ export default function EserciziPage() {
                       </div>
                     )}
                   </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  // Multi-infortunio: raggruppa con etichetta e ordina per data dentro ogni gruppo
+                  return Array.from(gruppi.entries()).map(([key, progs]) => {
+                    let lbl: { diagnosi: string; tipo?: string } | null = null;
+                    if (key) {
+                      if (key === "__corrente__") {
+                        lbl = { diagnosi: atleta.infortunio || "Infortunio corrente", tipo: atleta.tipoInfortunio };
+                      } else {
+                        const st = (atleta.storicoInfortuni ?? []).find((s) => s.id === key);
+                        if (st) lbl = { diagnosi: st.diagnosi, tipo: st.tipo };
+                      }
+                    }
+                    return (
+                      <div key={key ?? "__none__"} className="space-y-2">
+                        {lbl && (
+                          <div className="flex items-center gap-2 px-1 py-1.5 border-b border-gray-100 pb-2">
+                            {lbl.tipo && <span className="text-xs bg-red-50 text-[#C8102E] font-bold px-2 py-0.5 rounded-full">{lbl.tipo}</span>}
+                            <span className="text-sm font-semibold text-gray-700">{lbl.diagnosi}</span>
+                          </div>
+                        )}
+                        {[...progs].sort((a, b) => a.data.localeCompare(b.data)).map((prog) => (
+                          <div key={prog.id} className={`bg-white rounded-2xl border overflow-hidden shadow-sm ${prog.assente ? "border-orange-100" : prog.riposo ? "border-blue-100" : prog.squadra ? "border-red-100" : "border-gray-100"}`}>
+                            <p className="p-4 text-sm text-gray-500">{prog.nome} — {prog.data}</p>
+                          </div>
                         ))}
                       </div>
                     );
