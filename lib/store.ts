@@ -28,6 +28,7 @@ export const OBIETTIVI_PALESTRA = [
 
 export const OBIETTIVI_CAMPO = [
   "Accelerazioni/Decelerazioni",
+  "Agility",
   "Attivazione muscolare",
   "Cambi di direzione",
   "Forza",
@@ -39,6 +40,7 @@ export const OBIETTIVI_CAMPO = [
   "Neuromuscolare",
   "Partita",
   "Pliometria",
+  "Rapidità",
   "Rondo",
   "RSA",
   "Situazione di gioco",
