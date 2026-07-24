@@ -672,9 +672,20 @@ export default function EserciziPage() {
       }
     }
 
-    // Salva una copia del programma per ogni atleta aggiuntivo
+    // Salva una copia del programma per ogni atleta aggiuntivo — solo esercizi, no dati rehab
     for (const addId of atletiAggiuntivi) {
-      const pulitoCopia = { ...pulito, atletaId: addId, infortunioId: undefined, infortunioLabel: undefined };
+      const pulitoCopia = {
+        atletaId: addId,
+        nome: pulito.nome,
+        data: pulito.data,
+        fase: "",
+        esercizi: pulito.esercizi,
+        esercizicampo: pulito.esercizicampo,
+        obiettiviPalestra: pulito.obiettiviPalestra,
+        obiettiviCampo: pulito.obiettiviCampo,
+        tests: pulito.tests,
+        carico: pulito.carico,
+      };
       const progCopia: Programma = { ...pulitoCopia, id: uid() };
       await upsertProgramma(progCopia);
       setProgrammiPerAtleta((prev) => {
