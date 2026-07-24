@@ -522,7 +522,8 @@ async function esportaPDFReportMensile(
       if (a2 > nowY || (a2 === nowY && m2 > nowM)) {
         return { label: MESI_BREVI[m2], total: 0, perCat: {} as Record<string, number>, perTipo: {} as Record<string, number> };
       }
-      const attv = atleti.filter((a) => atletaAttivoInMese(a, a2, m2));
+      const atletiFiltrati = filtroCat && filtroCat !== "Tutte" ? atleti.filter((a) => a.categoria === filtroCat) : atleti;
+      const attv = atletiFiltrati.filter((a) => atletaAttivoInMese(a, a2, m2));
       const perCat: Record<string, number> = {};
       const perTipo: Record<string, number> = {};
       attv.forEach((a) => {
