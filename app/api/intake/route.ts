@@ -61,6 +61,62 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Salva dettaglio situazionale FIICCS se presente
+    if (body.dettaglio && typeof body.dettaglio === "object") {
+      const det = body.dettaglio;
+      const hasData = !!(
+        det.fonte_informazione?.length || det.giorni_referto || det.modalita_insorgenza ||
+        det.attivita_fisica || det.tipo_seduta || det.azione_con_palla
+      );
+      if (hasData) {
+        const detRow = {
+          id: crypto.randomUUID(),
+          atleta_id: row.id,
+          fonte_informazione: det.fonte_informazione?.length ? det.fonte_informazione : null,
+          fonte_informazione_altro: det.fonte_informazione_altro || null,
+          giorni_referto: det.giorni_referto ? parseInt(det.giorni_referto) || null : null,
+          modalita_insorgenza: det.modalita_insorgenza || null,
+          modalita_insorgenza_altro: det.modalita_insorgenza_altro || null,
+          contatto_dettaglio: det.contatto_dettaglio || null,
+          situazione_duello: det.situazione_duello || null,
+          direzione_contrasto: det.direzione_contrasto || null,
+          collisione_con: det.collisione_con || null,
+          duello_aereo: det.duello_aereo || null,
+          attivita_fisica: det.attivita_fisica || null,
+          tipo_corsa: det.tipo_corsa || null,
+          corsa_gradi: det.corsa_gradi || null,
+          corsa_gamba_coinvolta: det.corsa_gamba_coinvolta || null,
+          salto_fase: det.salto_fase || null,
+          salto_atterraggio_dove: det.salto_atterraggio_dove || null,
+          salto_gamba_atterraggio: det.salto_gamba_atterraggio || null,
+          caduta_dettagli: det.caduta_dettagli || null,
+          azione_con_palla: !!det.azione_con_palla,
+          situazione_gioco_palla: det.situazione_gioco_palla || null,
+          attivita_con_palla: det.attivita_con_palla || null,
+          calcio_azione: det.calcio_azione || null,
+          calcio_intensita: det.calcio_intensita || null,
+          calcio_tipo: det.calcio_tipo || null,
+          calcio_fase: det.calcio_fase || null,
+          dribbling_tipo: det.dribbling_tipo || null,
+          palla_altezza: det.palla_altezza || null,
+          controllo_palla_con: det.controllo_palla_con || null,
+          gamba_infortunata_palla: det.gamba_infortunata_palla || null,
+          tipo_seduta: det.tipo_seduta || null,
+          tipo_esercitazione: det.tipo_esercitazione || null,
+          partita_sede: det.partita_sede || null,
+          partita_competizione: det.partita_competizione || null,
+          partita_punteggio: det.partita_punteggio || null,
+          fase_gioco: det.fase_gioco || null,
+          sotto_fase_gioco: det.sotto_fase_gioco || null,
+          terreno_gioco: det.terreno_gioco || null,
+          decisione_arbitrale: det.decisione_arbitrale || null,
+          minuto_infortunio: det.minuto_infortunio ? parseInt(det.minuto_infortunio) || null : null,
+          minuti_giocati_prima: det.minuti_giocati_prima ? parseInt(det.minuti_giocati_prima) || null : null,
+        };
+        await supabase.from("dettaglio_situazionale").insert(detRow);
+      }
+    }
+
     // Aggiungi il giocatore alla rosa se non è già presente
     try {
       const { data: imp } = await supabase

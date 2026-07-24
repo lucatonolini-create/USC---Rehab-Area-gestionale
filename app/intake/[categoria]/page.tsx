@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import PlayerCombobox from "@/components/PlayerCombobox";
 import OsiicsCombobox from "@/components/OsiicsCombobox";
+import DettaglioSituazionale, { type DettaglioSituazionaleHandle } from "@/components/DettaglioSituazionale";
 import type { OsiicsCode } from "@/lib/store";
 
 const CATEGORIA_MAP: Record<string, string> = {
   u19: "U19", u17: "U17", u16: "U16", u15: "U15", u14: "U14",
 };
+
+const CATEGORIE_FORM = ["1ª Squadra", "U19", "U17", "U16", "U15", "U14", "Altra squadra", "Provino"];
 
 const PIEDI = ["Ambidestro", "Destro", "Sinistro"];
 const TIPI_INFORTUNIO = [
@@ -83,6 +86,7 @@ export default function IntakePage() {
   const [form, setForm] = useState<FormState>(vuoto);
   const [stato, setStato] = useState<"idle" | "invio" | "ok" | "errore">("idle");
   const [errMsg, setErrMsg] = useState("");
+  const dettaglioRef = useRef<DettaglioSituazionaleHandle>(null);
   const f = <K extends keyof FormState>(k: K, v: FormState[K]) =>
     setForm((prev) => ({ ...prev, [k]: v }));
 
@@ -108,7 +112,7 @@ export default function IntakePage() {
           <h2 className="text-lg font-bold text-gray-900 mb-2">Segnalazione inviata</h2>
           <p className="text-sm text-gray-500 mb-5">Il giocatore è stato aggiunto al gestionale rehab. Grazie.</p>
           <button
-            onClick={() => { setForm(vuoto()); setStato("idle"); setErrMsg(""); }}
+            onClick={() => { setForm(vuoto()); setStato("idle"); setErrMsg(""); dettaglioRef.current?.reset(); }}
             className="w-full bg-[#C8102E] text-white py-3 rounded-xl text-sm font-semibold hover:bg-red-800 transition-colors">
             Inserisci un altro infortunio
           </button>
@@ -123,10 +127,11 @@ export default function IntakePage() {
     setStato("invio");
     setErrMsg("");
     try {
+      const dettaglio = dettaglioRef.current?.hasData() ? dettaglioRef.current.getValues() : undefined;
       const res = await fetch("/api/intake", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, dettaglio }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Errore sconosciuto");
@@ -178,7 +183,7 @@ export default function IntakePage() {
                 <Label>Categoria *</Label>
                 <Sel value={form.categoria} onChange={(e) => f("categoria", e.target.value)} required>
                   <option value="">—</option>
-                  {Object.values(CATEGORIA_MAP).map((c) => <option key={c}>{c}</option>)}
+                  {CATEGORIE_FORM.map((c) => <option key={c}>{c}</option>)}
                 </Sel>
               </div>
               <div>
@@ -293,6 +298,10 @@ export default function IntakePage() {
                 <Label>Fisioterapista / Mittente</Label>
                 <Input value={form.fisioterapista} onChange={(e) => f("fisioterapista", e.target.value)} placeholder="Il tuo nome" />
               </div>
+            </div>
+
+            <div className="border-t border-gray-100 pt-4">
+              <DettaglioSituazionale ref={dettaglioRef} contatto={form.contatto} />
             </div>
 
             {stato === "errore" && (

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Copy, Check, Link2 } from "lucide-react";
 
-const CATEGORIE = ["1ª Squadra", "U19", "U17", "U16", "U15", "U14", "Altra squadra", "Provino"] as const;
+const CATEGORIE = ["U19", "U17", "U16", "U15", "U14"] as const;
 
 export default function SegnalazioniPage() {
   const [origin, setOrigin] = useState("");
