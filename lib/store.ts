@@ -1195,7 +1195,8 @@ export async function searchOsiicsCodes(query: string): Promise<OsiicsCode[]> {
       .or(`codice.ilike.%${q}%,descrizione_ita.ilike.%${q}%,descrizione_eng.ilike.%${q}%`)
       .order("codice")
       .limit(20);
-    if (error || !data) return [];
+    if (error) { console.error("[searchOsiicsCodes]", error.code, error.message); return []; }
+    if (!data) return [];
     return (data as Record<string, unknown>[]).map(rowToOsiicsCode);
-  } catch { return []; }
+  } catch (e) { console.error("[searchOsiicsCodes] exception", e); return []; }
 }
